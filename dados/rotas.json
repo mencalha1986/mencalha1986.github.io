@@ -15,21 +15,6 @@
   "minimo": 9509
  },
  {
-  "slug": "LIS-RIO-2026-12-17-2026-12-30",
-  "issue": 2,
-  "origem": "LIS",
-  "destino": "RIO",
-  "ida": "2026-12-17",
-  "volta": "2026-12-30",
-  "atualizado": "2026-10-30T20:04:34.860Z",
-  "erro": null,
-  "brl": 6623,
-  "eur": 1088,
-  "direto": 10477,
-  "variacao": 0,
-  "minimo": 6623
- },
- {
   "slug": "LIS-RIO-2026-12-17-2027-01-02",
   "issue": 1,
   "origem": "LIS",
@@ -43,5 +28,20 @@
   "direto": 14490,
   "variacao": 0,
   "minimo": 10421
+ },
+ {
+  "slug": "LIS-RIO-2026-12-17-2026-12-30",
+  "issue": 2,
+  "origem": "LIS",
+  "destino": "RIO",
+  "ida": "2026-12-17",
+  "volta": "2026-12-30",
+  "atualizado": "2026-10-30T20:09:19.784Z",
+  "erro": null,
+  "brl": 6623,
+  "eur": 1088,
+  "direto": 10477,
+  "variacao": 0,
+  "minimo": 6623
  }
 ]
