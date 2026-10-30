@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-10-30T19:27:59.864Z",
- "tentativa": "2026-10-30T19:27:59.864Z",
+ "atualizado": "2026-10-30T20:04:21.240Z",
+ "tentativa": "2026-10-30T20:04:21.240Z",
  "erro": null,
  "voos": [
   {
@@ -89,6 +89,19 @@
    "eur": 1771
   },
   {
+   "saida": "08:50",
+   "chegada": "21:20",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 930,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 2,
+   "detalhe": "GRU, CWB",
+   "brl": 11143,
+   "eur": 1830
+  },
+  {
    "saida": "13:50",
    "chegada": "01:00⁺¹",
    "companhia": "LATAM",
@@ -100,19 +113,6 @@
    "detalhe": "2h 50 min GRU",
    "brl": 11152,
    "eur": 1832
-  },
-  {
-   "saida": "08:50",
-   "chegada": "21:20",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 930,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 2,
-   "detalhe": "GRU, CWB",
-   "brl": 11289,
-   "eur": 1830
   },
   {
    "saida": "06:30",
@@ -273,6 +273,12 @@
   },
   {
    "quando": "2026-10-30T19:27:59.864Z",
+   "brl": 9509,
+   "eur": 1562,
+   "direto": 14490
+  },
+  {
+   "quando": "2026-10-30T20:04:21.240Z",
    "brl": 9509,
    "eur": 1562,
    "direto": 14490

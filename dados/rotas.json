@@ -1,18 +1,18 @@
 [
  {
-  "slug": "LIS-RIO-2026-12-17-2027-01-02",
-  "issue": 1,
+  "slug": "LIS-RIO-2026-12-17-2027-01-06",
+  "issue": 3,
   "origem": "LIS",
   "destino": "RIO",
   "ida": "2026-12-17",
-  "volta": "2027-01-02",
-  "atualizado": "2026-10-30T18:46:20.096Z",
+  "volta": "2027-01-06",
+  "atualizado": "2026-10-30T20:04:21.240Z",
   "erro": null,
-  "brl": 10451,
-  "eur": 1719,
-  "direto": 14469,
-  "variacao": 30,
-  "minimo": 10421
+  "brl": 9509,
+  "eur": 1562,
+  "direto": 14490,
+  "variacao": 0,
+  "minimo": 9509
  },
  {
   "slug": "LIS-RIO-2026-12-17-2026-12-30",
@@ -21,27 +21,27 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2026-12-30",
-  "atualizado": "2026-10-30T19:27:40.369Z",
+  "atualizado": "2026-10-30T20:04:34.860Z",
   "erro": null,
   "brl": 6623,
   "eur": 1088,
   "direto": 10477,
-  "variacao": null,
+  "variacao": 0,
   "minimo": 6623
  },
  {
-  "slug": "LIS-RIO-2026-12-17-2027-01-06",
-  "issue": 3,
+  "slug": "LIS-RIO-2026-12-17-2027-01-02",
+  "issue": 1,
   "origem": "LIS",
   "destino": "RIO",
   "ida": "2026-12-17",
-  "volta": "2027-01-06",
-  "atualizado": "2026-10-30T19:27:59.864Z",
+  "volta": "2027-01-02",
+  "atualizado": "2026-10-30T20:04:45.330Z",
   "erro": null,
-  "brl": 9509,
-  "eur": 1562,
+  "brl": 10466,
+  "eur": 1719,
   "direto": 14490,
-  "variacao": null,
-  "minimo": 9509
+  "variacao": 15,
+  "minimo": 10421
  }
 ]

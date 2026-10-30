@@ -6,8 +6,8 @@
   "volta": "2027-01-02",
   "issue": 1
  },
- "atualizado": "2026-10-30T18:46:20.096Z",
- "tentativa": "2026-10-30T18:46:20.096Z",
+ "atualizado": "2026-10-30T20:04:45.330Z",
+ "tentativa": "2026-10-30T20:04:45.330Z",
  "erro": null,
  "voos": [
   {
@@ -20,7 +20,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 10451,
+   "brl": 10466,
    "eur": 1719
   },
   {
@@ -33,7 +33,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "9h 55 min FOR",
-   "brl": 10953,
+   "brl": 10969,
    "eur": 1802
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 11117,
+   "brl": 11133,
    "eur": 1828
   },
   {
@@ -59,7 +59,7 @@
    "chega": "GIG",
    "paradas": 2,
    "detalhe": "GRU, CWB",
-   "brl": 11171,
+   "brl": 11187,
    "eur": 1837
   },
   {
@@ -72,7 +72,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 11259,
+   "brl": 11275,
    "eur": 1852
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 11267,
+   "brl": 11284,
    "eur": 1853
   },
   {
@@ -98,7 +98,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 11803,
+   "brl": 11820,
    "eur": null
   },
   {
@@ -111,7 +111,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 11938,
+   "brl": 11956,
    "eur": 1964
   },
   {
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min MAD",
-   "brl": 11952,
+   "brl": 11969,
    "eur": 1966
   },
   {
@@ -137,8 +137,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "5h 30 min GRU",
-   "brl": 13691,
-   "eur": 2252
+   "brl": 13677,
+   "eur": 2246
   },
   {
    "saida": "23:20",
@@ -150,7 +150,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14469,
+   "brl": 14490,
    "eur": 2380
   },
   {
@@ -163,7 +163,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 17915,
+   "brl": 17941,
    "eur": 2946
   }
  ],
@@ -288,6 +288,12 @@
    "brl": 10451,
    "eur": 1719,
    "direto": 14469
+  },
+  {
+   "quando": "2026-10-30T20:04:45.330Z",
+   "brl": 10466,
+   "eur": 1719,
+   "direto": 14490
   }
  ],
  "links": {
