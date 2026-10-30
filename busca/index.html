@@ -342,23 +342,24 @@ function calc(){
   else $('c-ver').textContent = 'por milheiro, abaixo dos ' + brl(cost, 2) + ' que custa o seu: compre em dinheiro.';
 }
 
+function eur(v){ return '€ ' + num(v); }
 function grafico(h){
-  h = (h || []).filter(function(x){ return x.brl; });
+  h = (h || []).filter(function(x){ return x.eur; });
   if (h.length < 2) return '<p class="note">O gráfico aparece a partir da segunda atualização (uma por hora).</p>';
   var W = 700, H = 170, P = 30, PB = 48;
-  var vals = h.map(function(x){ return x.brl; });
+  var vals = h.map(function(x){ return x.eur; });
   var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), span = max - min || 1;
   var x = function(i){ return P + i * (W - 2*P) / (h.length - 1); };
   var y = function(v){ return H - PB - (v - min) * (H - P - PB) / span; };
-  var linha = h.map(function(p, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.brl).toFixed(1); }).join(' ');
+  var linha = h.map(function(p, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.eur).toFixed(1); }).join(' ');
   var dt = function(iso){ return new Date(iso).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}); };
   return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Menor preço a cada atualização">'
     + '<line x1="' + P + '" x2="' + (W-P) + '" y1="' + y(max) + '" y2="' + y(max) + '" class="grid"/><line x1="' + P + '" x2="' + (W-P) + '" y1="' + y(min) + '" y2="' + y(min) + '" class="grid"/>'
-    + '<text x="' + (W-P) + '" y="' + (y(max)-6) + '" text-anchor="end" class="ax">' + brl(max) + '</text><text x="' + (W-P) + '" y="' + (y(min)+14) + '" text-anchor="end" class="ax">' + brl(min) + '</text>'
+    + '<text x="' + (W-P) + '" y="' + (y(max)-6) + '" text-anchor="end" class="ax">' + eur(max) + '</text><text x="' + (W-P) + '" y="' + (y(min)+14) + '" text-anchor="end" class="ax">' + eur(min) + '</text>'
     + '<path d="' + linha + ' L' + x(h.length-1).toFixed(1) + ',' + (H-PB) + ' L' + x(0).toFixed(1) + ',' + (H-PB) + ' Z" class="area"/><path d="' + linha + '" class="line"/>'
-    + '<circle cx="' + x(h.length-1) + '" cy="' + y(h[h.length-1].brl) + '" r="4" class="dot"/>'
+    + '<circle cx="' + x(h.length-1) + '" cy="' + y(h[h.length-1].eur) + '" r="4" class="dot"/>'
     + '<text x="' + P + '" y="' + (H-8) + '" class="ax">' + dt(h[0].quando) + '</text><text x="' + (W-P) + '" y="' + (H-8) + '" text-anchor="end" class="ax">' + dt(h[h.length-1].quando) + '</text>'
-    + '</svg></div><p class="note">Menor preço em reais a cada atualização. Mínimo visto: ' + brl(min) + '.</p>';
+    + '</svg></div><p class="note">Menor preço em euros a cada leitura (desde 22/10). Mínimo visto: ' + eur(min) + '.</p>';
 }
 
 carregarRotas().then(function(){ abrir(location.hash.slice(1) || (rotas[0] && rotas[0].slug) || ''); });
