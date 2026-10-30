@@ -1,7 +1,1 @@
 _voos/node_modules/
-_voos/ultimo.log
-_voos/monitor.log
-_voos/monitor.pid
-_worker/node_modules/
-_worker/.wrangler/
-_worker/.dev.vars

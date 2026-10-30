@@ -1,0 +1,17 @@
+[
+ {
+  "slug": "LIS-RIO-2026-12-17-2027-01-02",
+  "issue": 1,
+  "origem": "LIS",
+  "destino": "RIO",
+  "ida": "2026-12-17",
+  "volta": "2027-01-02",
+  "atualizado": "2026-10-30T18:46:20.096Z",
+  "erro": null,
+  "brl": 10451,
+  "eur": 1719,
+  "direto": 14469,
+  "variacao": 30,
+  "minimo": 10421
+ }
+]

@@ -1,0 +1,199 @@
+{
+ "rota": {
+  "origem": "LIS",
+  "destino": "RIO",
+  "ida": "2026-12-17",
+  "volta": "2027-01-02",
+  "issue": 1
+ },
+ "atualizado": "2026-10-30T18:46:20.096Z",
+ "tentativa": "2026-10-30T18:46:20.096Z",
+ "erro": null,
+ "voos": [
+  {
+   "saida": "08:50",
+   "chegada": "21:25",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 935,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "4h 20 min GRU",
+   "brl": 10451,
+   "eur": 1719
+  },
+  {
+   "saida": "18:35",
+   "chegada": "12:20⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 1245,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "9h 55 min FOR",
+   "brl": 10953,
+   "eur": 1802
+  },
+  {
+   "saida": "18:35",
+   "chegada": "05:50⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 855,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 25 min FOR",
+   "brl": 11117,
+   "eur": 1828
+  },
+  {
+   "saida": "08:50",
+   "chegada": "21:20",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 930,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 2,
+   "detalhe": "GRU, CWB",
+   "brl": 11171,
+   "eur": 1837
+  },
+  {
+   "saida": "08:50",
+   "chegada": "22:00",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 970,
+   "sai": "LIS",
+   "chega": "SDU",
+   "paradas": 1,
+   "detalhe": "5h GRU",
+   "brl": 11259,
+   "eur": 1852
+  },
+  {
+   "saida": "13:50",
+   "chegada": "01:00⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 850,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "2h 50 min GRU",
+   "brl": 11267,
+   "eur": 1853
+  },
+  {
+   "saida": "08:50",
+   "chegada": "21:10",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 920,
+   "sai": "LIS",
+   "chega": "SDU",
+   "paradas": 1,
+   "detalhe": "Mudança de aeroporto",
+   "brl": 11803,
+   "eur": null
+  },
+  {
+   "saida": "09:20",
+   "chegada": "20:10",
+   "companhia": "Azul / Tap Air Portugal",
+   "operador": "EUROATLANTIC Airways",
+   "duracao": 830,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "2h 25 min VCP",
+   "brl": 11938,
+   "eur": 1964
+  },
+  {
+   "saida": "06:30",
+   "chegada": "18:50",
+   "companhia": "Iberia / LATAM",
+   "operador": "",
+   "duracao": 920,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 35 min MAD",
+   "brl": 11952,
+   "eur": 1966
+  },
+  {
+   "saida": "16:30",
+   "chegada": "06:25⁺¹",
+   "companhia": "Tap Air Portugal / Gol",
+   "operador": "",
+   "duracao": 1015,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "5h 30 min GRU",
+   "brl": 13691,
+   "eur": 2252
+  },
+  {
+   "saida": "23:20",
+   "chegada": "06:30⁺¹",
+   "companhia": "Tap Air Portugal / Gol",
+   "operador": "",
+   "duracao": 610,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 0,
+   "detalhe": "",
+   "brl": 14469,
+   "eur": 2380
+  },
+  {
+   "saida": "23:25",
+   "chegada": "09:30⁺¹",
+   "companhia": "Tap Air Portugal / LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 785,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "1h 45 min GRU",
+   "brl": 17915,
+   "eur": 2946
+  }
+ ],
+ "escolhas": {
+  "barato": 0,
+  "rapido": 2,
+  "direto": 10
+ },
+ "historico": [
+  {
+   "quando": "2026-10-30T17:58:49.953Z",
+   "brl": 10421,
+   "eur": 1719,
+   "direto": 14428
+  },
+  {
+   "quando": "2026-10-30T18:01:34.193Z",
+   "brl": 10421,
+   "eur": 1719,
+   "direto": 14428
+  },
+  {
+   "quando": "2026-10-30T18:46:20.096Z",
+   "brl": 10451,
+   "eur": 1719,
+   "direto": 14469
+  }
+ ],
+ "links": {
+  "brl": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202026-12-17%20through%202027-01-02&hl=pt-BR&gl=BR&curr=BRL",
+  "eur": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202026-12-17%20through%202027-01-02&hl=pt-BR&gl=BR&curr=EUR"
+ }
+}
