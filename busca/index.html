@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Busca de voos e milhas</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cartão de embarque com o formulário, depois resumo, dinheiro, milhas e seu custo do milheiro. Coluna única até 1040px. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14213a; --muted:#5b6780; --line:#d9dfe9;
+  --board:#14213a; --board-fg:#f6f3e8; --board-line:rgba(246,243,232,.22); --signal:#f2b705; --signal-ink:#3a2b00;
+  --good:#1d7a4f; --good-bg:#e3f3ea; --warn:#9a5b00; --warn-bg:#fdf1dc; --bad:#b3261e; --bad-bg:#fbe5e3;
+  --link:#1f4fbf; --chart:#1f4fbf;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0e1424; --surface:#161e33; --ink:#e7ebf3; --muted:#9aa5bd; --line:#2a3550;
+  --board:#0a0f1c; --signal:#f5c431; --signal-ink:#2a1f00;
+  --good:#6fd3a0; --good-bg:#16352a; --warn:#f2b45a; --warn-bg:#3a2a12; --bad:#ff8a80; --bad-bg:#3d1a18;
+  --link:#8fb0ff; --chart:#8fb0ff; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:32px}
+h1,h2{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.05}
+h1{font-size:34px} h2{font-size:28px}
+p{margin:0}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sec{display:grid;gap:14px}
+.lead{color:var(--muted);max-width:70ch}
+.note{font-size:13px;color:var(--muted);max-width:80ch}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top a{font-size:14px}
+
+/* Formulário em cartão de embarque */
+.pass{background:var(--board);color:var(--board-fg);border-radius:14px;padding:22px 24px;display:grid;gap:18px}
+.pass .row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end}
+.pass .row2{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media (max-width:760px){.pass .row{grid-template-columns:1fr}.pass .swap{justify-self:center;transform:rotate(90deg)}.pass .row2{grid-template-columns:1fr 1fr}}
+.f{display:grid;gap:4px;min-width:0}
+.f label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.65}
+.pass input,.pass select{font:500 16px var(--f-mono);color:var(--board-fg);background:transparent;border:0;border-bottom:1px solid var(--board-line);padding:8px 2px;width:100%;color-scheme:dark;border-radius:0}
+.pass .ap input{font:700 34px/1 var(--f-display);letter-spacing:.02em;padding:4px 2px}
+.pass select option{color:#14213a}
+.apname{font-size:12.5px;opacity:.7;min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.swap{background:none;border:1px solid var(--board-line);color:var(--signal);border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer;margin-bottom:22px}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:2px dashed var(--board-line);padding-top:16px}
+.go{background:var(--signal);color:var(--signal-ink);border:0;border-radius:8px;font:700 20px var(--f-display);letter-spacing:.04em;padding:10px 26px;cursor:pointer}
+.go:disabled{opacity:.6;cursor:progress}
+.actions .f{min-width:170px;max-width:220px}
+.status{font-size:13.5px;opacity:.85}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;opacity:.85}
+.chk input{width:auto}
+
+.banner{border-radius:10px;padding:12px 16px;font-size:14px}
+.banner.demo{background:var(--warn-bg);color:var(--warn)}
+.banner.err{background:var(--bad-bg);color:var(--bad)}
+
+/* Resumo */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:860px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px;align-content:start;min-width:0}
+.tile .v{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.05}
+.tile .s{font-size:13px;color:var(--muted)}
+
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+.wide table{min-width:820px}
+th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td .main{font-weight:600}
+td .sub{font-size:12px;color:var(--muted)}
+.times{font-family:var(--f-mono);white-space:nowrap}
+tr.best td{background:color-mix(in srgb,var(--signal) 9%,var(--surface))}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.chip.best{background:var(--signal);color:var(--signal-ink)}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.mute{background:var(--bg);color:var(--muted)}
+
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.chart svg{width:100%;height:auto;display:block}
+.chart .grid{stroke:var(--line);stroke-dasharray:3 4}
+.chart .line{fill:none;stroke:var(--chart);stroke-width:2.5}
+.chart .area{fill:var(--chart);opacity:.1}
+.chart .dot{fill:var(--chart)}
+.chart .ax{fill:var(--muted);font:12px var(--f-mono)}
+
+.costs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.cost{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:4px}
+.cost label{font-size:13px;font-weight:500}
+.cost input{font:16px var(--f-mono);padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion:no-preference){.go{transition:transform .1s}.go:active{transform:scale(.98)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Busca de voos e milhas</h1>
+    <a href="../">Monitor Lisboa → Rio</a>
+  </div>
+
+  <form class="pass" id="form" autocomplete="off">
+    <div class="row">
+      <div class="f ap"><label for="origem">Origem</label><input id="origem" list="lista-ap" value="LIS" required><div class="apname" id="origem-nome"></div></div>
+      <button type="button" class="swap" id="trocar" aria-label="Trocar origem e destino">⇄</button>
+      <div class="f ap"><label for="destino">Destino</label><input id="destino" list="lista-ap" value="GIG,SDU" required><div class="apname" id="destino-nome"></div></div>
+    </div>
+    <datalist id="lista-ap"></datalist>
+    <div class="row2">
+      <div class="f"><label for="ida">Ida</label><input id="ida" type="date" required></div>
+      <div class="f"><label for="volta">Volta</label><input id="volta" type="date"></div>
+      <div class="f"><label for="adultos">Adultos</label><select id="adultos"></select></div>
+      <div class="f"><label for="cabine">Cabine</label><select id="cabine">
+        <option value="economy">Econômica</option><option value="premium">Premium economy</option>
+        <option value="business">Executiva</option><option value="first">Primeira</option></select></div>
+      <div class="f"><label for="flex">Milhas: datas</label><select id="flex">
+        <option value="0">Só a data</option><option value="1">± 1 dia</option><option value="3">± 3 dias</option></select></div>
+    </div>
+    <div class="actions">
+      <button class="go" id="buscar" type="submit">Buscar</button>
+      <div class="f"><label for="acesso">Código de acesso</label><input id="acesso" type="password" placeholder="••••"></div>
+      <span class="status" id="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <div id="avisos"></div>
+
+  <div id="resultado" hidden>
+    <div class="wrap" style="gap:32px">
+      <section class="sec">
+        <h2 id="titulo-res"></h2>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <section class="sec" id="sec-dinheiro">
+        <h2>Em dinheiro</h2>
+        <p class="lead" id="lead-dinheiro"></p>
+        <div id="grafico"></div>
+        <div class="tbl-wrap wide"><table>
+          <thead><tr><th>Companhia</th><th>Ida</th><th>Duração</th><th>Paradas</th><th class="num">Total R$</th></tr></thead>
+          <tbody id="tb-dinheiro"></tbody>
+        </table></div>
+        <p class="note" id="nota-dinheiro"></p>
+      </section>
+
+      <section class="sec" id="sec-milhas">
+        <h2>Em milhas</h2>
+        <p class="lead">Menor milhagem por programa em cada trecho. O valor do milheiro mostra quanto cada 1.000 milhas rende nesta emissão, comparado com o menor preço em dinheiro: (preço em dinheiro − taxas) ÷ milhas × 1.000. Quanto maior, melhor usar milhas.</p>
+        <div class="tbl-wrap wide"><table>
+          <thead><tr><th>Programa</th><th>Ida</th><th>Volta</th><th class="num">Milhas total</th><th class="num">Taxas R$</th><th class="num">Milheiro vale</th><th>Compensa?</th></tr></thead>
+          <tbody id="tb-milhas"></tbody>
+        </table></div>
+        <p class="note" id="nota-milhas"></p>
+      </section>
+
+      <section class="sec">
+        <h2>Quanto você paga no milheiro</h2>
+        <p class="lead">Preencha quanto custa para você 1.000 milhas em cada programa (compra, transferência de cartão ou o que você conseguiria vendendo). A coluna "Compensa?" usa esses valores. Fica salvo só neste navegador.</p>
+        <div class="costs" id="costs"></div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Dinheiro: Google Voos via SerpApi. Milhas: seats.aero (disponibilidade em cache, atualizada pelo serviço várias vezes ao dia; confirme no site do programa antes de emitir). Taxas convertidas para real pela cotação do Banco Central Europeu. Uso pessoal.</p>
+</div>
+
+<script src="aeroportos.js"></script>
+<script>
+// Endereço do servidor (Cloudflare Worker). Vazio = modo de exemplo.
+var API_URL = '';
+
+var PROGRAMAS = {
+  smiles:'Smiles (GOL)', azul:'Azul Fidelidade', flyingblue:'Flying Blue', aeroplan:'Aeroplan', united:'United MileagePlus',
+  american:'AAdvantage', delta:'Delta SkyMiles', alaska:'Alaska Mileage Plan', virginatlantic:'Virgin Atlantic',
+  lifemiles:'LifeMiles', emirates:'Emirates Skywards', etihad:'Etihad Guest', qatar:'Qatar Privilege Club',
+  turkish:'Turkish Miles&Smiles', eurobonus:'SAS EuroBonus', singapore:'KrisFlyer', qantas:'Qantas', velocity:'Velocity',
+  jetblue:'JetBlue TrueBlue', aeromexico:'Aeromexico Rewards', connectmiles:'ConnectMiles', latam:'LATAM Pass', tap:'TAP Miles&Go',
+  iberia:'Iberia Plus', british:'British Airways', ethiopian:'Ethiopian ShebaMiles', saudia:'Saudia AlFursan'
+};
+var nomePrograma = function(s){ return PROGRAMAS[s] || s; };
+
+var $ = function(id){ return document.getElementById(id); };
+var brl = function(v, dec){ return v == null ? '—' : 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: dec||0, maximumFractionDigits: dec||0}); };
+var num = function(v){ return v == null ? '—' : v.toLocaleString('pt-BR'); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+var store = {
+  get: function(k, d){ try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set: function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function dur(min){ if(min == null) return '—'; return Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0'); }
+function dataBR(iso){ if(!iso) return '—'; var p = iso.split('-'); return p[2] + '/' + p[1]; }
+function hora(t){ return t ? t.slice(11, 16) : '—'; }
+
+// ---------- formulário ----------
+(function montarForm(){
+  $('lista-ap').innerHTML = window.AEROPORTOS.map(function(a){
+    return '<option value="' + a[0] + '">' + esc(a[1] + ' · ' + a[2] + ' (' + a[3] + ')') + '</option>';
+  }).join('');
+  var s = '';
+  for (var i = 1; i <= 9; i++) s += '<option>' + i + '</option>';
+  $('adultos').innerHTML = s;
+
+  var ult = store.get('ultimaBusca', null);
+  var hoje = new Date(); hoje.setDate(hoje.getDate() + 30);
+  var padrao = { origem:'LIS', destino:'GIG,SDU', ida:'2026-12-17', volta:'2027-01-02', adultos:'1', cabine:'economy', flex:'0' };
+  var v = ult || padrao;
+  ['origem','destino','ida','volta','adultos','cabine','flex'].forEach(function(k){ if (v[k] != null) $(k).value = v[k]; });
+  $('acesso').value = store.get('acesso', '');
+  ['origem','destino'].forEach(function(k){ $(k).addEventListener('input', function(){ nomeAp(k); }); nomeAp(k); });
+  $('trocar').addEventListener('click', function(){
+    var o = $('origem').value; $('origem').value = $('destino').value; $('destino').value = o; nomeAp('origem'); nomeAp('destino');
+  });
+  $('ida').addEventListener('change', function(){ if ($('volta').value && $('volta').value < $('ida').value) $('volta').value = ''; });
+})();
+
+function nomeAp(k){
+  var c = $(k).value.trim().toUpperCase();
+  var a = window.AEROPORTOS.find(function(x){ return x[0] === c; });
+  $(k + '-nome').textContent = a ? a[1] + ' · ' + a[2] : (/^[A-Z]{3}(,[A-Z]{3})*$/.test(c) ? 'Código ' + c : 'Digite a cidade ou o código (ex.: LIS)');
+}
+
+function codigos(v){
+  v = v.trim().toUpperCase();
+  if (/^[A-Z]{3}(,[A-Z]{3})*$/.test(v)) return v;
+  var a = window.AEROPORTOS.find(function(x){ return (x[1] + ' ' + x[2]).toUpperCase().indexOf(v) >= 0; });
+  return a ? a[0] : null;
+}
+
+$('form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var p = {
+    origem: codigos($('origem').value), destino: codigos($('destino').value),
+    ida: $('ida').value, volta: $('volta').value,
+    adultos: $('adultos').value, cabine: $('cabine').value, flex: $('flex').value
+  };
+  $('avisos').innerHTML = '';
+  if (!p.origem || !p.destino) return aviso('err', 'Não reconheci a origem ou o destino. Use o código do aeroporto, como LIS ou GIG.');
+  if (!p.ida) return aviso('err', 'Escolha a data de ida.');
+  store.set('ultimaBusca', p);
+  store.set('acesso', $('acesso').value);
+  buscar(p);
+});
+
+function aviso(tipo, txt){
+  $('avisos').innerHTML += '<div class="banner ' + tipo + '">' + esc(txt) + '</div>';
+}
+
+function buscar(p){
+  var btn = $('buscar');
+  btn.disabled = true; $('status').textContent = 'Buscando dinheiro e milhas... (até 30 s)';
+  var pronto = function(){ btn.disabled = false; $('status').textContent = ''; };
+  if (!API_URL) {
+    aviso('demo', 'Modo de exemplo: o servidor ainda não foi ligado. Os preços em dinheiro abaixo são reais (Lisboa → Rio, 17/12 a 02/01, Google Voos em 30/10/2026); as milhas são fictícias, só para mostrar como a página fica.');
+    setTimeout(function(){ pronto(); mostrar(DEMO); }, 400);
+    return;
+  }
+  var q = new URLSearchParams(p);
+  fetch(API_URL.replace(/\/$/, '') + '/buscar?' + q, { headers: { 'X-Acesso': $('acesso').value } })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(x){
+      pronto();
+      if (!x.ok) return aviso('err', x.d.erro || 'A busca falhou.');
+      mostrar(x.d);
+    })
+    .catch(function(){ pronto(); aviso('err', 'Não consegui falar com o servidor. Confira a internet e tente de novo.'); });
+}
+
+// ---------- resultado ----------
+function mostrar(d){
+  $('resultado').hidden = false;
+  var b = d.busca;
+  $('titulo-res').textContent = b.origem.split(',')[0] + ' → ' + b.destino.split(',')[0] + ' · ' + dataBR(b.ida) + (b.volta ? ' a ' + dataBR(b.volta) : ' (só ida)') + ' · ' + b.adultos + ' adulto' + (b.adultos > 1 ? 's' : '');
+  var din = d.dinheiro || {}, mil = d.milhas || {};
+  if (din.erro) aviso('err', 'Dinheiro: ' + din.erro);
+  if (mil.erro) aviso('err', 'Milhas: ' + mil.erro);
+  var progs = (mil.programas || []).slice().sort(function(a, c){
+    return (c.completo - a.completo) || ((a.totalMilhas || 1e12) - (c.totalMilhas || 1e12));
+  });
+  var custos = store.get('custoMilheiro', {});
+
+  // resumo
+  var menorMil = progs.filter(function(p){ return p.completo; }).sort(function(a, c){ return a.totalMilhas - c.totalMilhas; })[0];
+  var ins = din.insights;
+  var nivel = ins && ins.nivel ? ({low:'baixo', typical:'normal', high:'alto'}[ins.nivel] || ins.nivel) : null;
+  var tiles = [
+    ['Menor em dinheiro', brl(d.resumo.menorDinheiro), din.voos && din.voos[0] ? din.voos[0].companhias.join(' / ') : ''],
+    ['Preço hoje', nivel ? nivel.charAt(0).toUpperCase() + nivel.slice(1) : '—', ins && ins.faixaTipica ? 'Normal nesta rota: ' + brl(ins.faixaTipica[0]) + ' a ' + brl(ins.faixaTipica[1]) : 'Sem histórico do Google para esta busca'],
+    ['Menor em milhas', menorMil ? num(menorMil.totalMilhas) : '—', menorMil ? nomePrograma(menorMil.programa) + ' + ' + brl(menorMil.totalTaxas) + ' de taxas' : 'Nenhum programa com ida e volta'],
+    ['Milheiro nesta busca', d.resumo.mediaMilheiro != null ? brl(d.resumo.mediaMilheiro, 2) : '—', d.resumo.melhorMilheiro != null ? 'média; melhor programa: ' + brl(d.resumo.melhorMilheiro, 2) : 'precisa de dinheiro e milhas']
+  ];
+  $('tiles').innerHTML = tiles.map(function(t){ return '<div class="tile"><span class="label">' + t[0] + '</span><span class="v">' + esc(t[1]) + '</span><span class="s">' + esc(t[2]) + '</span></div>'; }).join('');
+
+  // dinheiro
+  var voos = din.voos || [];
+  $('lead-dinheiro').textContent = (b.volta ? 'Preço de ida e volta' : 'Preço só de ida') + ' para ' + b.adultos + ' adulto' + (b.adultos > 1 ? 's' : '') + ', com taxas. A tabela mostra o voo de ida; a volta é escolhida depois e já entra no total.';
+  var maisCurto = voos.slice().sort(function(a, c){ return (a.duracao||1e9) - (c.duracao||1e9); })[0];
+  $('tb-dinheiro').innerHTML = voos.length ? voos.map(function(v, i){
+    var ch = [];
+    if (i === 0) ch.push('<span class="chip best">menor preço</span>');
+    if (v === maisCurto && i !== 0) ch.push('<span class="chip good">mais rápido</span>');
+    if (!v.paradas.length) ch.push('<span class="chip good">direto</span>');
+    if (v.paradas.some(function(p){ return p.duracao >= 480; })) ch.push('<span class="chip warn">espera longa</span>');
+    var par = v.paradas.length ? v.paradas.length + ' · ' + v.paradas.map(function(p){ return p.aeroporto + ' ' + dur(p.duracao); }).join(', ') : 'sem escala';
+    return '<tr' + (i === 0 ? ' class="best"' : '') + '><td><span class="main">' + esc(v.companhias.join(' / ')) + '</span> ' + ch.join(' ') + '<div class="sub">' + esc(v.voos.join(', ')) + '</div></td>'
+      + '<td class="times">' + hora(v.saida) + ' → ' + hora(v.chegada) + '<div class="sub">' + esc(v.de + '–' + v.para) + '</div></td>'
+      + '<td class="mono">' + dur(v.duracao) + '</td><td>' + esc(par) + '</td><td class="num">' + num(v.preco) + '</td></tr>';
+  }).join('') : '<tr><td colspan="5">Nenhum voo encontrado.</td></tr>';
+  $('nota-dinheiro').innerHTML = din.linkGoogle ? 'Para comprar, abra a busca no <a href="' + esc(din.linkGoogle) + '" target="_blank" rel="noopener">Google Voos ↗</a>. Bagagem despachada não está incluída.' : 'Bagagem despachada não está incluída.';
+  $('grafico').innerHTML = grafico(ins && ins.historico);
+
+  // milhas
+  var linhaPerna = function(o){
+    if (!o) return '<span class="sub">sem disponibilidade</span>';
+    var dif = o.data !== undefined && (o.data !== b.ida && o.data !== b.volta);
+    return '<span class="mono">' + num(o.milhas) + '</span>' + (dif ? ' <span class="chip warn">' + dataBR(o.data) + '</span>' : '')
+      + '<div class="sub">' + esc(o.rota) + ' · ' + esc(o.companhias || '') + (o.direto ? ' · direto' : '') + (o.taxasReais != null ? ' · taxas ' + brl(o.taxasReais) : '') + (o.assentos ? ' · ' + o.assentos + ' assento' + (o.assentos > 1 ? 's' : '') : '') + '</div>';
+  };
+  $('tb-milhas').innerHTML = progs.length ? progs.map(function(p, i){
+    var custo = parseFloat(custos[p.programa]);
+    var ver;
+    if (!p.completo) ver = '<span class="chip mute">falta um trecho</span>';
+    else if (p.valorMilheiro == null) ver = '<span class="chip mute">sem dinheiro p/ comparar</span>';
+    else if (p.valorMilheiro <= 0) ver = '<span class="chip bad">taxas maiores que o preço</span>';
+    else if (!custo) ver = '<span class="chip mute">preencha seu custo</span>';
+    else if (p.valorMilheiro > custo) ver = '<span class="chip good">vale milhas</span>';
+    else ver = '<span class="chip bad">melhor dinheiro</span>';
+    return '<tr' + (i === 0 && p.completo ? ' class="best"' : '') + '><td><span class="main">' + esc(nomePrograma(p.programa)) + '</span></td>'
+      + '<td>' + linhaPerna(p.ida) + '</td><td>' + (b.volta ? linhaPerna(p.volta) : '<span class="sub">só ida</span>') + '</td>'
+      + '<td class="num">' + num(p.totalMilhas) + '</td><td class="num">' + (p.totalTaxas != null ? num(Math.round(p.totalTaxas)) : '—') + '</td>'
+      + '<td class="num">' + (p.valorMilheiro != null ? brl(p.valorMilheiro, 2) : '—') + '</td><td>' + ver + '</td></tr>';
+  }).join('') : '<tr><td colspan="7">Nenhuma disponibilidade em milhas encontrada para estas datas. Tente "± 3 dias".</td></tr>';
+  $('nota-milhas').textContent = 'Milhas e taxas multiplicadas por ' + b.adultos + ' adulto' + (b.adultos > 1 ? 's' : '') + '. Data em amarelo = melhor dia dentro da faixa flexível. LATAM Pass e TAP Miles&Go podem não aparecer: consulte direto no site deles.';
+
+  // custo do milheiro
+  var nomes = progs.map(function(p){ return p.programa; });
+  Object.keys(custos).forEach(function(k){ if (nomes.indexOf(k) < 0) nomes.push(k); });
+  $('costs').innerHTML = nomes.map(function(n){
+    return '<div class="cost"><label for="c-' + esc(n) + '">' + esc(nomePrograma(n)) + '</label><input id="c-' + esc(n) + '" data-p="' + esc(n) + '" type="number" inputmode="decimal" step="0.5" placeholder="R$ por 1.000" value="' + (custos[n] || '') + '"></div>';
+  }).join('') || '<p class="note">Os programas aparecem aqui depois da primeira busca com milhas.</p>';
+  [].forEach.call(document.querySelectorAll('#costs input'), function(inp){
+    inp.addEventListener('change', function(){
+      var c = store.get('custoMilheiro', {}); c[inp.dataset.p] = inp.value; store.set('custoMilheiro', c); mostrar(d);
+    });
+  });
+}
+
+function grafico(h){
+  if (!h || h.length < 2) return '';
+  var W = 700, H = 150, P = 30;
+  var vals = h.map(function(x){ return x[1]; });
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), span = max - min || 1;
+  var x = function(i){ return P + i * (W - 2*P) / (h.length - 1); };
+  var y = function(v){ return H - P - (v - min) * (H - 2*P) / span; };
+  var linha = h.map(function(p, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p[1]).toFixed(1); }).join(' ');
+  var dt = function(t){ var d = new Date(t * 1000); return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0'); };
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Histórico do menor preço no Google">'
+    + '<line x1="' + P + '" x2="' + (W-P) + '" y1="' + y(max) + '" y2="' + y(max) + '" class="grid"/><line x1="' + P + '" x2="' + (W-P) + '" y1="' + y(min) + '" y2="' + y(min) + '" class="grid"/>'
+    + '<text x="' + (W-P) + '" y="' + (y(max)-6) + '" text-anchor="end" class="ax">' + brl(max) + '</text><text x="' + (W-P) + '" y="' + (y(min)+14) + '" text-anchor="end" class="ax">' + brl(min) + '</text>'
+    + '<path d="' + linha + ' L' + x(h.length-1).toFixed(1) + ',' + (H-P) + ' L' + x(0).toFixed(1) + ',' + (H-P) + ' Z" class="area"/><path d="' + linha + '" class="line"/>'
+    + '<circle cx="' + x(h.length-1) + '" cy="' + y(h[h.length-1][1]) + '" r="4" class="dot"/>'
+    + '<text x="' + P + '" y="' + (H-8) + '" class="ax">' + dt(h[0][0]) + '</text><text x="' + (W-P) + '" y="' + (H-8) + '" text-anchor="end" class="ax">' + dt(h[h.length-1][0]) + '</text>'
+    + '</svg></div><p class="note">Histórico do menor preço desta rota e data segundo o Google.</p>';
+}
+
+// Exemplo: dinheiro real (Google Voos, 30/10/2026); milhas fictícias.
+var DEMO = {
+  busca: { origem:'LIS', destino:'GIG,SDU', ida:'2026-12-17', volta:'2027-01-02', adultos:1, cabine:'economy', flex:0 },
+  dinheiro: {
+    voos: [
+      { companhias:['LATAM'], saida:'2026-12-17 08:50', chegada:'2026-12-17 21:25', de:'LIS', para:'GIG', duracao:935, paradas:[{aeroporto:'GRU', duracao:260}], voos:[], preco:10421 },
+      { companhias:['LATAM'], saida:'2026-12-17 18:35', chegada:'2026-12-18 05:50', de:'LIS', para:'GIG', duracao:855, paradas:[{aeroporto:'FOR', duracao:205}], voos:[], preco:11085 },
+      { companhias:['LATAM'], saida:'2026-12-17 13:50', chegada:'2026-12-18 01:00', de:'LIS', para:'GIG', duracao:850, paradas:[{aeroporto:'GRU', duracao:170}], voos:[], preco:11236 },
+      { companhias:['Azul','TAP Air Portugal'], saida:'2026-12-17 09:20', chegada:'2026-12-17 20:10', de:'LIS', para:'GIG', duracao:830, paradas:[{aeroporto:'VCP', duracao:145}], voos:[], preco:11905 },
+      { companhias:['Air France'], saida:'2026-12-17 05:30', chegada:'2026-12-17 18:30', de:'LIS', para:'GIG', duracao:960, paradas:[{aeroporto:'CDG', duracao:105}], voos:[], preco:12283 },
+      { companhias:['TAP Air Portugal','Gol'], saida:'2026-12-17 23:20', chegada:'2026-12-18 06:30', de:'LIS', para:'GIG', duracao:610, paradas:[], voos:[], preco:14428 }
+    ],
+    insights: null, linkGoogle: null
+  },
+  milhas: { programas: [
+    { programa:'smiles', completo:true, totalMilhas:190000, totalTaxas:1150, valorMilheiro:48.79,
+      ida:{ data:'2026-12-17', milhas:95000, taxasReais:640, rota:'LIS–GIG', companhias:'AF', direto:false, assentos:2 },
+      volta:{ data:'2027-01-02', milhas:95000, taxasReais:510, rota:'GIG–LIS', companhias:'AF', direto:false, assentos:4 } },
+    { programa:'flyingblue', completo:true, totalMilhas:150000, totalTaxas:2100, valorMilheiro:55.47,
+      ida:{ data:'2026-12-18', milhas:75000, taxasReais:1200, rota:'LIS–GIG', companhias:'AF, KL', direto:false, assentos:1 },
+      volta:{ data:'2027-01-02', milhas:75000, taxasReais:900, rota:'GIG–LIS', companhias:'AF', direto:false, assentos:2 } },
+    { programa:'azul', completo:false, totalMilhas:null, totalTaxas:null, valorMilheiro:null,
+      ida:{ data:'2026-12-17', milhas:120000, taxasReais:420, rota:'LIS–GIG', companhias:'AD', direto:false, assentos:3 }, volta:null }
+  ]},
+  resumo: { menorDinheiro:10421, mediaMilheiro:52.13, melhorMilheiro:55.47 }
+};
+</script>
+</body>
+</html>

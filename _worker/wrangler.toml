@@ -1,0 +1,11 @@
+name = "busca-voos"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ORIGENS_PERMITIDAS = "https://mencalha1986.github.io"
+
+# Segredos (não ficam aqui):
+#   npx wrangler secret put SERPAPI_KEY
+#   npx wrangler secret put SEATS_KEY
+#   npx wrangler secret put CODIGO_ACESSO
