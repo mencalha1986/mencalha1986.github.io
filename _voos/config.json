@@ -1,0 +1,9 @@
+{
+  "origem": "LIS",
+  "origemNome": "Lisboa",
+  "destino": "RIO",
+  "destinoNome": "Rio de Janeiro",
+  "ida": "2026-12-17",
+  "volta": "2027-01-02",
+  "publicar": true
+}

@@ -1,0 +1,7 @@
+{
+  "name": "voos-lis-rio",
+  "private": true,
+  "description": "Busca os voos no Google Voos e gera o index.html do site",
+  "scripts": { "atualizar": "node atualizar.js" },
+  "dependencies": { "puppeteer-core": "^22.15.0" }
+}
