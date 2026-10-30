@@ -50,6 +50,39 @@ function escolher(voos) {
   return { barato, rapido, direto };
 }
 
+// "Razoável": até 1 parada, até 20h e sem escala nos EUA ou no Canadá (pode exigir visto ou eTA).
+const EUA_CANADA = /\b(YYZ|YUL|YVR|YYC|YOW|YHZ|JFK|EWR|LGA|MIA|FLL|MCO|ATL|IAD|DCA|BOS|ORD|IAH|DFW|LAX|SFO|CLT|PHL|DTW|MSP|SEA|DEN|PHX|LAS|TPA)\b/;
+const razoavel = v => v.eur && v.paradas <= 1 && v.duracao <= 20 * 60 && !EUA_CANADA.test(v.detalhe || '');
+
+// Metas no corpo da issue: "avisar abaixo de: 1600" e "direto abaixo de: 1900" (em euros).
+function lerMetas(corpo) {
+  const n = re => { const m = (corpo || '').match(re); return m ? Number(m[1].replace(/\./g, '')) : null; };
+  return { razoavel: n(/avisar abaixo de:?\s*€?\s*([\d.]+)/i), direto: n(/direto abaixo de:?\s*€?\s*([\d.]+)/i) };
+}
+
+// Avisa (comentário na issue = e-mail do GitHub) quando o preço razoável ou o direto cruza a meta
+// ou bate um novo mínimo pelo menos € 100 abaixo do anterior.
+function alertas(rota, historico) {
+  const ult = historico[historico.length - 1], ant = historico.slice(0, -1);
+  const fmt = v => '€ ' + v.toLocaleString('pt-BR');
+  const msgs = [];
+  for (const [campo, nome] of [['razoavel', 'razoável (até 1 parada, até 20h, sem EUA/Canadá)'], ['direto', 'do voo direto']]) {
+    const agora = ult?.[campo + 'Eur'];
+    if (!agora) continue;
+    const vistos = ant.map(h => h[campo + 'Eur']).filter(Boolean);
+    const minimo = vistos.length ? Math.min(...vistos) : null;
+    const anterior = vistos.length ? vistos[vistos.length - 1] : null;
+    const meta = rota.metas?.[campo];
+    const desc = campo === 'razoavel' ? ult.razoavelCia : ult.diretoCia;
+    if (meta && agora < meta && !(anterior && anterior < meta)) {
+      msgs.push(`✈️ Preço ${nome} caiu para **${fmt(agora)}** (${desc}), abaixo da sua meta de ${fmt(meta)}.${anterior ? ` Antes: ${fmt(anterior)}.` : ''}`);
+    } else if (minimo && agora <= minimo - 100) {
+      msgs.push(`✈️ Novo menor preço ${nome}: **${fmt(agora)}** (${desc}). O menor até agora era ${fmt(minimo)}.`);
+    }
+  }
+  return msgs;
+}
+
 async function atualizar(browser, rota) {
   const arq = path.join(DADOS, `${rota.slug}.json`);
   const antigo = fs.existsSync(arq) ? JSON.parse(fs.readFileSync(arq, 'utf8')) : { historico: [] };
@@ -58,7 +91,12 @@ async function atualizar(browser, rota) {
   const sel = escolher(voos);
   const historico = antigo.historico || [];
   if (sel.barato) {
-    historico.push({ quando: agora, brl: sel.barato.brl, eur: sel.barato.eur, direto: sel.direto?.brl ?? null });
+    const raz = voos.filter(razoavel).sort((a, b) => a.eur - b.eur)[0];
+    const cia = v => v && `${v.companhia}${v.paradas ? ', ' + v.detalhe : ', direto'}`;
+    historico.push({
+      quando: agora, brl: sel.barato.brl, eur: sel.barato.eur, direto: sel.direto?.brl ?? null,
+      razoavelEur: raz?.eur ?? null, razoavelCia: cia(raz), diretoEur: sel.direto?.eur ?? null, diretoCia: cia(sel.direto),
+    });
   }
   const dados = {
     rota: { origem: rota.origem, destino: rota.destino, ida: rota.ida, volta: rota.volta, issue: rota.issue },
@@ -93,6 +131,11 @@ function resumo(rota, d) {
 (async () => {
   fs.mkdirSync(DADOS, { recursive: true });
   const arg = process.argv[2];
+  // "teste-aviso": só comenta na issue 1, para conferir se o e-mail do GitHub chega.
+  if (arg === 'teste-aviso') {
+    await gh('POST', '/issues/1/comments', { body: `@${REPO.split('/')[0]} 🔔 Teste de aviso: se este e-mail chegou, os alertas de queda de preço vão chegar também. Veja: ${SITE}` });
+    return;
+  }
   let rotas;
   if (arg && !/^\d+$/.test(arg)) {
     rotas = [lerTitulo(arg, null)].filter(Boolean);
@@ -111,6 +154,7 @@ function resumo(rota, d) {
         await gh('PATCH', `/issues/${is.number}`, { state: 'closed' });
         continue;
       }
+      r.metas = lerMetas(is.body);
       rotas.push(r);
     }
     if (arg) rotas = rotas.filter(r => String(r.issue) === arg);
@@ -123,6 +167,12 @@ function resumo(rota, d) {
       try {
         const d = await atualizar(browser, r);
         lista.push(resumo(r, d));
+        const avisos = r.issue && TOKEN && !d.erro ? alertas(r, d.historico) : [];
+        if (avisos.length) {
+          await gh('POST', `/issues/${r.issue}/comments`, {
+            body: `@${REPO.split('/')[0]} ${avisos.join('\n\n')}\n\nVeja os voos: ${SITE}#${r.slug}`,
+          });
+        }
         const novo = arg && TOKEN && d.historico.length === 1;
         if (novo) {
           await gh('POST', `/issues/${r.issue}/comments`, {

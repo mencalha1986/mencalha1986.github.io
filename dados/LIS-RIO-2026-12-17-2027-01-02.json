@@ -178,98 +178,154 @@
    "brl": null,
    "eur": 1787,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1787,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2413,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-23T06:08:00.000Z",
    "brl": null,
    "eur": 1831,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1831,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2413,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-23T16:13:00.000Z",
    "brl": null,
    "eur": 1831,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1831,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2413,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-23T23:08:00.000Z",
    "brl": null,
    "eur": 1780,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1780,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2123,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-25T02:35:00.000Z",
    "brl": null,
    "eur": 1848,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1848,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2495,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-25T20:43:00.000Z",
    "brl": null,
    "eur": 1841,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1841,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2495,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-25T23:07:00.000Z",
    "brl": null,
    "eur": 1871,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1885,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2495,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-28T13:31:00.000Z",
    "brl": null,
    "eur": 1735,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1735,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2341,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-28T16:08:00.000Z",
    "brl": null,
    "eur": 1735,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1735,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2341,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-28T23:08:00.000Z",
    "brl": null,
    "eur": 1733,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1733,
+   "razoavelCia": "LATAM via Sao Paulo",
+   "diretoEur": 2341,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-29T14:00:00.000Z",
    "brl": null,
    "eur": 1732,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1732,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2477,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-29T16:07:00.000Z",
    "brl": null,
    "eur": 1732,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1732,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2477,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-29T23:08:00.000Z",
    "brl": null,
    "eur": 1732,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1732,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2477,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-30T15:01:00.000Z",
    "brl": null,
    "eur": 1732,
    "direto": null,
-   "fonte": "monitor antigo"
+   "fonte": "monitor antigo",
+   "razoavelEur": 1732,
+   "razoavelCia": "LATAM via Fortaleza",
+   "diretoEur": 2477,
+   "diretoCia": "TAP, direto"
   },
   {
    "quando": "2026-10-30T17:58:49.953Z",
