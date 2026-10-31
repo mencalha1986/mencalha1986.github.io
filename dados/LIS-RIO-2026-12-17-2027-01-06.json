@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-10-31T05:53:52.611Z",
- "tentativa": "2026-10-31T05:53:52.611Z",
+ "atualizado": "2026-10-31T12:43:39.666Z",
+ "tentativa": "2026-10-31T12:43:39.666Z",
  "erro": null,
  "voos": [
   {
@@ -50,32 +50,6 @@
    "eur": 1706
   },
   {
-   "saida": "13:50",
-   "chegada": "09:25⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 1355,
-   "sai": "LIS",
-   "chega": "SDU",
-   "paradas": 1,
-   "detalhe": "11h 10 min GRU",
-   "brl": 10395,
-   "eur": null
-  },
-  {
-   "saida": "08:50",
-   "chegada": "01:00⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 1150,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "7h 55 min GRU",
-   "brl": 10467,
-   "eur": 1718
-  },
-  {
    "saida": "08:50",
    "chegada": "21:25",
    "companhia": "LATAM",
@@ -85,8 +59,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 10540,
-   "eur": 1730
+   "brl": 10759,
+   "eur": 1766
   },
   {
    "saida": "18:35",
@@ -141,17 +115,17 @@
    "eur": 1927
   },
   {
-   "saida": "08:55",
-   "chegada": "12:05⁺¹",
-   "companhia": "Air Canada",
+   "saida": "05:30",
+   "chegada": "18:30",
+   "companhia": "Air France",
    "operador": "",
-   "duracao": 1810,
+   "duracao": 960,
    "sai": "LIS",
    "chega": "GIG",
-   "paradas": 2,
-   "detalhe": "YUL, YYZ",
-   "brl": 11960,
-   "eur": 1963
+   "paradas": 1,
+   "detalhe": "1h 45 min CDG",
+   "brl": 12310,
+   "eur": 2021
   },
   {
    "saida": "09:20",
@@ -176,14 +150,14 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14495,
-   "eur": 2380
+   "brl": 14439,
+   "eur": 2370
   }
  ],
  "escolhas": {
   "barato": 0,
   "rapido": 1,
-  "direto": 12
+  "direto": 10
  },
  "historico": [
   {
@@ -370,6 +344,16 @@
    "razoavelEur": 1562,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 2380,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-10-31T12:43:39.666Z",
+   "brl": 9512,
+   "eur": 1562,
+   "direto": 14439,
+   "razoavelEur": 1562,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2370,
    "diretoCia": "Tap Air Portugal / Gol, direto"
   }
  ],
