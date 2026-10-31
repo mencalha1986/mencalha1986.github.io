@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-10-31T12:43:39.666Z",
- "tentativa": "2026-10-31T12:43:39.666Z",
+ "atualizado": "2026-10-31T17:49:10.938Z",
+ "tentativa": "2026-10-31T17:49:10.938Z",
  "erro": null,
  "voos": [
   {
@@ -37,6 +37,19 @@
    "eur": 1650
   },
   {
+   "saida": "08:50",
+   "chegada": "21:25",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 935,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "4h 20 min GRU",
+   "brl": 10375,
+   "eur": 1703
+  },
+  {
    "saida": "18:35",
    "chegada": "09:35⁺¹",
    "companhia": "LATAM",
@@ -48,19 +61,6 @@
    "detalhe": "FOR, CGH",
    "brl": 10391,
    "eur": 1706
-  },
-  {
-   "saida": "08:50",
-   "chegada": "21:25",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 935,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "4h 20 min GRU",
-   "brl": 10759,
-   "eur": 1766
   },
   {
    "saida": "18:35",
@@ -102,17 +102,17 @@
    "eur": 1830
   },
   {
-   "saida": "07:20",
-   "chegada": "06:40⁺¹",
-   "companhia": "Tap Air Portugal / ITA",
+   "saida": "05:30",
+   "chegada": "21:30",
+   "companhia": "Air France / Gol",
    "operador": "",
-   "duracao": 1580,
+   "duracao": 1140,
    "sai": "LIS",
    "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "11h 5 min FCO",
-   "brl": 11735,
-   "eur": 1927
+   "paradas": 2,
+   "detalhe": "CDG, SSA",
+   "brl": 12269,
+   "eur": 2014
   },
   {
    "saida": "05:30",
@@ -124,8 +124,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min CDG",
-   "brl": 12310,
-   "eur": 2021
+   "brl": 12341,
+   "eur": 2026
   },
   {
    "saida": "09:20",
@@ -348,6 +348,16 @@
   },
   {
    "quando": "2026-10-31T12:43:39.666Z",
+   "brl": 9512,
+   "eur": 1562,
+   "direto": 14439,
+   "razoavelEur": 1562,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2370,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-10-31T17:49:10.938Z",
    "brl": 9512,
    "eur": 1562,
    "direto": 14439,
