@@ -6,12 +6,12 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2027-01-06",
-  "atualizado": "2026-11-02T16:16:26.614Z",
+  "atualizado": "2026-11-02T23:36:41.214Z",
   "erro": null,
-  "brl": 9593,
-  "eur": 1575,
-  "direto": 13963,
-  "variacao": 20,
+  "brl": 9554,
+  "eur": 1571,
+  "direto": 13936,
+  "variacao": -39,
   "minimo": 9509
  },
  {
@@ -21,13 +21,13 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2026-12-30",
-  "atualizado": "2026-11-02T16:16:38.634Z",
+  "atualizado": "2026-11-02T23:36:51.402Z",
   "erro": null,
-  "brl": 6587,
+  "brl": 6574,
   "eur": 1081,
-  "direto": 11569,
-  "variacao": 7,
-  "minimo": 6580
+  "direto": 11546,
+  "variacao": -13,
+  "minimo": 6574
  },
  {
   "slug": "LIS-RIO-2026-12-17-2027-01-02",
@@ -36,12 +36,12 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2027-01-02",
-  "atualizado": "2026-11-02T06:20:50.262Z",
-  "erro": "Nenhum voo encontrado.",
-  "brl": 10449,
-  "eur": 1719,
-  "direto": 13935,
-  "variacao": 15,
+  "atualizado": "2026-11-02T23:37:00.087Z",
+  "erro": null,
+  "brl": 10589,
+  "eur": 1741,
+  "direto": 14470,
+  "variacao": 140,
   "minimo": 10421
  }
 ]
