@@ -1,0 +1,53 @@
+@font-face { font-family: 'Bebas Neue'; src: url('../fonts/bebas-neue-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'Rubik'; src: url('../fonts/rubik-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-display: block; }
+@font-face { font-family: 'Rubik'; src: url('../fonts/rubik-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'Rubik'; src: url('../fonts/rubik-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Rubik'; src: url('../fonts/rubik-latin-800-normal.woff2') format('woff2'); font-weight: 800; font-display: block; }
+@font-face { font-family: 'Rubik'; src: url('../fonts/rubik-latin-900-normal.woff2') format('woff2'); font-weight: 900; font-display: block; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: Rubik, system-ui, sans-serif; }
+body { display: flex; align-items: center; justify-content: center; }
+
+#stage { position: relative; background: #05050a; box-shadow: 0 0 60px rgba(0,0,0,.8); cursor: pointer; }
+#game { display: block; width: 100%; height: 100%; image-rendering: auto; }
+
+/* Painel de teste — some com a tecla H antes de capturar a janela */
+#test-panel {
+  position: fixed; top: 16px; right: 16px; width: 300px; max-height: calc(100vh - 32px); overflow: auto;
+  background: rgba(16, 13, 26, .94); color: #eee; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px; padding: 14px; z-index: 10; box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+}
+#test-panel.hidden { display: none; }
+#test-panel h2 { margin: 0 0 2px; font: 400 28px 'Bebas Neue', Impact, sans-serif; letter-spacing: .5px; color: #ffd23f; }
+#test-panel .note { margin: 0 0 12px; font-size: 12px; line-height: 1.4; color: #b9b3c9; }
+#test-panel label { display: block; font-size: 12px; color: #b9b3c9; margin-bottom: 4px; }
+#test-user { width: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: #0b0912; color: #fff; font: inherit; margin-bottom: 10px; }
+#gift-buttons { display: grid; gap: 6px; margin-bottom: 10px; }
+.gift-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px 6px 6px; border-radius: 12px; cursor: pointer;
+  background: #1c1828; color: #fff; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); text-align: left; font: inherit;
+  transition: transform .08s, background .15s;
+}
+.gift-btn:hover { background: #262036; }
+.gift-btn:active { transform: scale(.97); }
+.gift-btn canvas { width: 34px; height: 34px; flex: none; }
+.gift-btn span { display: flex; flex-direction: column; flex: 1; line-height: 1.15; }
+.gift-btn b { font-size: 14px; }
+.gift-btn small { font-size: 11.5px; color: #b9b3c9; }
+.gift-btn kbd { font: 700 12px Rubik, sans-serif; color: #b9b3c9; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; padding: 2px 7px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.ctrl { padding: 9px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14); background: #1c1828; color: #eee; font: 600 12.5px Rubik, sans-serif; cursor: pointer; }
+.ctrl:hover { background: #262036; }
+.ctrl.wide { grid-column: 1 / -1; }
+.ctrl.on { background: #3a2a06; border-color: #ffd23f; color: #ffd23f; }
+#voice-info { font-size: 11px; color: #8d86a0; margin-top: 8px; }
+.ctrl.studio { display: block; text-align: center; text-decoration: none; background: #3a0f1c; border-color: #ff3355; color: #ffd0d8; }
+#char-select, #ctl-select { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: #0b0912; color: #fff; font: 600 13px Rubik, sans-serif; margin-bottom: 10px; }
+.live-box { background: #0b0912; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 10px; margin-bottom: 12px; }
+.ws-row { display: flex; gap: 6px; }
+.ws-row input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,.15); background: #15121e; color: #fff; font: 12.5px Rubik, sans-serif; }
+#ws-status { font-size: 12px; margin-top: 6px; color: #8d86a0; }
+#ws-status.live { color: #4ade80; } #ws-status.bad { color: #f59e0b; }
+#unknown-gifts { font-size: 11.5px; color: #fca5a5; margin-top: 6px; line-height: 1.4; }
