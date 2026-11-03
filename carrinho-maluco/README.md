@@ -32,6 +32,11 @@ no Google Analytics quantas visitas vieram da live. Perfil, link e QR: `profile`
 | 6 | Chão molhado | derrapa, gira e perde 2 achados |
 | 7 | Liquidação | caem 6 achados extras no corredor |
 | 8 | Cartão recusado | GAME OVER: tudo volta pra prateleira |
+| 9 | **Novo seguidor** (de graça) | o carrinho volta 8 m e os 2 últimos achados caem de volta no corredor, à frente, para serem pegos de novo |
+
+**Seguidor:** cada pessoa que segue o canal durante a live dispara o efeito uma vez (seguir de novo não repete).
+Não cancela a ação em andamento: o turbo pausa e continua depois. Vários seguidores juntos entram em fila, um a cada 1,3 s.
+Precisa que o TikFinity envie os eventos de seguidor pelo WebSocket. Quantidade de metros/achados: `seguir` em `js/config.js`.
 
 Os nomes dos presentes reais do TikTok são ligados às ações em `js/config.js` → `giftAliases`.
 Presentes que chegam sem ação aparecem no painel (tecla H) em "Presentes sem ação".

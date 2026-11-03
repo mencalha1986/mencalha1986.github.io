@@ -10,12 +10,14 @@
       this.cfg = cfg;
       this.onAction = onAction;
       this.feed = [];
+      this.followed = new Set();   // quem já seguiu nesta live (vale uma vez por pessoa)
       this.resetRound();
     }
 
     resetRound() {
       this.users = new Map();
       this.totalGifts = 0;
+      this.followers = 0;
       this.totalPoints = 0;
       this.byType = {};
     }
@@ -45,7 +47,11 @@
       const user = String(evt.user || 'anônimo').slice(0, 32);
       const name = user.startsWith('@') ? user : '@' + user;
 
-      this.totalGifts += count;
+      if (def.action === 'follow') {
+        if (this.followed.has(name.toLowerCase())) return false;
+        this.followed.add(name.toLowerCase());
+        this.followers = (this.followers || 0) + 1;
+      } else this.totalGifts += count;
       this.totalPoints += def.points * count;
       this.byType[key] = (this.byType[key] || 0) + count;
       let u = this.users.get(name);

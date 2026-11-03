@@ -251,7 +251,7 @@
 
     _item(ctx, cam, it, t) {
       const drop = it.drop > 0 ? it.drop : 0;
-      const hover = it.flying ? it.h : 0.85 + Math.sin(t * 2.4 + it.seed * 9) * 0.07 + drop * 2.4;
+      const hover = it.flying || it.outFly ? it.h : 0.85 + Math.sin(t * 2.4 + it.seed * 9) * 0.07 + drop * 2.4;
       const g = this.proj(cam, it.x, 0, it.z), p = this.proj(cam, it.x, hover, it.z);
       if (!g || !p) return;
       const s = p.s, size = 0.62 * s, k = U.clamp(cam.y / g.dz, 0.05, 0.5);
@@ -259,7 +259,7 @@
       ctx.save(); ctx.globalAlpha = a;
       // anel de luz no chão (cor da categoria)
       const col = CNB.Catalog.CAT_COLOR[it.p.cat];
-      ctx.save(); if (it.flying) ctx.globalAlpha = 0; ctx.translate(g.x, g.y); ctx.scale(1, k);
+      ctx.save(); if (it.flying || it.outFly) ctx.globalAlpha = 0; ctx.translate(g.x, g.y); ctx.scale(1, k);
       const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.6);
       rg.addColorStop(0, U.rgba(col, 0.55)); rg.addColorStop(1, U.rgba(col, 0));
       ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, s * 0.6, 0, 7); ctx.fill();

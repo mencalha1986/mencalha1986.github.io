@@ -37,6 +37,11 @@
         ctx.fillStyle = '#fb7185'; U.poly(ctx, [-16, -6, -2, -20, 18, -20, 18, 0, 4, 14]); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(11, -13, 3, 0, 7); ctx.fill();
         ctx.font = `900 13px ${FU}`; ctx.textAlign = 'center'; ctx.fillText('%', 0, 2); break;
+      case 'follow':
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(-4, -9, 7, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-17, 14); ctx.quadraticCurveTo(-17, -1, -4, -1); ctx.quadraticCurveTo(9, -1, 9, 14); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ff4fa3'; ctx.beginPath(); ctx.arc(13, -10, 8, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(13, -15); ctx.lineTo(13, -5); ctx.moveTo(8, -10); ctx.lineTo(18, -10); ctx.stroke(); break;
       case 'card':
         ctx.fillStyle = '#e879f9'; U.roundRect(ctx, -18, -12, 36, 24, 4); ctx.fill();
         ctx.fillStyle = '#1a0820'; ctx.fillRect(-18, -6, 36, 5);
@@ -179,6 +184,7 @@
         case 'slip': return 'derrapa e perde 2';
         case 'sale': return `+${def.count} achados no chão`;
         case 'gameover': return 'GAME OVER';
+        case 'follow': return `volta ${def.back} m, caem ${def.drop} achados`;
       }
       return '';
     }
@@ -297,7 +303,7 @@
         ctx.font = `500 21px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(this.actionText(def), x + 68, y + 50);
       });
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.fillText(`Teste: 1–8 presentes · ← → conduzir · C manual/auto · D demo · H painel   ·   ${this.g.catalog.items.length} achados (${this.g.catalog.source === 'site' ? 'do site' : 'cópia local'})`, W / 2, 1600);
+      ctx.fillText(`Teste: 1–9 presentes · ← → conduzir · C manual/auto · D demo · H painel   ·   ${this.g.catalog.items.length} achados (${this.g.catalog.source === 'site' ? 'do site' : 'cópia local'})`, W / 2, 1660);
     }
 
     // ---------------- final: achados embalados nas sacolas + nota pequena ----------------
@@ -436,7 +442,7 @@
         ctx.save(); ctx.globalAlpha = a;
         glass(ctx, 90, by, 900, 120, 30, 0.85);
         ctx.textAlign = 'left'; ctx.font = `32px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('QUEM MAIS AJUDOU', 124, by + 46);
-        ctx.font = `600 20px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(`${g.gifts.totalGifts} presentes · ${U.fmtTime(g.finalTime)}`, 124, by + 80);
+        ctx.font = `600 20px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(`${g.gifts.totalGifts} presentes · ${g.gifts.followers || 0} seguidores · ${U.fmtTime(g.finalTime)}`, 124, by + 80);
         rank.forEach((u, i) => {
           const x = 480 + i * 170;
           ctx.fillStyle = ['#ffd23f', '#d6dbe4', '#d08a4a'][i]; ctx.beginPath(); ctx.arc(x, by + 46, 17, 0, 7); ctx.fill();

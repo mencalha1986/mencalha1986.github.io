@@ -43,7 +43,10 @@ CNB.CONFIG = {
     voltar:    { label: 'Esqueci',   action: 'back',    amount: 15, points: 5,  color: '#a78bfa', icon: 'back',   key: '5', demo: 9 },
     molhado:   { label: 'Chão molhado', action: 'slip', points: 5,  color: '#facc15', icon: 'wet',    key: '6', demo: 8 },
     liquidacao:{ label: 'Liquidação', action: 'sale',   count: 6,   points: 10, color: '#fb7185', icon: 'tag',    key: '7', demo: 6 },
-    recusado:  { label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 }
+    recusado:  { label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 },
+    // NOVO SEGUIDOR (de graça): o carrinho volta e achados caem de volta no corredor para serem pegos de novo.
+    // Não cancela a ação em andamento. Cada pessoa conta uma vez só.
+    seguir:    { label: 'Seguidor', action: 'follow', back: 8, drop: 2, points: 1, color: '#ff4fa3', icon: 'follow', key: '9', demo: 6 }
   },
 
   // nome do presente que chega da live -> presente do jogo (minúsculas)
@@ -55,6 +58,7 @@ CNB.CONFIG = {
     'gg': 'voltar', 'esqueci': 'voltar', 'voltar': 'voltar',
     'ice cream cone': 'molhado', 'sorvete': 'molhado', 'chão molhado': 'molhado', 'molhado': 'molhado',
     'perfume': 'liquidacao', 'liquidação': 'liquidacao', 'liquidacao': 'liquidacao',
+    'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir',
     'galaxy': 'recusado', 'galáxia': 'recusado', 'cartão recusado': 'recusado', 'recusado': 'recusado'
   },
 

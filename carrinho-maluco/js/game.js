@@ -25,6 +25,7 @@
       this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
       this.seed = Math.floor(Math.random() * 1000);
       this.timers = []; this.announce = null; this.annT = 6;
+      this.followQueue = []; this.followT = 0;
       // locutor (áudios gerados)
       this.annAudio = {};
       for (const k in CNB.ANUNCIOS || {}) { const a = new Audio(CNB.ANUNCIOS[k].src); a.preload = 'auto'; this.annAudio[k] = a; }
@@ -77,7 +78,7 @@
       this.seed++; this.roundNo++;
       this.store.reset(this.seed); this.store.cheer = 0; this.store.glow = 1;
       const man = this.shopper.manual; this.shopper.reset(); this.shopper.manual = man; this._bind();
-      this.gifts.resetRound(); this.fx.clear(); this.timers = [];
+      this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = [];
       this.mode = 'playing'; this.roundTime = 0; this.crashes = 0; this.lost = 0;
       this.payTime = -1; this.paid = false; this.scanned = 0; this.scanAt = []; this.countdown = 0; this.overTime = 0;
       this.cam.z = -CAM_WALK.dist; this.cam.x = 0;
@@ -98,6 +99,8 @@
     applyGift(key, def, n, user) {
       const d = this.shopper, head = d.headScreen;
       if (this.mode !== 'playing' || d.finished) { this.audio.gift(0); return; }
+      // seguidor novo não cancela nada: entra na fila e acontece por cima da ação atual
+      if (def.action === 'follow') { this.followQueue.push({ user, def }); return; }
       this.cancelCurrentAction();   // o último presente manda
       this.fx.text(U.clamp(head.x, 200, 880), head.y - 120, user, def.color, 30, { life: 1.6, vy: -70, rot: 0, tag: 'gift' });
       switch (def.action) {
@@ -162,6 +165,42 @@
       it.flying = { t: 0, x0: it.x, z0: it.z };
       this.audio.whoosh(true);
     }
+    // NOVO SEGUIDOR: o carrinho volta e os últimos achados voam de volta para o corredor, à frente
+    _follow(user, def) {
+      const d = this.shopper, st = this.store;
+      const lost = d.drop(def.drop);
+      const cc = d.cartCenter();
+      const out = lost.map((p, i) => {
+        const tz = d.z + 5 + i * 3.2 + Math.random() * 1.5;
+        const tx = U.clamp((Math.random() * 2 - 1) * (CNB.Store.AISLE - 0.9), -CNB.Store.AISLE + 0.8, CNB.Store.AISLE - 0.8);
+        return { p, x: cc.x, z: cc.z, h: 1, taken: false, seed: Math.random(), back: true,
+                 outFly: { t: -i * 0.18, x0: cc.x, z0: cc.z, x1: tx, z1: tz } };
+      });
+      st.items.push(...out);
+      st.items.sort((a, b) => a.z - b.z);
+      d.retreat = Math.max(d.retreat, def.back);   // vai pra trás (sem cancelar turbo/impulso)
+      this.audio.chime(); this.audio.whoosh(false);
+      this.fx.confetti(d.cartScreen.x, d.cartScreen.y, 40, 0.6);
+      this.hud.banner('NOVO SEGUIDOR!', `${user} seguiu o canal${out.length ? ` — ${out.length} achado${out.length > 1 ? 's' : ''} caíram do carrinho` : ''}`, def.color, 2.2);
+      this.fx.text(U.clamp(d.headScreen.x, 200, 880), d.headScreen.y - 120, '❤ ' + user, def.color, 32, { life: 1.8, vy: -70, rot: 0 });
+    }
+    _updateFollow(dt) {
+      this.followT -= dt;
+      const d = this.shopper;
+      if (this.followT <= 0 && this.followQueue.length && !d.finished && !d.busy) {
+        const f = this.followQueue.shift(); this._follow(f.user, f.def);
+        this.followT = 1.3;   // vários seguidores juntos: um efeito a cada 1,3 s
+      }
+      for (const it of this.store.items) {
+        const f = it.outFly; if (!f) continue;
+        f.t += dt / 0.85; if (f.t < 0) continue;
+        const u = Math.min(1, f.t), e = U.easeInOut(u);
+        it.x = U.lerp(f.x0, f.x1, e); it.z = U.lerp(f.z0, f.z1, e);
+        it.h = 1 + Math.sin(u * Math.PI) * 2.3 - u * 0.15;
+        if (u >= 1) { it.outFly = null; it.h = 0; }
+      }
+    }
+
     _updateFlying(dt) {
       const d = this.shopper;
       for (const it of this.store.items) {
@@ -192,7 +231,7 @@
         if (it.taken) continue;
         if (it.drop > 0) continue;
         // ímã: puxa achados próximos para o carrinho
-        if (it.flying) continue;
+        if (it.flying || it.outFly) continue;
         if (d.magnet > 0 && it.z - d.z < 8 && it.z - d.z > -1 && Math.abs(it.x - d.x) < 3.3) { this._grab(it); continue; }
         const crossed = (front0 <= it.z && front1 >= it.z) || (front0 >= it.z && front1 <= it.z);
         if (crossed && Math.abs(it.x - d.x) < 0.8) this._grab(it);
@@ -239,7 +278,7 @@
         }
       }
       // 2) vai atrás do próximo achado (às vezes erra)
-      const it = this.store.items.find((i) => !i.taken && !i.flying && !(i.drop > 0) && i.z - d.z > 1.5 && i.z - d.z < 17);
+      const it = this.store.items.find((i) => !i.taken && !i.flying && !i.outFly && !(i.drop > 0) && i.z - d.z > 1.5 && i.z - d.z < 17);
       if (it) {
         if (it.aim === undefined) it.aim = Math.random() < this.cfg.autoPickSkill ? 0 : (Math.random() < 0.5 ? -1 : 1) * 1.4;
         d.targetX = it.x + it.aim; d.chasing = true;
@@ -310,6 +349,7 @@
         d.update(dt, st);
         this._pickups(prevZ, dt); this._obstacles(prevZ);
         this._updateFlying(dt);
+        this._updateFollow(dt);
         if (d.z >= st.track) this.startArrive();
         // locutor: corredor novo + avisos de tempos em tempos
         const sec = st.sectionAt(d.z + 6);
