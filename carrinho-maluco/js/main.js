@@ -21,7 +21,15 @@
     const held = { left: false, right: false, pointer: 0 };
     const applySteer = () => { game.shopper.steer = held.pointer || ((held.right ? 1 : 0) - (held.left ? 1 : 0)); };
 
+    // clique no cartão do site (no final) abre o achadosuteisporai.com.br
+    const linkHit = (e) => {
+      const L = game.hud.linkRect; if (!L || game.mode !== 'win') return false;
+      const r = canvas.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * 1080, y = ((e.clientY - r.top) / r.height) * 1920;
+      return x >= L.x && x <= L.x + L.w && y >= L.y && y <= L.y + L.h;
+    };
+    stage.addEventListener('pointermove', (e) => { stage.style.cursor = linkHit(e) ? 'pointer' : ''; });
     stage.addEventListener('pointerdown', (e) => {
+      if (linkHit(e)) { window.open(game.cfg.siteLink, '_blank', 'noopener'); return; }
       if (game.mode === 'playing' && game.control === 'manual') {
         const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
         held.pointer = x < 0.4 ? -1 : x > 0.6 ? 1 : 0; applySteer(); return;

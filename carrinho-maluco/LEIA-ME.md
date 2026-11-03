@@ -17,7 +17,9 @@ Quantidade: `obstacleSpacing` em `js/config.js` (números menores = mais furadas
 
 ## Final
 No caixa os achados são passados um a um e embalados em sacolas da loja, com a nota fiscal pequena,
-o carimbo PAGO e quem mais ajudou.
+o carimbo PAGO e quem mais ajudou. Logo abaixo aparece o cartão do site com QR Code e "link na bio"
+(no navegador ele é clicável e abre o site). O link leva tags utm (`utm_source=tiktok&utm_medium=live`) para você ver
+no Google Analytics quantas visitas vieram da live. Perfil, link e QR: `profile`, `siteLink` e `qrImage` em `js/config.js`.
 
 ## Presentes (o último presente cancela a ação anterior)
 | Tecla | Presente | Efeito |

@@ -6,6 +6,10 @@ window.CNB = window.CNB || {};
 CNB.CONFIG = {
   // ---------- Loja ----------
   siteUrl: 'achadosuteisporai.com.br',
+  // link aberto ao clicar no final (as tags utm mostram no Google Analytics quem veio da live)
+  siteLink: 'https://achadosuteisporai.com.br/?utm_source=tiktok&utm_medium=live&utm_campaign=carrinho-maluco',
+  profile: '@romulo.mencalha',   // perfil do TikTok mostrado no "link na bio"
+  qrImage: 'qr-site.png',        // QR Code do site (troque o arquivo se mudar o link)
   // os achados vêm do seu site (produtos.js). Se não carregar, usa a cópia js/produtos-reserva.js
   productsUrl: 'https://achadosuteisporai.com.br/produtos.js',
   trackLength: 260,          // metros até o CAIXA

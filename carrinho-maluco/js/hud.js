@@ -66,7 +66,11 @@
   }
 
   class HUD {
-    constructor(game) { this.g = game; this.banners = []; this.show = null; this.bubble = null; }
+    constructor(game) {
+      this.g = game; this.banners = []; this.show = null; this.bubble = null;
+      this.qr = new Image(); this.qr.src = game.cfg.qrImage;
+      this.linkRect = null;
+    }
     banner(title, sub, color = '#ffd23f', dur = 1.9) { this.banners = [{ title, sub, color, dur, age: 0 }]; }
     clearBanners() { this.banners = []; }
     showcase(item) { this.show = { item, age: 0, dur: 2.8 }; }
@@ -358,13 +362,13 @@
       for (let b = 0; b < bags; b++) {
         const list = items.slice(b * per, (b + 1) * per);
         const packed = list.map((_, j) => g.scanAt[b * per + j]);
-        const x = (W - total) / 2 + b * (bw + gap), y = 520 + (1 - rise) * 600 + Math.sin(t * 2 + b) * (done ? 4 : 0);
+        const x = (W - total) / 2 + b * (bw + gap), y = 500 + (1 - rise) * 600 + Math.sin(t * 2 + b) * (done ? 4 : 0);
         this._bag(ctx, x, y, bw, bh, list, packed, pt, b);
       }
 
       // NOTA PEQUENA
-      const lines = Math.min(n, 8), lh = 30, rw = 430, rh = 150 + Math.max(1, lines) * lh + 70;
-      const rx = (W - rw) / 2, ry = 520 + bh + 40;
+      const lines = Math.min(n, 6), lh = 28, rw = 430, rh = 150 + Math.max(1, lines) * lh + 70;
+      const rx = (W - rw) / 2, ry = 500 + bh + 30;
       ctx.save(); ctx.translate(rx + rw / 2, ry + rh / 2); ctx.rotate(-0.025); ctx.translate(-(rx + rw / 2), -(ry + rh / 2));
       ctx.translate(0, (1 - U.easeOutCubic(U.clamp((pt - 0.2) / 0.6, 0, 1))) * 900);
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(rx + 8, ry + 10, rw, rh);
@@ -402,9 +406,33 @@
       }
       ctx.restore();
 
+      // LINK DO SITE: QR Code + endereço grande + "link na bio" (clicável quando o jogo é aberto no navegador)
+      this.linkRect = null;
+      if (done) {
+        const a = U.clamp((pt - g.paidAt - 0.4) * 2, 0, 1), ly = ry + rh + 26, lh2 = 176, pulse = 1 + Math.sin(t * 4) * 0.012;
+        ctx.save(); ctx.globalAlpha = a;
+        ctx.translate(W / 2, ly + lh2 / 2); ctx.scale(pulse, pulse); ctx.translate(-W / 2, -(ly + lh2 / 2));
+        U.roundRect(ctx, 70, ly, 940, lh2, 30);
+        const lg = ctx.createLinearGradient(70, 0, 1010, 0); lg.addColorStop(0, '#ff2d55'); lg.addColorStop(1, '#ff6b3d');
+        ctx.fillStyle = lg; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 3; ctx.stroke();
+        // QR
+        ctx.fillStyle = '#fff'; U.roundRect(ctx, 92, ly + 16, 144, 144, 14); ctx.fill();
+        if (this.qr.complete && this.qr.naturalWidth) ctx.drawImage(this.qr, 98, ly + 22, 132, 132);
+        ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+        ctx.font = `800 24px ${FU}`; ctx.fillText('QUER ESSES ACHADOS? TÁ TUDO NO SITE:', 262, ly + 48);
+        ctx.font = `58px ${FT}`; ctx.fillText(g.cfg.siteUrl, 262, ly + 108);
+        const tip = `📌 link na bio do ${g.cfg.profile}  ·  ou escaneie o QR`;
+        let fs = 24; ctx.font = `700 ${fs}px ${FU}`;
+        while (ctx.measureText(tip).width > 725 && fs > 16) { fs--; ctx.font = `700 ${fs}px ${FU}`; }
+        ctx.fillStyle = '#fff3c4'; ctx.fillText(tip, 262, ly + 146);
+        ctx.restore();
+        if (a > 0.5) this.linkRect = { x: 70, y: ly, w: 940, h: lh2 };
+      }
+
       // quem mais ajudou + contagem
       if (done) {
-        const rank = g.gifts.ranking(3), by = ry + rh + 40, a = U.clamp((pt - g.paidAt) * 2, 0, 1);
+        const rank = g.gifts.ranking(3), by = ry + rh + 230, a = U.clamp((pt - g.paidAt) * 2, 0, 1);
         ctx.save(); ctx.globalAlpha = a;
         glass(ctx, 90, by, 900, 120, 30, 0.85);
         ctx.textAlign = 'left'; ctx.font = `32px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('QUEM MAIS AJUDOU', 124, by + 46);
