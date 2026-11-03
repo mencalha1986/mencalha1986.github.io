@@ -94,6 +94,7 @@
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 240);
         this.drawRanking(ctx, top + 240);
+        if (g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 240 + 214 + 16);
         this.drawShowcase(ctx, t);
         this.drawAnnouncer(ctx, t);
         this.drawBanners(ctx, t);
@@ -187,6 +188,19 @@
         case 'follow': return `volta ${def.back} m, caem ${def.drop} achados`;
       }
       return '';
+    }
+
+    // guia fixo na lateral: qual presente do TikTok faz o quê (quem chega no meio da partida vê)
+    drawGiftGuide(ctx, y0) {
+      const G = this.g.cfg.gifts, keys = Object.keys(G), rowH = 46;
+      glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.62);
+      ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
+      keys.forEach((k, i) => {
+        const def = G[k], y = y0 + 56 + i * rowH;
+        giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 15), 790, y + 15);
+        ctx.font = `600 16px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 28), 790, y + 36);
+      });
     }
 
     drawRanking(ctx, y0) {
@@ -299,8 +313,8 @@
       keys.forEach((k, i) => {
         const def = this.g.cfg.gifts[k], x = x0 + (i % 2) * cw + 20, y = 1250 + Math.floor(i / 2) * 76;
         giftIcon(ctx, def.icon, x + 28, y + 26, 26, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 26px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(def.label, x + 68, y + 24);
-        ctx.font = `500 21px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(this.actionText(def), x + 68, y + 50);
+        ctx.textAlign = 'left'; ctx.font = `800 26px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(def.tiktok || def.label, x + 68, y + 24);
+        ctx.font = `500 21px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(`${def.label} · ${this.actionText(def)}`, x + 68, y + 50);
       });
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.45)';
       ctx.fillText(`Teste: 1–9 presentes · ← → conduzir · C manual/auto · D demo · H painel   ·   ${this.g.catalog.items.length} achados (${this.g.catalog.source === 'site' ? 'do site' : 'cópia local'})`, W / 2, 1660);
