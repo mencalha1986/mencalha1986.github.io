@@ -6,23 +6,10 @@
   "volta": "2026-12-30",
   "issue": 2
  },
- "atualizado": "2026-11-02T23:36:51.402Z",
- "tentativa": "2026-11-02T23:36:51.402Z",
+ "atualizado": "2026-11-03T06:56:40.632Z",
+ "tentativa": "2026-11-03T06:56:40.632Z",
  "erro": null,
  "voos": [
-  {
-   "saida": "10:55",
-   "chegada": "12:05⁺¹",
-   "companhia": "Air Canada",
-   "operador": "",
-   "duracao": 1690,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "9h 35 min YYZ",
-   "brl": 6574,
-   "eur": 1081
-  },
   {
    "saida": "13:50",
    "chegada": "01:00⁺¹",
@@ -33,8 +20,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 8023,
-   "eur": 1320
+   "brl": 8037,
+   "eur": 1319
   },
   {
    "saida": "08:50",
@@ -46,8 +33,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 8377,
-   "eur": 1378
+   "brl": 8391,
+   "eur": 1377
   },
   {
    "saida": "08:50",
@@ -59,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 8446,
+   "brl": 8463,
    "eur": 1389
   },
   {
@@ -72,8 +59,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min CDG",
-   "brl": 8621,
-   "eur": 1418
+   "brl": 8784,
+   "eur": 1442
   },
   {
    "saida": "18:35",
@@ -85,7 +72,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 8769,
+   "brl": 8786,
    "eur": 1442
   },
   {
@@ -98,8 +85,21 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 8852,
+   "brl": 8870,
    "eur": 1456
+  },
+  {
+   "saida": "06:30",
+   "chegada": "18:50",
+   "companhia": "Iberia",
+   "operador": "",
+   "duracao": 920,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 35 min MAD",
+   "brl": 9477,
+   "eur": 1556
   },
   {
    "saida": "09:20",
@@ -111,8 +111,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 9570,
-   "eur": 1574
+   "brl": 10039,
+   "eur": 1648
   },
   {
    "saida": "23:20",
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 11546,
+   "brl": 11569,
    "eur": 1899
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 12783,
+   "brl": 12808,
    "eur": 2102
   }
  ],
@@ -435,6 +435,16 @@
    "eur": 1081,
    "direto": 11546,
    "razoavelEur": 1320,
+   "razoavelCia": "LATAM, 2h 50 min GRU",
+   "diretoEur": 1899,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-03T06:56:40.632Z",
+   "brl": 8037,
+   "eur": 1319,
+   "direto": 11569,
+   "razoavelEur": 1319,
    "razoavelCia": "LATAM, 2h 50 min GRU",
    "diretoEur": 1899,
    "diretoCia": "Tap Air Portugal / Gol, direto"
