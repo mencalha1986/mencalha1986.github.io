@@ -218,9 +218,15 @@
         this.z = Math.max(0, this.z + this.speed * dt);
         const ROAD = CNB.World.ROAD - 0.7;
         if (this.state === S.ARRIVE || this.state === S.WIN) this.targetX = 0;
+        else if (this.manual) {
+          // você conduz, mas a bebida puxa para os lados: quanto mais bêbado, mais ele "escorrega"
+          const drift = U.noise(this.t * 0.35 + 9) * (0.5 + this.drunk * 1.1);
+          if (!this.busy) this.targetX += ((this.steer || 0) * 3.4 + drift) * dt;
+        }
         else if (!this.avoiding) this.targetX = U.noise(this.t * 0.18 + 5) * 1.9 * (0.6 + this.drunk * 0.6);
         this.targetX = U.clamp(this.targetX, -ROAD, ROAD);
-        if (!this.busy) this.baseX = U.damp(this.baseX, this.targetX, this.state === S.RUN ? 2.4 : 1.2, dt);
+        const steerRate = this.manual ? 3.6 : this.state === S.RUN ? 2.4 : 1.2;
+        if (!this.busy) this.baseX = U.damp(this.baseX, this.targetX, steerRate, dt);
         const wob = this.finished ? 0 : U.noise(this.t * 0.9) * 0.35 * this.drunk;
         this.x = U.clamp(this.baseX + wob, -ROAD - 0.4, ROAD + 0.4);
       }
@@ -255,7 +261,7 @@
           T.lLift = Math.max(0, sw) * 0.85 * amp; T.rLift = Math.max(0, -sw) * 0.85 * amp;
           T.lOut = -2 + Math.max(0, sw) * 3 * d; T.rOut = 2 - Math.max(0, -sw) * 3 * d;
           T.bob = -Math.abs(sw) * 3 * amp;
-          T.lean = sway + sw * 0.05 + (this.targetX - this.baseX) * 0.06;
+          T.lean = sway + sw * 0.05 + (this.targetX - this.baseX) * (this.manual ? 0.1 : 0.06);
           T.hipX = sw * 3;
           T.laA = 0.16 + d * 0.1 + Math.max(0, -sw) * 0.22; T.laE = 0.25 + Math.max(0, -sw) * 0.55; T.laF = -sw;
           T.raA = 0.18 + d * 0.1 + Math.max(0, sw) * 0.22; T.raE = 0.35 + Math.max(0, sw) * 0.55; T.raF = sw;

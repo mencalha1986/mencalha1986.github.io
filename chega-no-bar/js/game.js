@@ -33,6 +33,10 @@
       this.charChoice = ['homem', 'mulher', 'alternar'].includes(q) ? q : saved || this.cfg.character;
       this.gender = this.charChoice === 'mulher' ? 'f' : 'm';
       this.drunk.setGender(this.gender); this.voice.gender = this.gender;
+      let savedCtl = null;
+      try { savedCtl = localStorage.getItem('cnb-controle'); } catch (e) {}
+      const qc = new URLSearchParams(location.search).get('controle');
+      this.setControl(qc || savedCtl || this.cfg.control);
       this.previews = { homem: new CNB.Drunk(this.cfg), mulher: new CNB.Drunk(this.cfg) };
       this.previews.homem.setGender('m'); this.previews.mulher.setGender('f');
       for (const k in this.previews) { const p = this.previews[k]; p.reset(); p.state = 'preview'; p.turnT = 1; p.faceTarget = 'front'; p.facing = 'front'; p.t = k === 'mulher' ? 2 : 0; }
@@ -102,6 +106,7 @@
       this.world.reset(this.seed);
       this.world.barGlow = 1; this.world.cheer = 0;
       this.drunk.reset();
+      this.drunk.manual = this.control === 'manual';
       this.dog.reset();
       this._bindDrunk();
       this.gifts.resetRound();
@@ -155,7 +160,7 @@
           this.hud.banner('MAIS UMA!', `${user} pagou uma gelada`, def.color, 1.8);
           this.fx.text(head.x, head.y - 60, `+${def.amount * n} m`, '#ffd23f', 52);
           this.after(1.0, () => this.say('beer', true));
-          this.after(2.4, () => { if (Math.random() < 0.55 + d.drunk * 0.3) d.stumble(0, 0); });
+          this.after(2.4, () => { if (d.state === S.WALK && Math.random() < 0.55 + d.drunk * 0.3) d.stumble(0, 0); });
           break;
         }
         case 'back': {
@@ -239,9 +244,17 @@
     }
 
     // ------------------------------------------------------------------ colisões
+    // modo de controle: 'auto' (desvia sozinho, com chance de errar) ou 'manual' (você desvia com ← →)
+    setControl(mode) {
+      this.control = mode === 'manual' ? 'manual' : 'auto';
+      this.drunk.manual = this.control === 'manual';
+      try { localStorage.setItem('cnb-controle', this.control); } catch (e) {}
+    }
+
     _avoidance() {
       const d = this.drunk;
       d.avoiding = false;
+      if (d.manual) return;
       if (d.busy || d.finished) return;
       const dir = d.state === S.BACK ? -1 : 1;
       let next = null;

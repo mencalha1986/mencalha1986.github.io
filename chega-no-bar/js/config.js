@@ -15,7 +15,8 @@ CNB.CONFIG = {
   obstacleHitChance: 0.38,   // chance base de não desviar (aumenta com a bebedeira)
 
   // ---------- Personagem ----------
-  character: 'homem',        // 'homem' | 'mulher' | 'alternar' (troca a cada rodada)
+  character: 'homem',
+  control: 'auto',           // 'auto' (desvia sozinho) | 'manual' (você desvia com as setas ← →)        // 'homem' | 'mulher' | 'alternar' (troca a cada rodada)
 
   // ---------- Bebedeira ----------
   drunkStart: 0.55,          // 0..1

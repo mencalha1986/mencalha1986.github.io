@@ -34,16 +34,41 @@
         const card = game.hud.titleCards.find((c) => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
         if (card) { game.setCharacter(card.choice); syncChar(); if (card.choice === 'alternar') return; }
       }
+      if (game.mode === 'playing' && game.control === 'manual') {
+        const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+        held.pointer = x < 0.4 ? -1 : x > 0.6 ? 1 : 0; applySteer();
+        return;
+      }
       startOnce();
     });
+    const release = () => { held.pointer = 0; applySteer(); };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    // ---------- direção manual (setas ← → ou segurar o lado esquerdo/direito da tela) ----------
+    const held = { left: false, right: false, pointer: 0 };
+    const applySteer = () => { game.drunk.steer = held.pointer || ((held.right ? 1 : 0) - (held.left ? 1 : 0)); };
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') held.left = false;
+      if (e.key === 'ArrowRight') held.right = false;
+      applySteer();
+    });
+    window.addEventListener('blur', () => { held.left = held.right = false; held.pointer = 0; applySteer(); });
     window.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (e.key === 'ArrowLeft') held.left = true; else held.right = true;
+        if (game.control !== 'manual' && game.mode === 'playing') { game.setControl('manual'); syncCtl(); game.hud.banner('MODO MANUAL', 'Use ← → para desviar', '#38bdf8', 1.6); }
+        applySteer();
+        return;
+      }
       const k = e.key.toLowerCase();
       if (game.mode === 'title' && (k === ' ' || k === 'enter')) { startOnce(); return; }
       for (const gk in game.cfg.gifts) {
         if (game.cfg.gifts[gk].key === k) { startOnce(); game.bridge.test(gk, userInput.value.trim() || undefined); return; }
       }
       if (k === 'd') setDemo(game.bridge.toggleDemo());
+      if (k === 'c') { game.setControl(game.control === 'manual' ? 'auto' : 'manual'); syncCtl(); game.hud.banner(game.control === 'manual' ? 'MODO MANUAL' : 'MODO AUTOMÁTICO', game.control === 'manual' ? 'Use ← → para desviar' : 'Ele desvia sozinho (ou não)', '#38bdf8', 1.6); }
       if (k === 'g') { const order = ['homem', 'mulher', 'alternar']; game.setCharacter(order[(order.indexOf(game.charChoice) + 1) % 3]); syncChar(); }
       if (k === 'h') panel.classList.toggle('hidden');
       if (k === 'f') toggleFull();
@@ -85,6 +110,10 @@
     const syncVoice = () => { voiceBtn.textContent = game.voice.cfg.enabled ? 'Voz: ligada' : 'Voz: desligada'; };
     voiceBtn.addEventListener('click', () => { game.voice.cfg.enabled = !game.voice.cfg.enabled; if (!game.voice.cfg.enabled) game.voice.stop(); syncVoice(); });
     syncVoice();
+    const ctlSel = document.getElementById('ctl-select');
+    const syncCtl = () => { ctlSel.value = game.control; };
+    ctlSel.addEventListener('change', () => { game.setControl(ctlSel.value); ctlSel.blur(); });
+    syncCtl();
     const charSel = document.getElementById('char-select');
     const syncChar = () => { charSel.value = game.charChoice; };
     charSel.addEventListener('change', () => game.setCharacter(charSel.value));

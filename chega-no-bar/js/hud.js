@@ -109,16 +109,27 @@
       this.bubble = null;
     }
 
+    // avisos entram em FILA: um presente nunca apaga o aviso do anterior
     banner(title, sub, color = '#ffd23f', dur = 1.9) {
-      this.banners = this.banners.filter((b) => b.age < 0.4 * b.dur);
-      this.banners.push({ title, sub, color, dur, age: 0 });
-      if (this.banners.length > 2) this.banners.shift();
+      this.bannerQueue = this.bannerQueue || [];
+      const last = this.bannerQueue[this.bannerQueue.length - 1];
+      if (last && last.title === title && last.sub === sub) return;
+      this.bannerQueue.push({ title, sub, color, dur, age: 0 });
+      if (this.bannerQueue.length > 5) this.bannerQueue.splice(0, this.bannerQueue.length - 5);
     }
     speak(text, dur) { this.bubble = { text, dur, age: 0 }; }
 
     update(dt) {
       this.banners.forEach((b) => (b.age += dt));
       this.banners = this.banners.filter((b) => b.age < b.dur);
+      const q = this.bannerQueue || [];
+      const cur = this.banners[this.banners.length - 1];
+      // o atual fica no mínimo 1 s; com fila, ele sai mais rápido e o próximo entra
+      const minShow = q.length > 2 ? 0.75 : 1.05;
+      if (q.length && (!cur || cur.age >= Math.min(minShow, cur.dur))) {
+        if (cur) cur.dur = Math.min(cur.dur, cur.age + 0.18);
+        this.banners.push(q.shift());
+      }
       if (this.bubble) { this.bubble.age += dt; if (this.bubble.age > this.bubble.dur) this.bubble = null; }
     }
 
@@ -133,6 +144,7 @@
           this.drawRanking(ctx, top + 236);
         }
         this.drawBanners(ctx, t);
+        if (g.mode === 'playing' && g.control === 'manual') this.drawSteerHint(ctx, t);
       }
       if (g.mode === 'title') this.drawTitle(ctx, t);
       if (g.mode === 'win') this.drawWin(ctx, t);
@@ -306,6 +318,20 @@
       ctx.textBaseline = 'alphabetic';
     }
 
+    // ---------------- dica do modo manual (setas discretas na base) ----------------
+    drawSteerHint(ctx, t) {
+      const st = this.g.drunk.steer || 0, y = 1720;
+      [[-1, 120], [1, W - 120]].forEach(([dir, x]) => {
+        const on = Math.sign(st) === dir;
+        ctx.save(); ctx.translate(x, y); ctx.scale(-dir, 1);
+        ctx.globalAlpha = on ? 0.9 : 0.28;
+        ctx.fillStyle = on ? '#38bdf8' : 'rgba(255,255,255,0.9)';
+        U.poly(ctx, [-34, 0, 14, -42, 14, -16, 40, -16, 40, 16, 14, 16, 14, 42]); ctx.fill();
+        ctx.restore();
+      });
+      ctx.globalAlpha = 1;
+    }
+
     // ---------------- banners de evento ----------------
     drawBanners(ctx, t) {
       this.banners.forEach((b, i) => {
@@ -313,7 +339,7 @@
         const inT = U.clamp(b.age / 0.28, 0, 1);
         const sc = U.easeOutBack(inT) * (1 + (u > 0.8 ? (u - 0.8) * 0.6 : 0));
         const a = u > 0.8 ? 1 - (u - 0.8) / 0.2 : 1;
-        const y = 600 + i * 120;
+        const y = 600;
         ctx.save(); ctx.globalAlpha = a; ctx.translate(W / 2, y); ctx.scale(sc, sc); ctx.rotate(-0.04 + Math.sin(t * 6) * 0.01);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.font = `110px ${FT}`;
@@ -379,7 +405,7 @@
         ctx.font = `500 21px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(this.actionText(def, 1), x + 68, y + 50);
       });
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.fillText('Teste: teclas 1–8 · G troca personagem · D demo · H painel · F tela cheia', W / 2, 1690);
+      ctx.fillText('Teste: 1–8 presentes · ← → desviar · C manual/auto · G personagem · D demo · H painel', W / 2, 1690);
     }
 
     // ---------------- vitória ----------------

@@ -26,6 +26,8 @@ O painel lateral simula presentes **sem conexão com o TikTok**.
 | `6` Tropeço | cai e precisa levantar |
 | `7` Especial | GAME OVER (evento configurável) |
 | `8` Cachorro | um vira-lata faz xixi na perna dele (fica parado uns 5 s) |
+| `← →` | desviar (modo manual; também dá para segurar o lado esquerdo/direito da tela) |
+| `C` | alterna controle manual / automático |
 | `D` | demo automático (presentes aleatórios) |
 | `W` | testar a chegada no bar |
 | `R` | nova rodada |
