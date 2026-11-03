@@ -18,7 +18,9 @@
     window.CNB.game = game;
 
     // integração com a live (opcional)
-    const ws = params.get('ws');
+    let savedWs = null;
+    try { savedWs = localStorage.getItem('cnb-ws'); } catch (e) {}
+    const ws = params.get('ws') || savedWs;
     if (ws) game.bridge.connect(ws);
     if (params.get('demo') === '1') game.bridge.toggleDemo(true);
     if (params.get('voz') === '0') game.voice.cfg.enabled = false;
@@ -87,6 +89,26 @@
     const syncChar = () => { charSel.value = game.charChoice; };
     charSel.addEventListener('change', () => game.setCharacter(charSel.value));
     syncChar();
+    // ---------- conexão da live ----------
+    const wsInput = document.getElementById('ws-url'), wsStatus = document.getElementById('ws-status');
+    if (ws) wsInput.value = ws;
+    document.getElementById('btn-ws').addEventListener('click', () => {
+      const url = wsInput.value.trim();
+      try { url ? localStorage.setItem('cnb-ws', url) : localStorage.removeItem('cnb-ws'); } catch (e) {}
+      if (game.bridge.ws) { game.bridge.url = null; try { game.bridge.ws.close(); } catch (e) {} game.bridge.ws = null; game.bridge.status = 'teste'; }
+      if (url) game.bridge.connect(url);
+    });
+    setInterval(() => {
+      const st = game.bridge.status;
+      wsStatus.className = st === 'ao vivo' ? 'live' : game.bridge.url ? 'bad' : '';
+      wsStatus.textContent = st === 'ao vivo' ? '● Conectado — recebendo presentes da live'
+        : game.bridge.url ? (st === 'conectando' ? 'Conectando…' : 'Sem conexão — a ferramenta está aberta? Tentando de novo…') : 'Modo teste (sem conexão)';
+    }, 500);
+    game.gifts.onUnknown = (u) => {
+      document.getElementById('unknown-gifts').textContent = 'Presentes sem ação (adicione em giftAliases): ' +
+        Object.entries(u).map(([n, c]) => `${n} ×${c}`).join(', ');
+    };
+
     const vInfo = document.getElementById('voice-info');
     setInterval(() => { vInfo.textContent = 'Voz: ' + (game.voice.voiceName || 'carregando…'); }, 1500);
     if (params.get('painel') === '0') panel.classList.add('hidden');

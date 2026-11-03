@@ -45,3 +45,9 @@ body { display: flex; align-items: center; justify-content: center; }
 #voice-info { font-size: 11px; color: #8d86a0; margin-top: 8px; }
 .ctrl.studio { display: block; text-align: center; text-decoration: none; background: #3a0f1c; border-color: #ff3355; color: #ffd0d8; }
 #char-select { width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: #0b0912; color: #fff; font: 600 13px Rubik, sans-serif; margin-bottom: 10px; }
+.live-box { background: #0b0912; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 10px; margin-bottom: 12px; }
+.ws-row { display: flex; gap: 6px; }
+.ws-row input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,.15); background: #15121e; color: #fff; font: 12.5px Rubik, sans-serif; }
+#ws-status { font-size: 12px; margin-top: 6px; color: #8d86a0; }
+#ws-status.live { color: #4ade80; } #ws-status.bad { color: #f59e0b; }
+#unknown-gifts { font-size: 11.5px; color: #fca5a5; margin-top: 6px; line-height: 1.4; }

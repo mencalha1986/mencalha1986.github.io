@@ -32,7 +32,14 @@
     /** evt: { user, gift, count?, source? } */
     receive(evt) {
       const key = this.resolveKey(evt.gift);
-      if (!key) { console.info('[CHEGA NO BAR] presente sem ação configurada:', evt.gift); return false; }
+      if (!key) {
+        console.info('[CHEGA NO BAR] presente sem ação configurada:', evt.gift);
+        this.unknown = this.unknown || {};
+        const n = String(evt.gift || '?');
+        this.unknown[n] = (this.unknown[n] || 0) + (parseInt(evt.count, 10) || 1);
+        this.onUnknown && this.onUnknown(this.unknown);
+        return false;
+      }
       const def = this.cfg.gifts[key];
       const count = U.clamp(parseInt(evt.count, 10) || 1, 1, 99);
       const user = String(evt.user || 'anônimo').slice(0, 32);
