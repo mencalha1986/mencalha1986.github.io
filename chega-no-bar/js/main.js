@@ -114,6 +114,7 @@
     const syncCtl = () => { ctlSel.value = game.control; };
     ctlSel.addEventListener('change', () => { game.setControl(ctlSel.value); ctlSel.blur(); });
     syncCtl();
+    game.onControl = () => syncCtl();
     const charSel = document.getElementById('char-select');
     const syncChar = () => { charSel.value = game.charChoice; };
     charSel.addEventListener('change', () => game.setCharacter(charSel.value));

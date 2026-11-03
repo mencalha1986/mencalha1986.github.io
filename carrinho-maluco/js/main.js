@@ -88,6 +88,7 @@
     const ctlSel = document.getElementById('ctl-select');
     const syncCtl = () => (ctlSel.value = game.control);
     ctlSel.addEventListener('change', () => { game.setControl(ctlSel.value); ctlSel.blur(); }); syncCtl();
+    game.onControl = () => syncCtl();
 
     const wsInput = document.getElementById('ws-url'), wsStatus = document.getElementById('ws-status');
     if (ws) wsInput.value = ws;

@@ -61,3 +61,9 @@ Dá para trocar por gravações suas mantendo os mesmos nomes. O botão "Locutor
 4. No LIVE Studio, capture **essa janela nova** (Captura de janela).
 5. Controle tudo pela janela antiga: botões, teclas 1–9, setas, D, R… vão para a janela da live.
    A janela antiga fica sem som e desconectada; quem recebe os presentes do TikFinity é a janela da live.
+
+## Automático e manual
+O jogo sempre começa no **automático**: o personagem anda sozinho, pega alguns achados, desvia da maioria
+dos obstáculos e às vezes se distrai e bate. Para assumir, aperte **← →** (ou toque nos lados da tela).
+Depois de **5 segundos** sem mexer, o automático volta sozinho. Ajuste em `js/config.js`
+(Carrinho Maluco: bloco `autopilot`; Chega no Bar: `autoReturnAfter`).

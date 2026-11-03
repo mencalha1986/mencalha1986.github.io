@@ -8,7 +8,7 @@
   const S = { WALK: 'walk', RUN: 'run', BACK: 'back', SLIP: 'slip', CRASH: 'crash', ARRIVE: 'arrive', PAY: 'pay', DECLINED: 'declined', IDLE: 'idle' };
   const P3 = (b, l, d) => ({ b, l, d });
   const C = {
-    skin: P3('#c08a66', '#dca784', '#8a5a40'), shirt: P3('#ff2d55', '#ff6b86', '#b3133a'),
+    skin: P3('#c08a66', '#dca784', '#8a5a40'), shirt: P3('#1a1c21', '#3b3f48', '#08090b'),   // camiseta preta da marca
     jeans: P3('#3b5b8c', '#5a7fb5', '#22385c'), shoe: P3('#eceae4', '#ffffff', '#b8b4aa'),
     cap: P3('#1f2937', '#374151', '#0b1220'), hair: P3('#3a2a1e', '#5a4330', '#1e140d')
   };
@@ -258,6 +258,31 @@
       }
     }
 
+    // logo da marca (lupa com "check" + "achados úteis" + pílula "por aí"), em cm do boneco
+    _logo(ctx, x, y) {
+      const MINT = '#82e8cc', CREAM = '#f3efe7', INK = '#0e3a4a', GOLD = '#ffd45e';
+      ctx.save(); ctx.translate(x, y);
+      // cabo da lupa
+      ctx.strokeStyle = CREAM; ctx.lineCap = 'round'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(4.2, 4.2); ctx.lineTo(8.6, 8.6); ctx.stroke();
+      // aro + lente verde-água
+      ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(0, 0, 7, 0, 7); ctx.fill();
+      ctx.fillStyle = MINT; ctx.beginPath(); ctx.arc(0, 0, 5.2, 0, 7); ctx.fill();
+      // check
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(-2.6, 0.2); ctx.lineTo(-0.6, 2.2); ctx.lineTo(2.9, -1.9); ctx.stroke();
+      // brilhos
+      ctx.fillStyle = GOLD; U.star(ctx, 9.2, -6.2, 2.2, 0.7, 4); ctx.fill();
+      ctx.fillStyle = CREAM; U.star(ctx, -8.8, -3.6, 1.4, 0.45, 4); ctx.fill();
+      // "achados úteis"
+      ctx.fillStyle = CREAM; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.font = `800 6.4px ${U.FONT_UI}`; ctx.fillText('achados úteis', 0, 17.5);
+      // pílula "por aí"
+      ctx.fillStyle = MINT; U.roundRect(ctx, -6.2, 19.2, 12.4, 4.8, 2.4); ctx.fill();
+      ctx.fillStyle = INK; ctx.font = `800 3.5px ${U.FONT_UI}`; ctx.fillText('por aí', 0, 22.9);
+      ctx.restore();
+    }
+
     _body(ctx, fx, fy, k, hands, light) {
       const P = this.pose, t = this.t;
       ctx.save(); ctx.translate(fx, fy); ctx.scale(k, k);
@@ -272,7 +297,7 @@
         g.addColorStop(0, C.shoe.d); g.addColorStop(0.6, C.shoe.b); g.addColorStop(1, C.shoe.l);
         ctx.fillStyle = g; U.roundRect(ctx, foot.x - 9, foot.y - 11, 18, 12, 6); ctx.fill();
         if (lift > 0.15) { ctx.fillStyle = '#9aa0a8'; U.roundRect(ctx, foot.x - 8.5, foot.y - 4 - lift * 10, 17, 5 + lift * 10, 5); ctx.fill(); }
-        ctx.fillStyle = '#ff2d55'; ctx.fillRect(foot.x - 9, foot.y - 6, 18, 1.6);
+        ctx.fillStyle = '#82e8cc'; ctx.fillRect(foot.x - 9, foot.y - 6, 18, 1.6);
       };
       ctx.save(); ctx.rotate(lean);
       leg(-1, P.lL); leg(1, P.rL);
@@ -294,8 +319,8 @@
       const vg = ctx.createLinearGradient(0, shY, 0, hipY);
       vg.addColorStop(0, 'rgba(255,255,255,0.15)'); vg.addColorStop(1, 'rgba(0,0,0,0.2)');
       ctx.fillStyle = vg; ctx.fillRect(-25, shY - 4, 50, hipY - shY + 10);
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = `13px ${U.FONT_TITLE}`; ctx.textAlign = 'center';
-      ctx.fillText('ACHADOS', 0, shY + 22); ctx.font = `8px ${U.FONT_TITLE}`; ctx.fillText('ÚTEIS POR AÍ', 0, shY + 31);
+      // estampa da logo "achados úteis por aí" nas costas
+      this._logo(ctx, 0, shY + 15);
       ctx.restore();
       // pescoço + cabeça (de costas) com boné virado
       capsule(ctx, { x: 0, y: shY - 2 }, { x: 0, y: shY - 12 }, 6.2, 6, C.skin);
@@ -307,7 +332,7 @@
       // boné para trás (aba para a câmera)
       ctx.fillStyle = C.cap.b; ctx.beginPath(); ctx.ellipse(0, hy - 6, 13, 9, 0, Math.PI, 0); ctx.fill();
       ctx.fillStyle = C.cap.d; ctx.beginPath(); ctx.ellipse(0, hy - 1.5, 10, 3.5, 0, 0, Math.PI); ctx.fill();
-      ctx.fillStyle = '#ff2d55'; ctx.fillRect(-3, hy - 6, 6, 4);
+      ctx.fillStyle = '#82e8cc'; ctx.fillRect(-3, hy - 6, 6, 4);
       ctx.restore();
 
       // braços: até a alça do carrinho, para cima (comemorando) ou na cabeça (cartão recusado)

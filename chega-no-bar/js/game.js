@@ -36,7 +36,7 @@
       let savedCtl = null;
       try { savedCtl = localStorage.getItem('cnb-controle'); } catch (e) {}
       const qc = new URLSearchParams(location.search).get('controle');
-      this.setControl(qc || savedCtl || this.cfg.control);
+      this.setControl(qc || this.cfg.control);   // sempre começa no automático
       this.previews = { homem: new CNB.Drunk(this.cfg), mulher: new CNB.Drunk(this.cfg) };
       this.previews.homem.setGender('m'); this.previews.mulher.setGender('f');
       for (const k in this.previews) { const p = this.previews[k]; p.reset(); p.state = 'preview'; p.turnT = 1; p.faceTarget = 'front'; p.facing = 'front'; p.t = k === 'mulher' ? 2 : 0; }
@@ -261,7 +261,16 @@
     setControl(mode) {
       this.control = mode === 'manual' ? 'manual' : 'auto';
       this.drunk.manual = this.control === 'manual';
-      try { localStorage.setItem('cnb-controle', this.control); } catch (e) {}
+      this.idleManual = 0;
+      if (this.onControl) this.onControl(this.control);
+    }
+    // no manual, sem mexer por alguns segundos, volta para o automático
+    _autoReturn(dt) {
+      const sec = this.cfg.autoReturnAfter;
+      if (this.control !== 'manual' || !sec || this.mode !== 'playing') return;
+      if (this.drunk.steer) { this.idleManual = 0; return; }
+      this.idleManual = (this.idleManual || 0) + dt;
+      if (this.idleManual > sec) { this.setControl('auto'); this.hud.banner('AUTOMÁTICO', 'aperte ← → para assumir', '#38bdf8', 1.4); }
     }
 
     _avoidance() {
@@ -356,6 +365,7 @@
         this.roundTime += dt;
         this.dog.update(dt, d, this);
         this._avoidance();
+        this._autoReturn(dt);
         const prevZ = d.z;
         d.update(dt, w);
         this._collide(prevZ);

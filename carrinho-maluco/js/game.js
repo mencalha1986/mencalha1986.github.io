@@ -29,8 +29,8 @@
       // locutor (áudios gerados)
       this.annAudio = {};
       for (const k in CNB.ANUNCIOS || {}) { const a = new Audio(CNB.ANUNCIOS[k].src); a.preload = 'auto'; this.annAudio[k] = a; }
-      let saved = null; try { saved = localStorage.getItem('cm-controle'); } catch (e) {}
-      this.setControl(new URLSearchParams(location.search).get('controle') || saved || this.cfg.control);
+      // sempre começa no automático (ou ?controle=manual no link)
+      this.setControl(new URLSearchParams(location.search).get('controle') || this.cfg.control);
       this._bind();
       this.catalog.ready.then(() => {
         this.store = new CNB.Store(this.cfg, this.catalog);
@@ -44,7 +44,16 @@
     setControl(mode) {
       this.control = mode === 'manual' ? 'manual' : 'auto';
       this.shopper.manual = this.control === 'manual';
-      try { localStorage.setItem('cm-controle', this.control); } catch (e) {}
+      this.idleManual = 0;
+      if (this.onControl) this.onControl(this.control);
+    }
+    // no manual, sem mexer por alguns segundos, o piloto automático assume de novo
+    _autoReturn(dt) {
+      const sec = this.cfg.autopilot.returnAfter;
+      if (this.control !== 'manual' || !sec || this.mode !== 'playing') return;
+      if (this.shopper.steer) { this.idleManual = 0; return; }
+      this.idleManual = (this.idleManual || 0) + dt;
+      if (this.idleManual > sec) { this.setControl('auto'); this.hud.banner('PILOTO AUTOMÁTICO', 'aperte ← → para assumir', '#38bdf8', 1.4); }
     }
 
     _bind() {
@@ -262,27 +271,45 @@
       }
     }
 
-    _autoSteer() {
-      const d = this.shopper;
+    // PILOTO AUTOMÁTICO: olha o corredor à frente e escolhe a melhor faixa.
+    // Pega a maioria dos achados, desvia da maioria das furadas, mas às vezes
+    // se distrai, reage tarde e bate (correndo no turbo erra mais).
+    _autoSteer(dt) {
+      const d = this.shopper, cfg = this.cfg.autopilot;
       d.avoiding = false; d.chasing = false;
       if (d.manual || d.finished || d.busy || d.state === S.BACK) return;
-      // 1) desvia de furada próxima
-      const range = d.state === S.RUN ? 14 : 8;
-      const ob = this.store.obstacles.find((o) => !o.hit && o.z - d.z > 1 && o.z - d.z < range + 1);
-      if (ob) {
-        if (ob.dodge === undefined) ob.dodge = Math.random() < 0.8;
-        if (ob.dodge) {
-          let side = Math.sign(d.x - ob.x) || 1;
-          if (Math.abs(ob.x + side * (ob.w / 2 + 0.9)) > CNB.Store.AISLE - 0.5) side *= -1;
-          d.targetX = ob.x + side * (ob.w / 2 + 0.95); d.avoiding = true; return;
+      const run = d.state === S.RUN;
+      this.apT = (this.apT || 0) - dt;
+      if (this.apT > 0 && this.apLane !== undefined) { d.targetX = this.apLane; d.chasing = true; return; }
+      // tempo de reação humano: decide de novo a cada 0,25–0,6 s
+      this.apT = U.rand(0.25, 0.6);
+      const AISLE = CNB.Store.AISLE, look = run ? 22 : 15, near = run ? 4 : 2;
+      const obs = this.store.obstacles.filter((o) => !o.hit && o.z - d.z > 1.2 && o.z - d.z < look);
+      const items = this.store.items.filter((i) => !i.taken && !i.flying && !i.outFly && !(i.drop > 0) && i.z - d.z > 1.5 && i.z - d.z < look);
+      // cada furada/achado decide UMA vez se ele "percebe"/"quer"
+      for (const o of obs) if (o.seen === undefined) o.seen = Math.random() < (run ? cfg.dodgeRun : cfg.dodge);
+      for (const it of items) if (it.want === undefined) it.want = Math.random() < cfg.pick;
+      let best = d.x, bestScore = -1e9;
+      for (let x = -AISLE + 0.6; x <= AISLE - 0.6 + 1e-6; x += 0.3) {
+        let sc = 0;
+        for (const it of items) {
+          if (!it.want) continue;
+          const dz = it.z - d.z, reach = Math.abs(it.x - d.x) / Math.max(1, dz) ;
+          if (reach > (run ? 0.35 : 0.6)) continue;                 // longe demais para alcançar a tempo
+          if (Math.abs(it.x - x) < 0.7) sc += 10 / (1 + dz * 0.15) + it.p.price * 0.01;
         }
+        for (const o of obs) {
+          if (!o.seen) continue;                                      // não viu: pode bater
+          const dz = o.z - d.z, late = dz < near ? 0.4 : 1;           // muito perto = reage mal
+          if (Math.abs(o.x - x) < o.w / 2 + 0.45) sc -= (30 / (1 + dz * 0.1)) * late;
+        }
+        sc -= Math.abs(x - d.x) * 1.2;                                // preguiça de trocar de faixa
+        sc -= Math.abs(x) * 0.15;                                     // gosta do meio do corredor
+        if (sc > bestScore) { bestScore = sc; best = x; }
       }
-      // 2) vai atrás do próximo achado (às vezes erra)
-      const it = this.store.items.find((i) => !i.taken && !i.flying && !i.outFly && !(i.drop > 0) && i.z - d.z > 1.5 && i.z - d.z < 17);
-      if (it) {
-        if (it.aim === undefined) it.aim = Math.random() < this.cfg.autoPickSkill ? 0 : (Math.random() < 0.5 ? -1 : 1) * 1.4;
-        d.targetX = it.x + it.aim; d.chasing = true;
-      }
+      // de vez em quando se distrai olhando a prateleira
+      if (Math.random() < cfg.distract) best = U.clamp(best + U.rand(-1.2, 1.2), -AISLE + 0.6, AISLE - 0.6);
+      this.apLane = best; d.targetX = best; d.chasing = true;
     }
 
     // ------------------------------------------------------------ caixa
@@ -344,7 +371,8 @@
 
       if (this.mode === 'playing') {
         this.roundTime += dt;
-        this._autoSteer();
+        this._autoSteer(dt);
+        this._autoReturn(dt);
         const prevZ = d.z;
         d.update(dt, st);
         this._pickups(prevZ, dt); this._obstacles(prevZ);

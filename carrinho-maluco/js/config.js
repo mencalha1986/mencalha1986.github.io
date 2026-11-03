@@ -20,7 +20,14 @@ CNB.CONFIG = {
   runSpeed: 11,
   backSpeed: 3,
   control: 'auto',           // 'auto' (vai atrás dos achados sozinho) | 'manual' (você conduz com ← →)
-  autoPickSkill: 0.72,       // no automático: chance de mirar certo no achado
+  // piloto automático (chances de 0 a 1)
+  autopilot: {
+    pick: 0.75,        // chance de querer ir buscar cada achado
+    dodge: 0.78,       // chance de perceber cada furada andando
+    dodgeRun: 0.55,    // ... e correndo no turbo
+    distract: 0.04,    // chance de se distrair a cada decisão
+    returnAfter: 5     // no manual, volta ao automático depois de X s sem mexer (0 = nunca)
+  },
 
   // ---------- Rodada ----------
   restartCountdown: 12,

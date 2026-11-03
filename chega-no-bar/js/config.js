@@ -16,7 +16,8 @@ CNB.CONFIG = {
 
   // ---------- Personagem ----------
   character: 'homem',
-  control: 'auto',           // 'auto' (desvia sozinho) | 'manual' (você desvia com as setas ← →)        // 'homem' | 'mulher' | 'alternar' (troca a cada rodada)
+  control: 'auto',           // 'auto' (desvia sozinho) | 'manual' (você desvia com as setas ← →)
+  autoReturnAfter: 5,        // no manual, volta ao automático depois de X s sem mexer (0 = nunca)
 
   // ---------- Bebedeira ----------
   drunkStart: 0.55,          // 0..1
