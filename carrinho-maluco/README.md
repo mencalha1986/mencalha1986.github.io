@@ -53,3 +53,11 @@ Presentes que chegam sem ação aparecem no painel (tecla H) em "Presentes sem a
 ## Locutor da loja
 Os avisos do alto-falante ("Atenção, senhores clientes...") são áudios em `sounds/anuncios/` (lista em `js/anuncios.js`).
 Dá para trocar por gravações suas mantendo os mesmos nomes. O botão "Locutor" no painel liga/desliga.
+
+## Para transmitir só o jogo (sem painel e sem faixas pretas)
+1. Abra o link do jogo no Chrome (esta janela vira o **controle remoto**).
+2. No painel, clique em **📺 Abrir janela da live (só o jogo)**. Abre uma janela separada, vertical, só com o jogo.
+3. Clique uma vez nessa janela nova (libera o som).
+4. No LIVE Studio, capture **essa janela nova** (Captura de janela).
+5. Controle tudo pela janela antiga: botões, teclas 1–9, setas, D, R… vão para a janela da live.
+   A janela antiga fica sem som e desconectada; quem recebe os presentes do TikFinity é a janela da live.

@@ -162,3 +162,11 @@ O jogo está completo sem arquivos externos. Se quiser ir além:
   computador e navegador que você usa na live (Chrome ou Edge). Limpar os dados do navegador apaga as gravações.
 - **Novas frases**: edite `tools/frases.json` e as listas em `js/voice.js`, depois rode `tools/gerar_vozes.py`
   (instruções no topo do arquivo). Frases sem áudio usam a voz do sistema como reserva.
+
+## Para transmitir só o jogo (sem painel e sem faixas pretas)
+1. Abra o link do jogo no Chrome (esta janela vira o **controle remoto**).
+2. No painel, clique em **📺 Abrir janela da live (só o jogo)**. Abre uma janela separada, vertical, só com o jogo.
+3. Clique uma vez nessa janela nova (libera o som).
+4. No LIVE Studio, capture **essa janela nova** (Captura de janela).
+5. Controle tudo pela janela antiga: botões, teclas 1–9, setas, D, R… vão para a janela da live.
+   A janela antiga fica sem som e desconectada; quem recebe os presentes do TikFinity é a janela da live.
