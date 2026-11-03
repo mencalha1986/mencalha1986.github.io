@@ -85,7 +85,7 @@
       };
     }
 
-    after(sec, fn) { this.timers.push({ t: sec, fn }); }
+    after(sec, fn, tag) { this.timers.push({ t: sec, fn, tag }); }
     say(cat, force = false, text) { return this.voice.say(cat, this.time, { force, text }); }
 
     // ------------------------------------------------------------------ rodada
@@ -133,12 +133,14 @@
       const d = this.drunk;
       const head = d.headScreen;
       if (this.mode !== 'playing' || d.finished) { this.audio.gift(0); return; }
-      this.fx.text(U.clamp(head.x, 200, 880), head.y - 150, user, def.color, 30, { life: 1.6, vy: -70, rot: 0 });
+      // O ÚLTIMO PRESENTE MANDA: cancela a ação em andamento antes de aplicar a nova
+      this.cancelCurrentAction();
+      this.fx.text(U.clamp(head.x, 200, 880), head.y - 150, user, def.color, 30, { life: 1.6, vy: -70, rot: 0, tag: 'gift' });
       switch (def.action) {
         case 'advance': {
           d.addImpulse(def.amount * n);
           this.audio.gift(def.amount * n >= 10 ? 1 : 0);
-          this.fx.text(head.x + U.rand(-80, 80), head.y - 60, `+${def.amount * n} m`, '#7cff6b', 52);
+          this.fx.text(head.x, head.y - 60, `+${def.amount * n} m`, '#7cff6b', 52, { tag: 'gift' });
           if (def.amount * n >= 10) this.hud.banner(`+${def.amount * n} m`, `${user} mandou ${def.label}`, def.color, 1.5);
           if (Math.random() < 0.45) this.say('go');
           break;
@@ -149,18 +151,18 @@
           this.fx.doFlash(0.35, '255,220,80');
           this.shake = Math.max(this.shake, 14);
           this.hud.banner('TURBO!', `${user} ligou o modo corrida`, '#ffd23f', 2);
-          this.after(0.25, () => this.say('turbo', true));
+          this.after(0.25, () => this.say('turbo', true), 'gift');
           break;
         }
         case 'beer': {
           d.addImpulse(def.amount * n);
           d.addDrunk(def.drunk * n);
           this.audio.gulp();
-          this.after(0.75, () => this.audio.burp());
+          this.after(0.75, () => this.audio.burp(), 'gift');
           this.hud.banner('MAIS UMA!', `${user} pagou uma gelada`, def.color, 1.8);
-          this.fx.text(head.x, head.y - 60, `+${def.amount * n} m`, '#ffd23f', 52);
-          this.after(1.0, () => this.say('beer', true));
-          this.after(2.4, () => { if (d.state === S.WALK && Math.random() < 0.55 + d.drunk * 0.3) d.stumble(0, 0); });
+          this.fx.text(head.x, head.y - 60, `+${def.amount * n} m`, '#ffd23f', 52, { tag: 'gift' });
+          this.after(1.0, () => this.say('beer', true), 'gift');
+          this.after(2.4, () => { if (d.state === S.WALK && Math.random() < 0.55 + d.drunk * 0.3) d.stumble(0, 0); }, 'gift');
           break;
         }
         case 'back': {
@@ -168,7 +170,7 @@
           d.impulse = Math.max(0, d.impulse - def.amount * n * 0.5);
           this.audio.back();
           this.hud.banner(`VOLTA ${def.amount * n} m!`, `${user} atrapalhou`, def.color, 1.8);
-          this.after(0.2, () => this.say('back', true));
+          this.after(0.2, () => this.say('back', true), 'gift');
           break;
         }
         case 'trip': {
@@ -185,6 +187,17 @@
           this.hud.banner('CACHORRO!', `${user} soltou o caramelo`, def.color, 1.8);
           break;
       }
+    }
+
+    cancelCurrentAction() {
+      const d = this.drunk;
+      const had = d.turbo > 0 || d.impulse > 0.5 || d.retreat > 0 || this.dog.active || d.busy;
+      d.cancelAction();
+      this.dog.cancel();
+      this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
+      this.fx.clearTag('gift');
+      this.hud.clearBanners();
+      if (had) this.audio.whoosh(false);
     }
 
     // ------------------------------------------------------------------ vitória
@@ -216,10 +229,10 @@
     }
 
     onDogStart() {
-      this.after(0.4, () => this.say('idle', true, 'Ué... que bicho é esse?'));
-      this.after(2.15, () => { this.say('dog', true); this.audio.slip(); this.shake = 8; });
-      this.after(4.3, () => this.say('dogafter', true));
-      this.after(3.9, () => this.audio.bark());
+      this.after(0.4, () => this.say('idle', true, 'Ué... que bicho é esse?'), 'gift');
+      this.after(2.15, () => { this.say('dog', true); this.audio.slip(); this.shake = 8; }, 'gift');
+      this.after(4.3, () => this.say('dogafter', true), 'gift');
+      this.after(3.9, () => this.audio.bark(), 'gift');
     }
 
     _sitDown() {

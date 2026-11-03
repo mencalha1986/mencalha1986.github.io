@@ -146,6 +146,14 @@
       this.setState(S.STUMBLE);
     }
     knockDown(dir, push) { if (this.finished) return; this.slide += push; this.fallDir = dir; this.state = null; this.setState(S.FALL); }
+    // cancela qualquer ação em andamento (o presente novo assume)
+    cancelAction() {
+      if (this.finished) return;
+      this.turbo = 0; this.impulse = 0; this.retreat = 0; this.slide = 0;
+      if ([S.RUN, S.BACK, S.STUMBLE, S.DOG].includes(this.state)) { this.state = null; this.setState(S.WALK); }
+      else if ([S.FALL, S.DOWN].includes(this.state)) { this.state = null; this.setState(S.GETUP); this.st = 0.45; }
+    }
+
     startDog(side) { this.dogSide = side; this.speed = 0; this.state = null; this.setState(S.DOG); }
     say(dur) { this.talk = dur; this.talkTurn = Math.random() < 0.5 ? -1 : 1; }
 

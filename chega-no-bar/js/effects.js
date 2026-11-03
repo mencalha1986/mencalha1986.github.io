@@ -27,7 +27,7 @@
         this.p.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 500, drag: 2.5, life: U.rand(0.3, 0.7), age: 0, c: color }); }
     }
     text(x, y, str, color = '#fff', size = 46, opts = {}) {
-      this.p.push({ k: 'text', x, y, vx: opts.vx || 0, vy: opts.vy ?? -90, g: 0, drag: 0.5, life: opts.life || 1.4, age: 0, s: str, c: color, size, rot: opts.rot || U.rand(-0.12, 0.12) });
+      this.p.push({ k: 'text', x, y, vx: opts.vx || 0, vy: opts.vy ?? -90, g: 0, drag: 0.5, life: opts.life || 1.4, age: 0, s: str, c: color, size, rot: opts.rot || U.rand(-0.12, 0.12), tag: opts.tag });
     }
     zzz(x, y) { this.p.push({ k: 'text', x, y, vx: U.rand(20, 50), vy: -60, g: 0, drag: 0, life: 2.2, age: 0, s: 'Z', c: '#cfd8ff', size: U.rand(40, 70), rot: -0.2 }); }
     doFlash(a = 0.6, color = '255,255,255') { this.flash = a; this.flashColor = color; }
@@ -74,6 +74,7 @@
     }
 
     clear() { this.p = []; }
+    clearTag(tag) { this.p = this.p.filter((q) => q.tag !== tag); }
   }
 
   // linhas de velocidade do turbo, saindo do ponto de fuga

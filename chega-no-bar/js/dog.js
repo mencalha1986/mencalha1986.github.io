@@ -10,7 +10,12 @@
   class DogActor {
     constructor() { this.active = false; this.pending = 0; this.puddles = []; }
 
-    request() { this.pending++; }
+    request() { this.pending = 1; }
+    // presente novo chegou: o cachorro desiste e vai embora correndo
+    cancel() {
+      this.pending = 0;
+      if (this.active && this.t < T_LEAVE) { this.t = T_LEAVE; this.peeing = false; }
+    }
     reset() { this.active = false; this.pending = 0; this.puddles = []; }
 
     start(drunk) {

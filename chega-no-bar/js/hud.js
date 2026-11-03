@@ -109,27 +109,16 @@
       this.bubble = null;
     }
 
-    // avisos entram em FILA: um presente nunca apaga o aviso do anterior
+    // aviso novo substitui o anterior na hora (o último presente manda)
     banner(title, sub, color = '#ffd23f', dur = 1.9) {
-      this.bannerQueue = this.bannerQueue || [];
-      const last = this.bannerQueue[this.bannerQueue.length - 1];
-      if (last && last.title === title && last.sub === sub) return;
-      this.bannerQueue.push({ title, sub, color, dur, age: 0 });
-      if (this.bannerQueue.length > 5) this.bannerQueue.splice(0, this.bannerQueue.length - 5);
+      this.banners = [{ title, sub, color, dur, age: 0 }];
     }
+    clearBanners() { this.banners = []; }
     speak(text, dur) { this.bubble = { text, dur, age: 0 }; }
 
     update(dt) {
       this.banners.forEach((b) => (b.age += dt));
       this.banners = this.banners.filter((b) => b.age < b.dur);
-      const q = this.bannerQueue || [];
-      const cur = this.banners[this.banners.length - 1];
-      // o atual fica no mínimo 1 s; com fila, ele sai mais rápido e o próximo entra
-      const minShow = q.length > 2 ? 0.75 : 1.05;
-      if (q.length && (!cur || cur.age >= Math.min(minShow, cur.dur))) {
-        if (cur) cur.dur = Math.min(cur.dur, cur.age + 0.18);
-        this.banners.push(q.shift());
-      }
       if (this.bubble) { this.bubble.age += dt; if (this.bubble.age > this.bubble.dur) this.bubble = null; }
     }
 
