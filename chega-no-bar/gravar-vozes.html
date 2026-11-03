@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estúdio de Vozes — Chega no Bar</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  html, body { overflow: auto; height: auto; display: block; background: #0d0b14; color: #ece8f5; }
+  body { margin: 0; font-family: Rubik, system-ui, sans-serif; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font: 400 54px 'Bebas Neue', Impact, sans-serif; letter-spacing: .5px; margin: 0; color: #fff; text-shadow: 0 0 18px #ff3355; }
+  .lead { color: #b9b3c9; line-height: 1.55; margin: 8px 0 22px; max-width: 70ch; }
+  .bar { position: sticky; top: 0; z-index: 5; background: rgba(13,11,20,.94); backdrop-filter: blur(8px); padding: 12px 0; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .progress { flex: 1; min-width: 200px; }
+  .progress .track { height: 10px; background: rgba(255,255,255,.1); border-radius: 6px; overflow: hidden; }
+  .progress .fill { height: 100%; width: 0; background: linear-gradient(90deg, #ffb347, #ff3355); transition: width .3s; }
+  .progress small { color: #b9b3c9; display: block; margin-top: 6px; }
+  .meter { width: 160px; height: 10px; background: rgba(255,255,255,.1); border-radius: 6px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: #4ade80; transition: width .05s; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: #1c1828; color: #eee; font: 600 14px Rubik, sans-serif; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: #262036; }
+  .btn.primary { background: #ff3355; border-color: #ff3355; color: #fff; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .tips { background: #171322; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 16px 18px; margin: 18px 0; color: #cfc8de; line-height: 1.55; font-size: 14.5px; }
+  .tips b { color: #ffd23f; }
+  h2 { font: 400 30px 'Bebas Neue', Impact, sans-serif; color: #ffd23f; margin: 30px 0 4px; letter-spacing: .4px; }
+  .hint { color: #8d86a0; font-size: 13.5px; margin: 0 0 10px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: #15121e; border: 1px solid transparent; margin-bottom: 8px; cursor: pointer; }
+  .row.sel { border-color: #ff3355; background: #1d1626; }
+  .row.rec { border-color: #ff3355; box-shadow: 0 0 0 3px rgba(255,51,85,.25); }
+  .row .txt { font-size: 18px; font-weight: 600; line-height: 1.35; }
+  .row .st { font-size: 12.5px; color: #8d86a0; margin-top: 4px; }
+  .row .st.ok { color: #4ade80; }
+  .acts { display: flex; gap: 6px; }
+  .ic { width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: #211c2e; color: #eee; cursor: pointer; display: grid; place-items: center; }
+  .ic:hover { background: #2b2440; }
+  .ic.rec { background: #ff3355; border-color: #ff3355; }
+  .ic svg { width: 18px; height: 18px; fill: currentColor; }
+  .ic:disabled { opacity: .3; cursor: default; }
+  .err { background: #3a0f1c; border: 1px solid #ff3355; color: #ffd0d8; padding: 12px 14px; border-radius: 12px; display: none; margin: 10px 0; }
+  .tabs { display: flex; gap: 8px; margin: 0 0 6px; }
+  .tabs .btn.on { background: #ff3355; border-color: #ff3355; color: #fff; }
+  kbd { font: 700 12px Rubik, sans-serif; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 1px 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ESTÚDIO DE VOZES</h1>
+  <p class="lead">Grave as falas do bêbado com o seu microfone. Cada gravação substitui a voz sintética na hora, e o jogo usa
+    a sua voz automaticamente (neste mesmo navegador). Frases que você não gravar continuam com a voz neural.</p>
+
+  <div class="tips">
+    <b>Como deixar engraçado e real:</b> fale mais devagar do que o normal, arraste as vogais ("ô meu parceeeiro..."),
+    engula o fim das palavras, faça pausas no meio da frase como quem perdeu o fio, solte um soluço ou uma risadinha quando der vontade.
+    Gritos ("SAI DA FRENTE!") podem sair desafinados mesmo. Fique a um palmo do microfone e grave num lugar sem eco.<br><br>
+    <b>Atalhos:</b> <kbd>Espaço</kbd> grava / para · <kbd>↓</kbd> <kbd>↑</kbd> muda de frase · <kbd>P</kbd> ouve sua gravação ·
+    depois de parar, ele pula sozinho para a próxima frase que falta.
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="btn" data-g="m">Voz do HOMEM</button>
+    <button class="btn" data-g="f">Voz da MULHER</button>
+  </div>
+  <div class="bar">
+    <button class="btn primary" id="mic">Ativar microfone</button>
+    <div class="meter" title="Nível do microfone"><i id="lvl"></i></div>
+    <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><small id="count"></small></div>
+    <a class="btn" href="index.html">Voltar ao jogo</a>
+  </div>
+  <div class="err" id="err"></div>
+  <div id="list"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/voice-clips.js"></script>
+<script src="js/voice-clips-mulher.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/voice-store.js"></script>
+<script>
+(function () {
+  const GROUPS = [
+    ['idle', 'Andando sozinho', 'Resmungando para si mesmo, sem pressa, meio perdido.'],
+    ['go', 'Recebeu presente (avança)', 'Animado, agradecendo o público.'],
+    ['turbo', 'Turbo (correndo)', 'Gritando, sem fôlego, correndo desengonçado.'],
+    ['beer', 'Ganhou cerveja', 'Satisfeito depois do gole, ainda mais tonto.'],
+    ['back', 'Voltou para trás', 'Confuso e indignado.'],
+    ['stumble', 'Tropeçou', 'Susto, quase caindo.'],
+    ['fall', 'Caiu no chão', 'Gemendo, dolorido, fingindo que está tudo bem.'],
+    ['getup', 'Levantou', 'Envergonhado, se recompondo.'],
+    ['near', 'Perto do bar', 'Empolgado, sentindo o cheiro do bar.'],
+    ['win', 'Chegou ao bar', 'Comemoração máxima!'],
+    ['table', 'Indo até a mesa', 'Folgado, puxando conversa com o cliente.'],
+    ['sit', 'Brinde na mesa', 'Feliz, aliviado, brindando.'],
+    ['dog', 'Cachorro fez xixi', 'Desespero e nojo.'],
+    ['dogafter', 'Depois do xixi', 'Conformado, derrotado.'],
+    ['gameover', 'Game over', 'Pegando no sono, quase sussurrando.']
+  ];
+  const all = new Set(); GROUPS.forEach(([k]) => (CNB.PHRASES[k] || []).forEach((p) => all.add(p)));
+  const extra = Object.keys(CNB.VOICE_CLIPS).filter((p) => !all.has(p));
+  for (const k in CNB.CONFIG.specialEvents) { const p = CNB.CONFIG.specialEvents[k].phrase; if (!all.has(p) && !extra.includes(p)) extra.push(p); }
+  if (extra.length) GROUPS.push(['_extra', 'Falas especiais', 'Momentos específicos da rodada.']);
+
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>',
+    rec: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/></svg>',
+    stop: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    del: '<svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zM9 4h6l1 2H8z"/></svg>',
+    robot: '<svg viewBox="0 0 24 24"><path d="M4 9h16v10H4zM11 4h2v5h-2zM8 12h2v2H8zm6 0h2v2h-2z"/></svg>'
+  };
+
+  const listEl = document.getElementById('list');
+  const rows = [];
+  let gender = 'm';
+  const key = (t) => CNB.Voice.storeKey(gender, t);
+  const shown = (t) => (gender === 'f' ? CNB.Voice.femText(t) : t);
+  const ttsClip = (t) => (gender === 'f' ? (CNB.VOICE_CLIPS_F || {})[CNB.Voice.femText(t)] : CNB.VOICE_CLIPS[t]);
+  let recs = {}, sel = 0, stream = null, ac = null, analyser = null, recorder = null, recording = null, player = null;
+
+  GROUPS.forEach(([k, title, hint]) => {
+    const phrases = k === '_extra' ? extra : CNB.PHRASES[k] || [];
+    if (!phrases.length) return;
+    const h = document.createElement('h2'); h.textContent = title; listEl.appendChild(h);
+    const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Clima: ' + hint; listEl.appendChild(p);
+    phrases.forEach((text) => {
+      const el = document.createElement('div'); el.className = 'row';
+      el.innerHTML = `<div><div class="txt"></div><div class="st"></div></div>
+        <div class="acts">
+          <button class="ic" data-a="tts" title="Ouvir voz sintética">${ICON.robot}</button>
+          <button class="ic" data-a="rec" title="Gravar (Espaço)">${ICON.rec}</button>
+          <button class="ic" data-a="play" title="Ouvir sua gravação (P)">${ICON.play}</button>
+          <button class="ic" data-a="del" title="Apagar gravação">${ICON.del}</button>
+        </div>`;
+      el.querySelector('.txt').textContent = text;
+      const idx = rows.length;
+      rows.push({ text, el });
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); select(idx);
+        if (!b) return;
+        const a = b.dataset.a;
+        if (a === 'rec') toggleRec();
+        if (a === 'play') playMine(idx);
+        if (a === 'del') delMine(idx);
+        if (a === 'tts') playTTS(idx);
+      });
+      listEl.appendChild(el);
+    });
+  });
+
+  function refresh() {
+    let n = 0;
+    rows.forEach((r, i) => {
+      const has = !!recs[key(r.text)];
+      r.el.querySelector('.txt').textContent = shown(r.text);
+      if (has) n++;
+      const st = r.el.querySelector('.st');
+      st.textContent = has ? `Sua voz gravada · ${recs[key(r.text)].dur.toFixed(1)}s` : 'Ainda com voz sintética';
+      st.className = 'st' + (has ? ' ok' : '');
+      r.el.querySelector('[data-a=play]').disabled = !has;
+      r.el.querySelector('[data-a=del]').disabled = !has;
+      r.el.querySelector('[data-a=tts]').disabled = !ttsClip(r.text);
+      r.el.classList.toggle('sel', i === sel);
+    });
+    document.getElementById('fill').style.width = (n / rows.length) * 100 + '%';
+    document.getElementById('count').textContent = `${n} de ${rows.length} falas gravadas`;
+  }
+  function select(i, scroll) {
+    sel = Math.max(0, Math.min(rows.length - 1, i));
+    refresh();
+    if (scroll) rows[sel].el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  function stopPlayer() { if (player) { player.pause(); player = null; } }
+  function playMine(i) { const r = recs[key(rows[i].text)]; if (!r) return; stopPlayer(); player = new Audio(URL.createObjectURL(r.blob)); player.play(); }
+  function playTTS(i) { const c = ttsClip(rows[i].text); if (!c) return; stopPlayer(); player = new Audio(c.src); player.play(); }
+  async function delMine(i) { await CNB.VoiceStore.del(key(rows[i].text)); delete recs[key(rows[i].text)]; refresh(); }
+
+  function showErr(msg) { const e = document.getElementById('err'); e.textContent = msg; e.style.display = 'block'; }
+
+  async function enableMic() {
+    if (stream) return true;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    } catch (e) { showErr('Não foi possível usar o microfone. Libere o acesso no ícone de cadeado/câmera da barra de endereço e tente de novo.'); return false; }
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = ac.createAnalyser(); analyser.fftSize = 1024;
+    ac.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Float32Array(analyser.fftSize), lvl = document.getElementById('lvl');
+    (function meter() {
+      analyser.getFloatTimeDomainData(buf);
+      let pk = 0; for (const v of buf) pk = Math.max(pk, Math.abs(v));
+      lvl.style.width = Math.min(100, pk * 140) + '%';
+      lvl.style.background = pk > 0.95 ? '#ff3355' : pk > 0.6 ? '#ffd23f' : '#4ade80';
+      requestAnimationFrame(meter);
+    })();
+    const b = document.getElementById('mic'); b.textContent = 'Microfone ativo'; b.disabled = true;
+    return true;
+  }
+  document.getElementById('mic').addEventListener('click', enableMic);
+
+  async function toggleRec() {
+    if (recorder) { recorder.stop(); return; }
+    if (!(await enableMic())) return;
+    stopPlayer();
+    const chunks = [];
+    recording = sel;
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    recorder.onstop = async () => {
+      const idx = recording; recorder = null; recording = null;
+      rows[idx].el.classList.remove('rec');
+      rows[idx].el.querySelector('[data-a=rec]').classList.remove('rec');
+      rows[idx].el.querySelector('[data-a=rec]').innerHTML = ICON.rec;
+      try {
+        const raw = await new Blob(chunks).arrayBuffer();
+        const audio = await ac.decodeAudioData(raw);
+        const { blob, dur } = clean(audio);
+        if (dur < 0.3) { showErr('A gravação ficou muda. Fale mais perto do microfone.'); return; }
+        recs[key(rows[idx].text)] = { blob, dur };
+        await CNB.VoiceStore.put(key(rows[idx].text), { blob, dur, at: Date.now() });
+        refresh(); playMine(idx);
+        const next = rows.findIndex((r, i) => i > idx && !recs[key(r.text)]);
+        if (next >= 0) select(next, true);
+      } catch (e) { showErr('Não consegui processar a gravação: ' + e.message); }
+    };
+    recorder.start();
+    rows[sel].el.classList.add('rec');
+    const rb = rows[sel].el.querySelector('[data-a=rec]'); rb.classList.add('rec'); rb.innerHTML = ICON.stop;
+  }
+
+  // corta silêncio do começo/fim, normaliza e exporta WAV mono
+  function clean(audio) {
+    const sr = audio.sampleRate, ch = audio.getChannelData(0);
+    let start = 0, end = ch.length - 1;
+    const th = 0.025, pad = Math.floor(sr * 0.12);
+    while (start < ch.length && Math.abs(ch[start]) < th) start++;
+    while (end > start && Math.abs(ch[end]) < th) end--;
+    start = Math.max(0, start - pad); end = Math.min(ch.length - 1, end + pad * 2);
+    const data = ch.slice(start, end + 1);
+    let pk = 0; for (const v of data) pk = Math.max(pk, Math.abs(v));
+    const g = pk > 0 ? 0.9 / pk : 1;
+    const n = data.length, buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+    dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+    w(36, 'data'); dv.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) { const v = Math.max(-1, Math.min(1, data[i] * g)); dv.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true); }
+    return { blob: new Blob([buf], { type: 'audio/wav' }), dur: n / sr };
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); toggleRec(); }
+    if (e.key === 'ArrowDown' && !recorder) { e.preventDefault(); select(sel + 1, true); }
+    if (e.key === 'ArrowUp' && !recorder) { e.preventDefault(); select(sel - 1, true); }
+    if (e.key.toLowerCase() === 'p') playMine(sel);
+  });
+
+  const tabs = document.querySelectorAll('#tabs .btn');
+  const setG = (g) => { gender = g; tabs.forEach((b) => b.classList.toggle('on', b.dataset.g === g)); refresh(); };
+  tabs.forEach((b) => b.addEventListener('click', () => setG(b.dataset.g)));
+  try { if (localStorage.getItem('cnb-personagem') === 'mulher') gender = 'f'; } catch (e) {}
+  tabs.forEach((b) => b.classList.toggle('on', b.dataset.g === gender));
+  CNB.VoiceStore.all().then((r) => { recs = r; refresh(); }).catch(() => { showErr('Este navegador não permite salvar gravações. Use o Google Chrome ou o Edge.'); refresh(); });
+})();
+</script>
+</body>
+</html>

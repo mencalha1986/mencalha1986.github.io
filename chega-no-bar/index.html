@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chega no Bar</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="1080" height="1920"></canvas>
+  </div>
+
+  <aside id="test-panel">
+    <h2>MODO DE TESTE</h2>
+    <p class="note">Simula presentes sem conexão com o TikTok. Aperte <b>H</b> para esconder este painel antes de capturar a janela.</p>
+    <label for="test-user">Nome do espectador (vazio = aleatório)</label>
+    <input id="test-user" placeholder="@seu_nome" autocomplete="off">
+    <label for="char-select">Personagem (vale a partir da próxima rodada)</label>
+    <select id="char-select">
+      <option value="homem">Homem</option>
+      <option value="mulher">Mulher</option>
+      <option value="alternar">Alternar a cada rodada</option>
+    </select>
+    <div id="gift-buttons"></div>
+    <div class="row">
+      <button class="ctrl wide" id="btn-demo">Demo automático: desligado</button>
+      <button class="ctrl" id="btn-reset">Nova rodada (R)</button>
+      <button class="ctrl" id="btn-win">Testar chegada (W)</button>
+      <button class="ctrl" id="btn-voice">Voz: ligada</button>
+      <button class="ctrl" id="btn-full">Tela cheia (F)</button>
+      <a class="ctrl wide studio" href="gravar-vozes.html" target="_blank">Gravar vozes com microfone</a>
+      <button class="ctrl wide" id="btn-hide">Esconder painel (H)</button>
+    </div>
+    <div id="voice-info"></div>
+  </aside>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/voice-clips.js"></script>
+  <script src="js/voice-clips-mulher.js"></script>
+  <script src="js/voice-store.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/drunk.js"></script>
+  <script src="js/dog.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/gifts.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
