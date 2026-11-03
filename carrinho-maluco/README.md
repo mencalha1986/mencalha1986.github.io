@@ -8,7 +8,16 @@ e desviando das "furadas" até chegar ao **CAIXA**, onde sai a nota fiscal com t
 ## Os achados
 O jogo carrega o `produtos.js` do seu site toda vez que abre. Ou seja: **cadastrou um achado novo no site,
 ele aparece no jogo** (com foto, preço e categoria). Se o site não responder, usa a cópia `js/produtos-reserva.js`.
-Cada categoria vira um corredor com placa e cor própria.
+Cada categoria com 3 ou mais achados vira um corredor com placa e cor própria (as menores entram misturadas).
+
+## Furadas (obstáculos)
+Chão molhado, laranjas no chão, pilha de caixas, paleteira, carrinho largado, pirâmide de latas, cone,
+escada do repositor, cestinha, display de oferta e dois que andam: a máquina de limpeza e o repositor carregando caixas.
+Quantidade: `obstacleSpacing` em `js/config.js` (números menores = mais furadas).
+
+## Final
+No caixa os achados são passados um a um e embalados em sacolas da loja, com a nota fiscal pequena,
+o carimbo PAGO e quem mais ajudou.
 
 ## Presentes (o último presente cancela a ação anterior)
 | Tecla | Presente | Efeito |

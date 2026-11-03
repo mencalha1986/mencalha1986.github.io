@@ -226,7 +226,7 @@
       if (a <= 0) return;
       ctx.save(); ctx.globalAlpha = a;
       ctx.font = `700 26px ${FU}`;
-      const lines = wrap(ctx, b.text, 820), h = 58 + lines.length * 34, y = this.show ? 860 : 650;
+      const lines = wrap(ctx, b.text, 820), h = 58 + lines.length * 34, y = this.g.mode === 'win' ? 1700 - h : this.show ? 860 : 650;
       glass(ctx, 80, y, 920, h, 24, 0.82);
       ctx.fillStyle = '#ffd23f'; ctx.font = `800 18px ${FU}`; ctx.textAlign = 'left'; ctx.fillText('📢  ALTO-FALANTE DA LOJA', 112, y + 34);
       ctx.fillStyle = '#fff'; ctx.font = `700 26px ${FU}`;
@@ -296,87 +296,129 @@
       ctx.fillText(`Teste: 1–8 presentes · ← → conduzir · C manual/auto · D demo · H painel   ·   ${this.g.catalog.items.length} achados (${this.g.catalog.source === 'site' ? 'do site' : 'cópia local'})`, W / 2, 1600);
     }
 
-    // ---------------- nota fiscal ----------------
+    // ---------------- final: achados embalados nas sacolas + nota pequena ----------------
+    _bag(ctx, x, y, w, h, items, packedAt, pt, idx) {
+      const cat = this.g.catalog;
+      // achados saindo pela boca da sacola (desenhados antes da frente da sacola)
+      items.forEach((it, j) => {
+        const age = packedAt[j] === undefined ? -1 : pt - packedAt[j];
+        if (age < 0) return;
+        const drop = U.easeOutBack(U.clamp(age * 3.2, 0, 1));
+        const size = w * 0.62, cx = x + w * (0.27 + (j % 3) * 0.23), rot = ((j * 41 + idx * 13) % 9 - 4) * 0.08;
+        const ty = y + h * 0.14 - size * 0.72 - (j >= 3 ? size * 0.3 : 0) - (j % 3 === 1 ? size * 0.12 : 0);
+        ctx.save(); ctx.translate(cx, U.lerp(ty - 260, ty, drop)); ctx.rotate(rot);
+        ctx.globalAlpha = U.clamp(age * 6, 0, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(-size / 2 + 3, 4, size, size);
+        cat.drawPhoto(ctx, it, -size / 2, 0, size, size * 0.1);
+        ctx.restore();
+      });
+      // alças de papel torcido
+      ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = w * 0.035; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(x + w * 0.32, y + h * 0.1, w * 0.13, Math.PI, 0); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x + w * 0.68, y + h * 0.1, w * 0.13, Math.PI, 0); ctx.stroke();
+      // sacola kraft
+      const g = ctx.createLinearGradient(x, 0, x + w, 0);
+      g.addColorStop(0, '#b98552'); g.addColorStop(0.45, '#d9a874'); g.addColorStop(0.8, '#c9935e'); g.addColorStop(1, '#a8743f');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(x, y + h * 0.1); ctx.lineTo(x + w, y + h * 0.1); ctx.lineTo(x + w * 0.97, y + h); ctx.lineTo(x + w * 0.03, y + h); ctx.closePath(); ctx.fill();
+      // borda dobrada (zigue-zague) e vincos
+      ctx.fillStyle = '#c4915c';
+      ctx.beginPath(); ctx.moveTo(x, y + h * 0.1);
+      for (let i = 0; i <= 10; i++) ctx.lineTo(x + (w * i) / 10, y + h * 0.1 + (i % 2 ? 7 : 0));
+      ctx.lineTo(x + w, y + h * 0.17); ctx.lineTo(x, y + h * 0.17); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(90,55,25,0.25)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x + w * 0.2, y + h * 0.18); ctx.lineTo(x + w * 0.22, y + h); ctx.moveTo(x + w * 0.8, y + h * 0.18); ctx.lineTo(x + w * 0.78, y + h); ctx.stroke();
+      // etiqueta da marca
+      const lx = x + w / 2, ly = y + h * 0.58, r = w * 0.27;
+      ctx.fillStyle = '#ff2d55'; ctx.beginPath(); ctx.arc(lx, ly, r, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, ly, r - 6, 0, 7); ctx.stroke();
+      cartIcon(ctx, lx, ly - r * 0.25, r / 26, '#fff');
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `${Math.round(r * 0.36)}px ${FT}`; ctx.fillText('ACHADOS', lx, ly + r * 0.42);
+      ctx.fillStyle = 'rgba(70,40,15,0.75)'; ctx.font = `700 ${Math.round(w * 0.075)}px ${FU}`; ctx.fillText(`${items.filter((_, j) => packedAt[j] !== undefined && pt >= packedAt[j]).length} ${items.length === 1 ? 'item' : 'itens'}`, lx, y + h - 12);
+    }
+
     drawReceipt(ctx, t) {
       const g = this.g, pt = g.payTime; if (pt < 0) return;
-      const items = g.shopper.cart, shown = Math.min(items.length, g.scanned);
+      const items = g.shopper.cart, n = items.length, shown = Math.min(n, g.scanned), done = g.paid;
+      ctx.fillStyle = `rgba(10,8,18,${0.45 * U.clamp(pt * 2, 0, 1)})`; ctx.fillRect(0, 0, W, H);
       // título
-      const done = g.paid;
-      ctx.save(); ctx.translate(W / 2, 270); const sc = U.easeOutElastic(U.clamp(pt / 0.7, 0, 1)); ctx.scale(sc, sc); ctx.rotate(-0.03);
+      ctx.save(); ctx.translate(W / 2, 250); const sc = U.easeOutElastic(U.clamp(pt / 0.7, 0, 1)); ctx.scale(sc, sc); ctx.rotate(-0.03);
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const gr = ctx.createLinearGradient(0, -80, 0, 80); gr.addColorStop(0, '#d6ffe6'); gr.addColorStop(1, '#22e07a');
-      ctx.font = `128px ${FT}`; ctx.save(); ctx.shadowColor = '#22e07a'; ctx.shadowBlur = 30;
-      outlined(ctx, items.length ? 'COMPRA FINALIZADA!' : 'CHEGOU NO CAIXA!', 0, -30, gr, '#062a14', 16); ctx.restore();
-      ctx.font = `800 34px ${FU}`; outlined(ctx, items.length ? `${items.length} achados no carrinho` : 'mas o carrinho tá vazio...', 0, 50, '#fff', '#062a14', 8);
+      ctx.font = `120px ${FT}`; ctx.save(); ctx.shadowColor = '#22e07a'; ctx.shadowBlur = 30;
+      outlined(ctx, n ? (done ? 'TUDO EMBALADO!' : 'EMBALANDO...') : 'CHEGOU NO CAIXA!', 0, -30, gr, '#062a14', 16); ctx.restore();
+      ctx.font = `800 32px ${FU}`; outlined(ctx, n ? (done ? 'Pronto pra levar pra casa!' : `${shown} de ${n} achados`) : 'mas o carrinho tá vazio...', 0, 44, '#fff', '#062a14', 8);
       ctx.restore();
-      // papel da nota
-      const rows = Math.min(8, Math.max(1, items.length)), rh = 74;
-      const pw = 760, ph = 230 + rows * rh + 150, px = (W - pw) / 2, py = 400;
-      const rise = U.easeOutCubic(U.clamp(pt / 0.8, 0, 1));
-      ctx.save(); ctx.translate(0, (1 - rise) * 900);
-      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(px + 10, py + 14, pw, ph);
+      ctx.textBaseline = 'alphabetic';
+
+      // SACOLAS com os achados
+      const bags = n ? U.clamp(Math.ceil(n / 3), 1, 4) : 0, per = bags ? Math.ceil(n / bags) : 0;
+      const bw = bags >= 4 ? 215 : bags === 3 ? 260 : 290, bh = bw * 1.1, gap = 24, total = bags * bw + (bags - 1) * gap;
+      const rise = U.easeOutCubic(U.clamp(pt / 0.6, 0, 1));
+      for (let b = 0; b < bags; b++) {
+        const list = items.slice(b * per, (b + 1) * per);
+        const packed = list.map((_, j) => g.scanAt[b * per + j]);
+        const x = (W - total) / 2 + b * (bw + gap), y = 520 + (1 - rise) * 600 + Math.sin(t * 2 + b) * (done ? 4 : 0);
+        this._bag(ctx, x, y, bw, bh, list, packed, pt, b);
+      }
+
+      // NOTA PEQUENA
+      const lines = Math.min(n, 8), lh = 30, rw = 430, rh = 150 + Math.max(1, lines) * lh + 70;
+      const rx = (W - rw) / 2, ry = 520 + bh + 40;
+      ctx.save(); ctx.translate(rx + rw / 2, ry + rh / 2); ctx.rotate(-0.025); ctx.translate(-(rx + rw / 2), -(ry + rh / 2));
+      ctx.translate(0, (1 - U.easeOutCubic(U.clamp((pt - 0.2) / 0.6, 0, 1))) * 900);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(rx + 8, ry + 10, rw, rh);
       ctx.fillStyle = '#fbfaf6';
-      ctx.beginPath(); ctx.moveTo(px, py);
-      for (let x = 0; x <= pw; x += 20) ctx.lineTo(px + x, py + (x / 20) % 2 * 10);
-      ctx.lineTo(px + pw, py + ph);
-      for (let x = pw; x >= 0; x -= 20) ctx.lineTo(px + x, py + ph - (x / 20) % 2 * 10);
+      ctx.beginPath(); ctx.moveTo(rx, ry);
+      for (let x = 0; x <= rw; x += 14) ctx.lineTo(rx + x, ry + (x / 14) % 2 * 7);
+      ctx.lineTo(rx + rw, ry + rh);
+      for (let x = rw; x >= 0; x -= 14) ctx.lineTo(rx + x, ry + rh - (x / 14) % 2 * 7);
       ctx.closePath(); ctx.fill();
       const ink = '#24222a';
-      ctx.textAlign = 'center'; ctx.fillStyle = ink;
-      ctx.font = `46px ${FT}`; ctx.fillText('ACHADOS ÚTEIS POR AÍ', W / 2, py + 64);
-      ctx.font = `600 18px ${FU}`; ctx.fillStyle = '#6b6878';
-      ctx.fillText(`CUPOM DA LIVE  •  RODADA ${g.roundNo}  •  ${g.cfg.siteUrl}`, W / 2, py + 94);
-      ctx.strokeStyle = '#cfcbd6'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(px + 30, py + 116); ctx.lineTo(px + pw - 30, py + 116); ctx.stroke();
-      // itens (os últimos 8 escaneados)
-      const start = Math.max(0, shown - rows);
+      ctx.textAlign = 'center'; ctx.fillStyle = ink; ctx.font = `32px ${FT}`; ctx.fillText('ACHADOS ÚTEIS POR AÍ', W / 2, ry + 42);
+      ctx.font = `600 13px ${FU}`; ctx.fillStyle = '#6b6878'; ctx.fillText(`CUPOM DA LIVE • RODADA ${g.roundNo} • ${g.cfg.siteUrl}`, W / 2, ry + 62);
+      ctx.strokeStyle = '#cfcbd6'; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(rx + 20, ry + 76); ctx.lineTo(rx + rw - 20, ry + 76); ctx.stroke();
+      const start = Math.max(0, shown - lines);
       for (let i = start; i < shown; i++) {
-        const it = items[i], y = py + 132 + (i - start) * rh;
-        const a = U.clamp((g.scanAt[i] !== undefined ? pt - g.scanAt[i] : 1) * 6, 0, 1);
-        ctx.globalAlpha = a;
-        g.catalog.drawPhoto(ctx, it, px + 34, y, 60, 10);
-        ctx.textAlign = 'left'; ctx.fillStyle = ink; ctx.font = `700 25px ${FU}`;
-        ctx.fillText(U.truncate(it.short, 30), px + 112, y + 28);
-        ctx.font = `500 18px ${FU}`; ctx.fillStyle = '#7a7686'; ctx.fillText(CNB.Catalog.CAT_LABEL[it.cat], px + 112, y + 54);
-        ctx.textAlign = 'right'; ctx.font = `800 27px ${FU}`; ctx.fillStyle = ink; ctx.fillText(CNB.fmtBRL(it.price), px + pw - 36, y + 38);
-        ctx.globalAlpha = 1;
+        const it = items[i], y = ry + 100 + (i - start) * lh;
+        ctx.textAlign = 'left'; ctx.fillStyle = ink; ctx.font = `600 17px ${FU}`;
+        ctx.fillText(`${String(i + 1).padStart(2, '0')} ${U.truncate(it.short, 28)}`, rx + 22, y);
+        ctx.textAlign = 'right'; ctx.font = `800 17px ${FU}`; ctx.fillText(CNB.fmtBRL(it.price), rx + rw - 22, y);
       }
-      if (!items.length) { ctx.textAlign = 'center'; ctx.font = `600 26px ${FU}`; ctx.fillStyle = '#7a7686'; ctx.fillText('(nenhum achado — mandem presentes na próxima!)', W / 2, py + 170); }
-      if (items.length > rows && shown > rows) { ctx.textAlign = 'center'; ctx.font = `600 18px ${FU}`; ctx.fillStyle = '#7a7686'; ctx.fillText(`+ ${shown - rows} itens acima`, W / 2, py + 128); }
-      const ty = py + 132 + rows * rh + 10;
-      ctx.beginPath(); ctx.moveTo(px + 30, ty); ctx.lineTo(px + pw - 30, ty); ctx.stroke(); ctx.setLineDash([]);
+      if (!n) { ctx.textAlign = 'center'; ctx.font = `600 17px ${FU}`; ctx.fillStyle = '#7a7686'; ctx.fillText('(nenhum achado nesta rodada)', W / 2, ry + 102); }
+      if (start > 0) { ctx.textAlign = 'center'; ctx.font = `600 13px ${FU}`; ctx.fillStyle = '#7a7686'; ctx.fillText(`+ ${start} itens acima`, W / 2, ry + 82); }
+      const ty = ry + 100 + Math.max(1, lines) * lh - 8;
+      ctx.beginPath(); ctx.moveTo(rx + 20, ty); ctx.lineTo(rx + rw - 20, ty); ctx.stroke(); ctx.setLineDash([]);
       const sum = items.slice(0, shown).reduce((a, it) => a + it.price, 0);
-      ctx.textAlign = 'left'; ctx.font = `48px ${FT}`; ctx.fillStyle = ink; ctx.fillText('TOTAL', px + 36, ty + 62);
-      ctx.textAlign = 'right'; ctx.font = `64px ${FT}`; ctx.fillStyle = done ? '#0f9d58' : ink; ctx.fillText(CNB.fmtBRL(sum), px + pw - 36, ty + 66);
+      ctx.textAlign = 'left'; ctx.font = `34px ${FT}`; ctx.fillStyle = ink; if (!done) ctx.fillText(`TOTAL  (${shown} ${shown === 1 ? 'item' : 'itens'})`, rx + 22, ty + 44);
+      ctx.textAlign = 'right'; ctx.font = `44px ${FT}`; ctx.fillStyle = done ? '#0f9d58' : ink; ctx.fillText(CNB.fmtBRL(sum), rx + rw - 22, ty + 46);
       if (done) {
-        ctx.save(); ctx.translate(px + pw - 170, ty - 70); ctx.rotate(-0.22);
-        ctx.strokeStyle = 'rgba(15,157,88,0.85)'; ctx.lineWidth = 6; U.roundRect(ctx, -120, -38, 240, 76, 12); ctx.stroke();
-        ctx.fillStyle = 'rgba(15,157,88,0.85)'; ctx.font = `56px ${FT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('PAGO', 0, 4);
+        const st = U.easeOutBack(U.clamp((pt - g.paidAt) * 4, 0, 1));
+        ctx.save(); ctx.translate(rx + 140, ty + 34); ctx.rotate(-0.18); ctx.scale(st, st);
+        ctx.strokeStyle = 'rgba(15,157,88,0.85)'; ctx.lineWidth = 4; U.roundRect(ctx, -70, -24, 140, 48, 8); ctx.stroke();
+        ctx.fillStyle = 'rgba(15,157,88,0.85)'; ctx.font = `38px ${FT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('PAGO', 0, 3);
         ctx.restore();
       }
-      ctx.textAlign = 'center'; ctx.font = `600 20px ${FU}`; ctx.fillStyle = '#6b6878';
-      ctx.fillText('Links de todos os achados: ' + g.cfg.siteUrl, W / 2, ty + 112);
       ctx.restore();
 
-      // ranking + contagem
-      if (g.paid) {
-        const rank = g.gifts.ranking(3), by = py + ph + 30;
-        const a = U.clamp((pt - g.paidAt) * 2, 0, 1);
+      // quem mais ajudou + contagem
+      if (done) {
+        const rank = g.gifts.ranking(3), by = ry + rh + 40, a = U.clamp((pt - g.paidAt) * 2, 0, 1);
         ctx.save(); ctx.globalAlpha = a;
-        glass(ctx, 90, by, 900, 130, 30, 0.85);
-        ctx.textAlign = 'left'; ctx.font = `34px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('QUEM MAIS AJUDOU', 124, by + 46);
-        ctx.font = `600 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)';
-        ctx.fillText(`${g.gifts.totalGifts} presentes · ${U.fmtTime(g.finalTime)}`, 124, by + 82);
+        glass(ctx, 90, by, 900, 120, 30, 0.85);
+        ctx.textAlign = 'left'; ctx.font = `32px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('QUEM MAIS AJUDOU', 124, by + 46);
+        ctx.font = `600 20px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.fillText(`${g.gifts.totalGifts} presentes · ${U.fmtTime(g.finalTime)}`, 124, by + 80);
         rank.forEach((u, i) => {
-          const x = 470 + i * 175;
-          ctx.fillStyle = ['#ffd23f', '#d6dbe4', '#d08a4a'][i]; ctx.beginPath(); ctx.arc(x, by + 50, 18, 0, 7); ctx.fill();
-          ctx.fillStyle = '#1a1420'; ctx.font = `800 20px ${FU}`; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), x, by + 57);
-          ctx.fillStyle = '#fff'; ctx.font = `600 18px ${FU}`; ctx.fillText(U.truncate(u.name, 13), x, by + 98);
+          const x = 480 + i * 170;
+          ctx.fillStyle = ['#ffd23f', '#d6dbe4', '#d08a4a'][i]; ctx.beginPath(); ctx.arc(x, by + 46, 17, 0, 7); ctx.fill();
+          ctx.fillStyle = '#1a1420'; ctx.font = `800 19px ${FU}`; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), x, by + 53);
+          ctx.fillStyle = '#fff'; ctx.font = `600 17px ${FU}`; ctx.fillText(U.truncate(u.name, 13), x, by + 92);
         });
-        if (!rank.length) { ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = `600 22px ${FU}`; ctx.fillText('Ninguém ajudou dessa vez!', 470, by + 72); }
+        if (!rank.length) { ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = `600 20px ${FU}`; ctx.fillText('Ninguém ajudou dessa vez!', 480, by + 70); }
         if (g.countdown > 0) {
-          ctx.textAlign = 'center'; ctx.font = `600 26px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText('NOVA RODADA EM', W / 2, by + 196);
-          ctx.font = `90px ${FT}`; ctx.fillStyle = '#fff'; ctx.fillText(String(Math.ceil(g.countdown)), W / 2, by + 280);
+          ctx.textAlign = 'center'; ctx.font = `600 24px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText('NOVA RODADA EM', W / 2, by + 170);
+          ctx.font = `80px ${FT}`; ctx.fillStyle = '#fff'; ctx.fillText(String(Math.ceil(g.countdown)), W / 2, by + 245);
         }
         ctx.restore();
       }

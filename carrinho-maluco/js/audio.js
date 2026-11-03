@@ -316,6 +316,12 @@
       if (!this.ok) return;
       this._osc('square', 2350, this.now, 0.09, 0.07, null, { filter: 'lowpass', ff: 5000 });
     }
+    paper() { // achado caindo na sacola de papel
+      if (!this.ok) return;
+      const t = this.now;
+      this._noise(t, 0.16, 0.22, 'bandpass', 2600, null, { q: 0.7, to: 1200 });
+      this._noise(t + 0.05, 0.1, 0.12, 'highpass', 4000);
+    }
     kaching() {
       if (!this.ok) return;
       const t = this.now;

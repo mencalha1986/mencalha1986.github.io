@@ -5,15 +5,23 @@
    ========================================================================= */
 (function () {
   const U = CNB.U, W = 1080, H = 1920;
-  const AISLE = 2.7, SHELF_D = 0.7, SHELF_H = 2.5, CEIL = 3.8;
+  const AISLE = 2.7, SHELF_D = 0.7, SHELF_H = 2.5, CEIL = 6.0, SIGN_TOP = 4.0, SIGN_BOT = 3.35;
   const FOG = '#151820';
   const BOX_COLORS = ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#ecf0f1', '#e67e22', '#1abc9c', '#ff7aa2', '#2c3e50', '#d35400'];
+  // furadas. slip = escorrega e gira; banner = mensagem ao bater; move = anda de um lado pro outro
   const OB_TYPES = {
-    wet:    { w: 1.1, label: 'chão molhado' },
-    boxes:  { w: 1.0, label: 'pilha de caixas' },
-    pallet: { w: 1.3, label: 'paleteira' },
-    cart:   { w: 0.9, label: 'carrinho largado' },
-    spill:  { w: 1.2, label: 'laranjas no chão' }
+    wet:     { w: 1.1, slip: true,  banner: 'PISOU NO MOLHADO!' },
+    boxes:   { w: 1.0, banner: 'DERRUBOU AS CAIXAS!' },
+    pallet:  { w: 1.3, banner: 'BATEU NA PALETEIRA!' },
+    cart:    { w: 0.9, banner: 'TROMBOU NO CARRINHO!' },
+    spill:   { w: 1.2, slip: true,  banner: 'ESCORREGOU NAS LARANJAS!' },
+    cans:    { w: 0.95, banner: 'DERRUBOU A PIRÂMIDE DE LATAS!' },
+    cone:    { w: 0.6, banner: 'ATROPELOU O CONE!' },
+    ladder:  { w: 1.0, banner: 'BATEU NA ESCADA DO REPOSITOR!' },
+    basket:  { w: 0.7, banner: 'TROPEÇOU NA CESTINHA!' },
+    promo:   { w: 0.9, banner: 'DERRUBOU O DISPLAY DE OFERTA!' },
+    cleaner: { w: 1.0, slip: true, move: 1.3, banner: 'A MÁQUINA DE LIMPEZA PEGOU!' },
+    stocker: { w: 0.8, move: 1.6, banner: 'ATROPELOU O REPOSITOR!' }
   };
 
   class Store {
@@ -29,7 +37,9 @@
       this.track = cfg.trackLength;
       this.checkoutZ = this.track + 6;
       // seções por categoria (ordem embaralhada)
-      const cats = this.catalog.categories.slice();
+      // só vira corredor a categoria com 3+ achados; as pequenas entram misturadas nos outros
+      let cats = this.catalog.categories.filter((c) => this.catalog.byCategory(c).length >= 3);
+      if (!cats.length) cats = this.catalog.categories.slice();
       for (let i = cats.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [cats[i], cats[j]] = [cats[j], cats[i]]; }
       const n = Math.max(1, Math.min(cats.length, 5));
       const len = this.track / n;
@@ -39,10 +49,15 @@
       const used = new Set();
       for (const sec of this.sections) {
         const pool = this.catalog.byCategory(sec.cat);
+        const small = this.catalog.items.filter((p) => !cats.includes(p.cat));
         let z = sec.z0 + 7;
         while (z < sec.z1 - 3) {
-          let it = pool[Math.floor(r() * pool.length)];
-          if (used.has(it.id) && pool.length > 2) it = pool.find((p) => !used.has(p.id)) || it;
+          // prefere achado desta seção que ainda não apareceu; depois os das categorias pequenas; depois qualquer um
+          const fresh = pool.filter((p) => !used.has(p.id));
+          const extra = small.filter((p) => !used.has(p.id));
+          const any = this.catalog.items.filter((p) => !used.has(p.id));
+          const from = fresh.length ? fresh : extra.length ? extra : any.length ? any : pool;
+          const it = from[Math.floor(r() * from.length)];
           used.add(it.id);
           this.items.push({ p: it, z, x: (r() * 2 - 1) * (AISLE - 0.9), taken: false, fly: 0, seed: r() });
           z += U.lerp(cfg.itemSpacing[0], cfg.itemSpacing[1], r());
@@ -51,7 +66,7 @@
       // furadas
       this.obstacles = [];
       const types = Object.keys(OB_TYPES);
-      let z = 20, last = '';
+      let z = 16, last = '';
       while (z < this.track - 12) {
         let t; do { t = types[Math.floor(r() * types.length)]; } while (t === last);
         last = t;
@@ -59,12 +74,22 @@
         let x = (r() * 2 - 1) * (AISLE - 0.9);
         const near = this.items.find((i) => Math.abs(i.z - z) < 2.5);
         if (near && Math.abs(near.x - x) < 1.4) x = near.x > 0 ? near.x - 1.8 : near.x + 1.8;
-        this.obstacles.push({ type: t, z, x: U.clamp(x, -AISLE + 0.6, AISLE - 0.6), w: OB_TYPES[t].w, hit: false, knock: 0, seed: r(), decided: false });
+        const ox = U.clamp(x, -AISLE + 0.6, AISLE - 0.6);
+        this.obstacles.push({ type: t, z, x: ox, x0: OB_TYPES[t].move ? 0 : ox, w: OB_TYPES[t].w, hit: false, knock: 0, seed: r(), decided: false, move: OB_TYPES[t].move || 0 });
         z += U.lerp(cfg.obstacleSpacing[0], cfg.obstacleSpacing[1], r());
       }
       // detalhes de prateleira por módulo (2 m)
       this.lights = [];
       for (let lz = 0; lz < this.track + 8; lz += 4) this.lights.push({ z: lz, flick: r() < 0.06 });
+    }
+
+    // furadas que andam (máquina de limpeza, repositor com caixas)
+    update(dt, t) {
+      for (const o of this.obstacles) {
+        if (!o.move || o.hit) continue;
+        o.x = o.x0 + Math.sin(t * (0.55 + o.seed * 0.4) + o.seed * 9) * o.move;
+        o.dir = Math.cos(t * (0.55 + o.seed * 0.4) + o.seed * 9) >= 0 ? 1 : -1;
+      }
     }
 
     sectionAt(z) { return this.sections.find((s) => z >= s.z0 && z < s.z1) || this.sections[this.sections.length - 1]; }
@@ -200,14 +225,14 @@
       const list = [];
       const vis = (z) => z - cam.z > 0.6 && z - cam.z < 230;
       for (const s of this.sections) if (vis(s.z0 + 0.5)) list.push({ z: s.z0 + 0.5, draw: (c) => this._sign(c, cam, s) });
-      for (const it of this.items) if (!it.taken && vis(it.z)) list.push({ z: it.flying ? it.z - 2 : it.z, draw: (c) => this._item(c, cam, it, t) });
+      for (const it of this.items) if (!it.taken && vis(it.z)) list.push({ z: it.z, draw: (c) => this._item(c, cam, it, t) });
       for (const o of this.obstacles) if (vis(o.z)) list.push({ z: o.z, draw: (c) => this._obstacle(c, cam, o, t) });
       if (this.checkoutZ - cam.z > 0.6) list.push({ z: this.checkoutZ, draw: (c) => this._checkout(c, cam, t) });
       return list;
     }
 
     _sign(ctx, cam, s) {
-      const a = this.proj(cam, -1.6, CEIL - 0.6, s.z0 + 0.5), b = this.proj(cam, 1.6, CEIL - 1.25, s.z0 + 0.5);
+      const a = this.proj(cam, -1.6, SIGN_TOP, s.z0 + 0.5), b = this.proj(cam, 1.6, SIGN_BOT, s.z0 + 0.5);
       if (!a || !b) return;
       const w = b.x - a.x, h = b.y - a.y, col = CNB.Catalog.CAT_COLOR[s.cat];
       ctx.strokeStyle = this._fog('#555a66', a.dz); ctx.lineWidth = Math.max(1, a.s * 0.012);
@@ -323,6 +348,89 @@
           ctx.fillStyle = '#111'; [-0.38, 0.38].forEach((xx) => { ctx.beginPath(); ctx.arc(xx * w, -0.04 * s, s * 0.04, 0, 7); ctx.fill(); });
           // bolsa esquecida dentro
           ctx.fillStyle = F('#2e86de'); ctx.fillRect(-w * 0.2, -top + hb * 0.1, w * 0.3, hb * 0.5);
+          break;
+        }
+        case 'cans': {
+          // pirâmide de latas de promoção
+          const r = 0.09 * s, rows = 4;
+          for (let row = 0; row < rows; row++) {
+            for (let i = 0; i < rows - row; i++) {
+              const x = (i - (rows - row - 1) / 2) * r * 2.05, y = -row * r * 2.2 - r * 1.1;
+              const fall = o.knock * (row + 1) * 0.6;
+              ctx.save(); ctx.translate(x + fall * (i - 1.5) * r * 3, y + fall * row * r * 2.2); ctx.rotate(fall * (i % 2 ? 1 : -1) * 1.5);
+              ctx.fillStyle = F(['#e63946', '#f1c40f', '#2a9d8f'][(row + i) % 3]); ctx.fillRect(-r, -r * 1.1, r * 2, r * 2.2);
+              ctx.fillStyle = F('#d9dde3'); ctx.fillRect(-r, -r * 1.1, r * 2, r * 0.25); ctx.fillRect(-r, r * 0.85, r * 2, r * 0.25);
+              ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(-r * 0.7, -r * 0.8, r * 0.3, r * 1.6);
+              ctx.restore();
+            }
+          }
+          if (s > 28) { ctx.fillStyle = F('#ff2d55'); ctx.fillRect(-0.32 * s, -0.95 * s, 0.64 * s, 0.13 * s); ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(s * 0.08)}px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('LEVE 3', 0, -0.855 * s); }
+          break;
+        }
+        case 'cone': {
+          shadow(0.25);
+          const hgt = 0.6 * s, bw = 0.34 * s;
+          ctx.fillStyle = F('#222'); ctx.fillRect(-bw / 2, -s * 0.04, bw, s * 0.04);
+          ctx.fillStyle = F('#ff7a1a'); ctx.beginPath(); ctx.moveTo(-bw * 0.42, -s * 0.04); ctx.lineTo(bw * 0.42, -s * 0.04); ctx.lineTo(s * 0.03, -hgt); ctx.lineTo(-s * 0.03, -hgt); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = F('#f5f5f5'); ctx.fillRect(-bw * 0.28, -hgt * 0.55, bw * 0.56, hgt * 0.12);
+          break;
+        }
+        case 'ladder': {
+          shadow(0.55);
+          const w = 0.55 * s, h = 1.7 * s;
+          ctx.strokeStyle = F('#c9ccd2'); ctx.lineWidth = Math.max(1, s * 0.04); ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(-w / 2, 0); ctx.lineTo(-w * 0.2, -h); ctx.moveTo(w / 2, 0); ctx.lineTo(w * 0.2, -h); ctx.stroke();
+          ctx.lineWidth = Math.max(1, s * 0.03);
+          for (let i = 1; i < 6; i++) { const u = i / 6; ctx.beginPath(); ctx.moveTo(U.lerp(-w / 2, -w * 0.2, u), -h * u); ctx.lineTo(U.lerp(w / 2, w * 0.2, u), -h * u); ctx.stroke(); }
+          ctx.fillStyle = F('#f39c12'); ctx.fillRect(-w * 0.25, -h - 0.06 * s, w * 0.5, 0.08 * s);
+          // caixa de etiqueta lá em cima
+          ctx.fillStyle = F('#b98a52'); ctx.fillRect(-w * 0.18, -h - 0.28 * s, w * 0.36, 0.22 * s);
+          break;
+        }
+        case 'basket': {
+          shadow(0.32);
+          const w = 0.5 * s, h = 0.28 * s;
+          ctx.fillStyle = F('#d61f3c'); ctx.beginPath(); ctx.moveTo(-w / 2, -h); ctx.lineTo(w / 2, -h); ctx.lineTo(w * 0.42, 0); ctx.lineTo(-w * 0.42, 0); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = 'rgba(0,0,0,0.25)'; for (let i = 0; i < 5; i++) ctx.fillRect(-w * 0.4 + i * w * 0.18, -h * 0.8, w * 0.08, h * 0.6);
+          ctx.strokeStyle = F('#222'); ctx.lineWidth = Math.max(1, s * 0.02);
+          ctx.beginPath(); ctx.arc(0, -h, w * 0.32, Math.PI, 0); ctx.stroke();
+          break;
+        }
+        case 'promo': {
+          shadow(0.4);
+          const w = 0.7 * s, h = 1.5 * s;
+          ctx.fillStyle = F('#ffd23f'); U.roundRect(ctx, -w / 2, -h, w, h * 0.55, w * 0.12); ctx.fill();
+          ctx.fillStyle = F('#ff2d55'); U.star(ctx, 0, -h * 0.72, w * 0.42, w * 0.3, 12, t * 0.5); ctx.fill();
+          ctx.fillStyle = F('#c9a227'); ctx.fillRect(-w * 0.05, -h * 0.46, w * 0.1, h * 0.46);
+          ctx.fillStyle = F('#c9a227'); ctx.fillRect(-w * 0.3, -0.03 * s, w * 0.6, 0.03 * s);
+          if (s > 26) { ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(w * 0.22)}px ${U.FONT_TITLE}`; ctx.fillText('OFERTA', 0, -h * 0.74); ctx.textBaseline = 'alphabetic'; }
+          break;
+        }
+        case 'cleaner': {
+          // máquina de limpeza de piso andando de um lado pro outro, deixando o chão molhado
+          ctx.fillStyle = 'rgba(160,200,255,0.3)'; ctx.beginPath(); ctx.ellipse(-(o.dir || 1) * 0.5 * s, 0, 0.8 * s, 0.8 * s * k + 1, 0, 0, 7); ctx.fill();
+          shadow(0.5);
+          const w = 0.75 * s, h = 0.55 * s;
+          ctx.fillStyle = F('#f5c400'); U.roundRect(ctx, -w / 2, -h, w, h, w * 0.14); ctx.fill();
+          ctx.fillStyle = F('#1f2937'); ctx.fillRect(-w / 2, -h * 0.25, w, h * 0.25);
+          ctx.fillStyle = Math.sin(t * 8) > 0 ? '#ff8c00' : F('#7a4a00'); ctx.beginPath(); ctx.arc(0, -h - 0.05 * s, 0.06 * s, 0, 7); ctx.fill(); // giroflex
+          ctx.strokeStyle = F('#333'); ctx.lineWidth = Math.max(1, s * 0.03);
+          ctx.beginPath(); ctx.moveTo(-(o.dir || 1) * w * 0.35, -h); ctx.lineTo(-(o.dir || 1) * w * 0.6, -h * 1.9); ctx.stroke();
+          ctx.fillStyle = F('#333'); ctx.fillRect(-(o.dir || 1) * w * 0.6 - w * 0.15, -h * 1.95, w * 0.3, 0.05 * s);
+          break;
+        }
+        case 'stocker': {
+          // repositor carregando caixas, atravessando o corredor
+          shadow(0.35);
+          const sw = Math.sin(t * 9 + o.seed * 5) * 0.12 * s;
+          ctx.strokeStyle = F('#2c3e50'); ctx.lineWidth = Math.max(1, s * 0.11); ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(-0.07 * s, -0.85 * s); ctx.lineTo(-0.07 * s + sw, 0); ctx.moveTo(0.07 * s, -0.85 * s); ctx.lineTo(0.07 * s - sw, 0); ctx.stroke();
+          ctx.fillStyle = F('#16a34a'); U.roundRect(ctx, -0.17 * s, -1.45 * s, 0.34 * s, 0.65 * s, 0.08 * s); ctx.fill(); // colete verde
+          ctx.fillStyle = F('#c08a66'); ctx.beginPath(); ctx.arc(0, -1.58 * s, 0.11 * s, 0, 7); ctx.fill();
+          ctx.fillStyle = F('#16a34a'); ctx.beginPath(); ctx.arc(0, -1.62 * s, 0.115 * s, Math.PI, 0); ctx.fill();
+          // pilha de caixas nos braços (tampa o rosto, por isso ele não vê o carrinho)
+          ctx.fillStyle = F('#b98a52'); ctx.fillRect(-0.24 * s, -1.75 * s, 0.48 * s, 0.32 * s); ctx.fillRect(-0.22 * s, -2.02 * s, 0.44 * s, 0.27 * s);
+          ctx.fillStyle = F('#e8d9b4'); ctx.fillRect(-0.03 * s, -2.02 * s, 0.06 * s, 0.59 * s);
           break;
         }
         case 'spill': {

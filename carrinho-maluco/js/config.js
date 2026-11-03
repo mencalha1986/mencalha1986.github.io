@@ -10,7 +10,7 @@ CNB.CONFIG = {
   productsUrl: 'https://achadosuteisporai.com.br/produtos.js',
   trackLength: 260,          // metros até o CAIXA
   itemSpacing: [8, 13],      // distância entre achados no chão
-  obstacleSpacing: [13, 22], // distância entre "furadas"
+  obstacleSpacing: [7, 12],  // distância entre "furadas" (menor = mais obstáculos)
   autoWalkSpeed: 0.35,       // anda sozinho bem devagar sem presentes
   walkSpeed: 2.4,
   runSpeed: 11,

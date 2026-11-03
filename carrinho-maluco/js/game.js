@@ -5,9 +5,10 @@
 (function () {
   const U = CNB.U, W = 1080, H = 1920;
   const S = CNB.Shopper.S;
-  const CAM_WALK = { dist: 5.5, y: 2.95, F: 1450, hz: 620 };
-  const CAM_RUN = { dist: 6.3, y: 2.75, F: 1350, hz: 650 };
-  const CAM_PAY = { dist: 5.2, y: 2.5, F: 1300, hz: 700 };
+  // câmera alta e um pouco à esquerda (por cima do ombro) para o carrinho aparecer
+  const CAM_WALK = { dist: 3.5, y: 4.3, F: 1060, hz: 330, side: 0.3 };
+  const CAM_RUN = { dist: 4.1, y: 4.1, F: 1000, hz: 350, side: 0.3 };
+  const CAM_PAY = { dist: 3.8, y: 3.4, F: 1100, hz: 470, side: 0.2 };
 
   class Game {
     constructor(canvas) {
@@ -139,13 +140,13 @@
       }
     }
 
-    _slip(dir, sub) {
+    _slip(dir, sub, title = 'DERRAPOU!') {
       const d = this.shopper;
       d.spinDir = dir; d.force(S.SLIP);
       this.audio.slip(); this.after(0.5, () => this.audio.crash());
       const lost = d.drop(2);
       this._lostFx(lost);
-      this.hud.banner('DERRAPOU!', sub || (lost.length ? `perdeu ${lost.length} achado${lost.length > 1 ? 's' : ''}` : null), '#facc15', 1.8);
+      this.hud.banner(title, sub || (lost.length ? `perdeu ${lost.length} achado${lost.length > 1 ? 's' : ''}` : null), '#facc15', 1.8);
       this.shake = 14;
     }
 
@@ -168,7 +169,7 @@
         const f = it.flying; f.t += dt / 0.55;
         const cc = d.cartCenter(), u = Math.min(1, f.t), e = U.easeInOut(u);
         it.x = U.lerp(f.x0, cc.x, e); it.z = U.lerp(f.z0, cc.z, e);
-        it.h = 0.85 + Math.sin(u * Math.PI) * 1.7 - (u > 0.8 ? (u - 0.8) * 1.5 : 0);
+        it.h = 0.85 + Math.sin(u * Math.PI) * 0.9 - (u > 0.8 ? (u - 0.8) * 1.2 : 0);
         if (u >= 1) this._collect(it);
       }
     }
@@ -186,7 +187,7 @@
     _pickups(prevZ, dt) {
       const d = this.shopper;
       if (d.finished || d.busy) return;
-      const front0 = prevZ + 0.35, front1 = d.z + 0.35;
+      const front0 = prevZ + 1.35, front1 = d.z + 1.35;
       for (const it of this.store.items) {
         if (it.taken) continue;
         if (it.drop > 0) continue;
@@ -201,7 +202,7 @@
     _obstacles(prevZ) {
       const d = this.shopper;
       if (d.finished || d.busy) return;
-      const f0 = prevZ + 0.35, f1 = d.z + 0.35;
+      const f0 = prevZ + 1.4, f1 = d.z + 1.4;
       for (const o of this.store.obstacles) {
         if (o.hit) continue;
         const crossed = (f0 < o.z && f1 >= o.z) || (f0 > o.z && f1 <= o.z);
@@ -209,12 +210,13 @@
         if (Math.abs(d.x - o.x) > o.w / 2 + 0.3) { o.hit = true; o.passed = true; continue; }
         o.hit = true; o.knockDir = Math.sign(o.x - d.x) || 1;
         this.crashes++;
-        if (o.type === 'wet' || o.type === 'spill') { this._slip(o.knockDir, o.type === 'wet' ? 'pisou no chão molhado' : 'escorregou nas laranjas'); }
+        const def = CNB.Store.OB_TYPES[o.type];
+        if (def.slip) { this._slip(o.knockDir, null, def.banner); }
         else {
           const lost = d.drop(1); this._lostFx(lost);
           d.force(S.CRASH); d.slide = d.state === S.RUN ? 2.5 : 1.4; d.turbo = 0;
           this.audio.crash(); this.shake = 18;
-          this.hud.banner(o.type === 'cart' ? 'TROMBOU NO CARRINHO!' : o.type === 'pallet' ? 'BATEU NA PALETEIRA!' : 'DERRUBOU AS CAIXAS!', lost.length ? 'perdeu 1 achado' : null, '#ff6b6b', 1.6);
+          this.hud.banner(def.banner, lost.length ? 'perdeu 1 achado' : null, '#ff6b6b', 1.6);
           if (Math.random() < 0.5) this.after(0.6, () => this.speak('bateu'));
         }
         break;
@@ -227,7 +229,7 @@
       if (d.manual || d.finished || d.busy || d.state === S.BACK) return;
       // 1) desvia de furada próxima
       const range = d.state === S.RUN ? 14 : 8;
-      const ob = this.store.obstacles.find((o) => !o.hit && o.z - d.z > 0 && o.z - d.z < range);
+      const ob = this.store.obstacles.find((o) => !o.hit && o.z - d.z > 1 && o.z - d.z < range + 1);
       if (ob) {
         if (ob.dodge === undefined) ob.dodge = Math.random() < 0.8;
         if (ob.dodge) {
@@ -237,7 +239,7 @@
         }
       }
       // 2) vai atrás do próximo achado (às vezes erra)
-      const it = this.store.items.find((i) => !i.taken && !i.flying && !(i.drop > 0) && i.z - d.z > 0.5 && i.z - d.z < 16);
+      const it = this.store.items.find((i) => !i.taken && !i.flying && !(i.drop > 0) && i.z - d.z > 1.5 && i.z - d.z < 17);
       if (it) {
         if (it.aim === undefined) it.aim = Math.random() < this.cfg.autoPickSkill ? 0 : (Math.random() < 0.5 ? -1 : 1) * 1.4;
         d.targetX = it.x + it.aim; d.chasing = true;
@@ -255,8 +257,8 @@
     _startPay() {
       this.payTime = 0; this.scanned = 0; this.scanAt = []; this.paid = false;
       const n = this.shopper.cart.length;
-      const step = n > 12 ? 0.18 : 0.32;
-      for (let i = 0; i < n; i++) this.after(0.9 + i * step, () => { this.scanned = i + 1; this.scanAt[i] = this.payTime; this.audio.beep(); });
+      const step = n > 12 ? 0.22 : 0.4;
+      for (let i = 0; i < n; i++) this.after(0.9 + i * step, () => { this.scanned = i + 1; this.scanAt[i] = this.payTime; this.audio.beep(); setTimeout(() => this.audio.paper(), 160); });
       this.after(1.2 + n * step, () => {
         this.paid = true; this.paidAt = this.payTime;
         this.audio.kaching(); this.audio.fanfare(); this.after(0.3, () => this.audio.cheer());
@@ -297,6 +299,7 @@
       if (!this.store) return;
       const d = this.shopper, st = this.store;
       this.bridge.update(dt, this.mode === 'playing');
+      st.update(dt, this.time);
       // achados da liquidação caindo do teto
       for (const it of st.items) if (it.drop > 0) it.drop = Math.max(0, it.drop - dt * 1.6);
 
@@ -347,8 +350,8 @@
       c.F = U.damp(c.F, P.F, 3, dt); c.y = U.damp(c.y, P.y, 3, dt); c.horizon = U.damp(c.horizon, P.hz, 3, dt);
       const tz = d.z - P.dist;
       c.z = U.damp(c.z, tz, tz < c.z ? 9 : 6, dt);
-      if (d.z - c.z < 4.3) c.z = d.z - 4.3;
-      c.x = U.damp(c.x, d.finished ? 0 : d.x * 0.55, 2.5, dt);
+      if (d.z - c.z < 3.0) c.z = d.z - 3.0;
+      c.x = U.damp(c.x, (d.finished ? 0 : d.x * 0.7) - P.side, 2.5, dt);
       this.shake = Math.max(0, this.shake - dt * 45);
       c.sx = (Math.random() - 0.5) * this.shake;
       c.sy = (Math.random() - 0.5) * this.shake + (d.busy || d.finished ? 0 : Math.sin(d.phase * 2) * (d.state === S.RUN ? 4 : 1.2));
@@ -361,7 +364,7 @@
       const st = this.store, d = this.shopper;
       st.drawEnv(ctx, c, t);
       const sprites = st.collectSprites(c, t);
-      sprites.push({ z: d.z - 1.1, draw: (cx) => d.draw(cx, st, c, this.catalog) });
+      sprites.push({ z: d.z + 0.2, draw: (cx) => d.draw(cx, st, c, this.catalog) });
       sprites.sort((a, b) => b.z - a.z);
       for (const s of sprites) s.draw(ctx);
       if (d.state === S.RUN) CNB.Effects.speedLines(ctx, W / 2 - c.x * 40, c.horizon, 1, t);

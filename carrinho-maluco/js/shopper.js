@@ -163,36 +163,37 @@
     }
 
     // ------------------------------------------------------------------ desenho
-    // O cliente PUXA o carrinho: o carrinho vem atrás dele, perto da câmera,
-    // com a cesta aberta para o público ver cada achado que entra.
-    cartCenter() { return { x: this.cartX, z: this.z - 1.08 }; }
+    // O cliente anda para a frente EMPURRANDO o carrinho. A câmera fica alta e
+    // um pouco de lado, e os achados empilham na frente da cesta (visíveis).
+    cartCenter() { return { x: this.x, z: this.z + 0.95 }; }
 
     draw(ctx, store, cam, catalog, light = 0.6) {
       const P = this.pose, len = 0.9;
-      const ang = this.spin + this.cartYaw;
+      const ang = this.spin + this.yaw * 0.5;
       const cs = Math.cos(ang), sn = Math.sin(ang);
       const cc = this.cartCenter();
-      // lz: -len/2 = bico (perto da câmera) … +len/2 = alça (perto do cliente)
+      // lz: -len/2 = alça (perto do cliente) … +len/2 = bico (lá na frente)
       const W3 = (lx, y, lz) => store.proj(cam, cc.x + lx * cs + lz * sn, y, cc.z + lz * cs - lx * sn);
       const corners = {
-        tn: [W3(-0.27, 0.92, -len / 2), W3(0.27, 0.92, -len / 2)], tf: [W3(-0.3, 1.0, len / 2), W3(0.3, 1.0, len / 2)],
-        bn: [W3(-0.21, 0.42, -len / 2 + 0.05), W3(0.21, 0.42, -len / 2 + 0.05)], bf: [W3(-0.24, 0.42, len / 2 - 0.06), W3(0.24, 0.42, len / 2 - 0.06)]
+        tn: [W3(-0.3, 1.0, -len / 2), W3(0.3, 1.0, -len / 2)], tf: [W3(-0.27, 0.95, len / 2), W3(0.27, 0.95, len / 2)],
+        bn: [W3(-0.24, 0.42, -len / 2 + 0.06), W3(0.24, 0.42, -len / 2 + 0.06)], bf: [W3(-0.21, 0.42, len / 2 - 0.05), W3(0.21, 0.42, len / 2 - 0.05)]
       };
       const ok = Object.values(corners).every((p) => p[0] && p[1]);
       const feet = store.proj(cam, this.x, P.jump * 0.25, this.z), ground = store.proj(cam, this.x, 0, this.z);
       if (!feet) return;
       const k = feet.s / 100;
+      // carrinho primeiro (está mais longe que o cliente)
+      if (ok) this._cart(ctx, store, cam, corners, W3, catalog, light, len);
       // sombra do cliente
       ctx.save(); ctx.translate(ground.x, ground.y); ctx.scale(1, 0.22);
       const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, 45 * k);
       sg.addColorStop(0, 'rgba(0,0,0,0.35)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, 45 * k, 0, 7); ctx.fill(); ctx.restore();
-      // mão de trás segura a alça (lado direito da alça)
-      const grip = W3(0.12, 1.06, len / 2 + 0.08);
+      // as duas mãos na alça
+      const gl = W3(-0.24, 1.06, -len / 2 - 0.08), gr = W3(0.24, 1.06, -len / 2 - 0.08);
       const toLocal = (p) => ({ x: (p.x - feet.x) / k, y: (p.y - feet.y) / k });
-      this._body(ctx, feet.x, feet.y, k, ok && grip && P.reach > 0.3 ? toLocal(grip) : null, light);
-      if (ok) this._cart(ctx, store, cam, corners, W3, catalog, light, len);
-      this.cartScreen = ok ? { x: (corners.tn[0].x + corners.tf[1].x) / 2, y: (corners.tn[0].y + corners.tf[0].y) / 2 } : { x: feet.x, y: feet.y };
+      this._body(ctx, feet.x, feet.y, k, ok && gl && gr && P.reach > 0.3 ? [toLocal(gl), toLocal(gr)] : null, light);
+      this.cartScreen = ok ? { x: (corners.tf[0].x + corners.tf[1].x) / 2, y: corners.tf[0].y } : { x: feet.x, y: feet.y - 80 * k };
     }
 
     _cart(ctx, store, cam, c, W3, catalog, light, len) {
@@ -206,48 +207,45 @@
         ctx.strokeStyle = U.rgba('#d5d9e0', alpha); ctx.lineWidth = lw * 0.75;
         for (let i = 0; i <= n; i++) { const u = i / n; ctx.beginPath(); ctx.moveTo(U.lerp(a0.x, a1.x, u), U.lerp(a0.y, a1.y, u)); ctx.lineTo(U.lerp(b0.x, b1.x, u), U.lerp(b0.y, b1.y, u)); ctx.stroke(); }
       };
-      // sombra do carrinho
       const sh = [W3(-0.32, 0, -len / 2), W3(0.32, 0, -len / 2), W3(0.32, 0, len / 2), W3(-0.32, 0, len / 2)];
       if (sh.every(Boolean)) poly(sh, 'rgba(0,0,0,0.2)');
-      // alça vermelha (do lado do cliente, mais longe da câmera)
-      const h0 = W3(-0.33, 1.06, len / 2 + 0.08), h1 = W3(0.33, 1.06, len / 2 + 0.08);
-      if (h0 && h1) {
-        ctx.strokeStyle = wire; ctx.lineWidth = lw;
-        ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(c.tf[0].x, c.tf[0].y); ctx.moveTo(h1.x, h1.y); ctx.lineTo(c.tf[1].x, c.tf[1].y); ctx.stroke();
-        ctx.strokeStyle = '#d61f3c'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(2, s * 0.042);
-        ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(h1.x, h1.y); ctx.stroke();
-      }
       // rodinhas + chassi
-      const wheels = [W3(-0.2, 0.05, -len / 2 + 0.06), W3(0.2, 0.05, -len / 2 + 0.06), W3(-0.22, 0.05, len / 2 - 0.08), W3(0.22, 0.05, len / 2 - 0.08)];
+      const wheels = [W3(-0.22, 0.05, -len / 2 + 0.08), W3(0.22, 0.05, -len / 2 + 0.08), W3(-0.19, 0.05, len / 2 - 0.06), W3(0.19, 0.05, len / 2 - 0.06)];
       ctx.strokeStyle = '#8b919b'; ctx.lineWidth = lw * 1.6;
       [[wheels[0], c.bn[0]], [wheels[1], c.bn[1]], [wheels[2], c.bf[0]], [wheels[3], c.bf[1]]].forEach(([a, b]) => { if (a && b) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } });
       ctx.fillStyle = '#15171c';
       wheels.forEach((w) => { if (w) { ctx.beginPath(); ctx.ellipse(w.x, w.y, w.s * 0.045, w.s * 0.055, 0, 0, 7); ctx.fill(); } });
-      // parede da alça (por dentro), fundo da cesta
+      // bico (parede da frente), fundo da cesta
       poly([c.tf[0], c.tf[1], c.bf[1], c.bf[0]], 'rgba(120,128,140,0.35)', wire, lw);
-      mesh(c.tf[0], c.tf[1], c.bf[0], c.bf[1], 10, 0.5);
+      mesh(c.tf[0], c.tf[1], c.bf[0], c.bf[1], 9, 0.5);
       poly([c.bn[0], c.bn[1], c.bf[1], c.bf[0]], 'rgba(45,50,60,0.6)', wire, lw);
-      mesh(c.bn[0], c.bn[1], c.bf[0], c.bf[1], 8, 0.35);
-      // OS ACHADOS DENTRO DO CARRINHO (fotos reais), empilhando
-      const items = this.cart.slice(-15);
-      const n = items.length;
+      // OS ACHADOS: empilham a partir da FRENTE da cesta e vão subindo (ficam à vista por cima do cliente)
+      const items = this.cart.slice(-16), n = items.length;
       items.forEach((it, i) => {
-        const layer = Math.floor(i / 5), slot = i % 5;
-        const lx = [-0.13, 0.13, 0, -0.12, 0.12][slot], lz = [0.22, 0.22, 0.02, -0.18, -0.18][slot] + (layer % 2 ? 0.07 : 0);
-        const p = W3(lx + (layer % 2 ? 0.03 : -0.02), 0.52 + layer * 0.16, lz);
+        const layer = Math.floor(i / 4), slot = i % 4;
+        const lx = [-0.12, 0.12, -0.12, 0.12][slot] + (layer % 2 ? 0.04 : -0.03);
+        const lz = [0.3, 0.3, 0.06, 0.06][slot] - (layer % 2 ? 0.05 : 0);
+        const p = W3(lx, 0.55 + layer * 0.17 + (slot < 2 ? 0.05 : 0), lz);
         if (!p) return;
-        const size = p.s * 0.28, fresh = i === n - 1 ? U.clamp(this.lastAddAge * 4, 0, 1) : 1;
+        const size = p.s * 0.3, fresh = i === n - 1 ? U.clamp(this.lastAddAge * 4, 0, 1) : 1;
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(((i * 37) % 11 - 5) * 0.06); ctx.scale(U.easeOutBack(fresh), U.easeOutBack(fresh));
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-size / 2 + 3, -size / 2 + 4, size, size);
         catalog.drawPhoto(ctx, it, -size / 2, -size / 2, size, size * 0.1);
         ctx.restore();
       });
-      // laterais e bico (grade translúcida) + borda de cima
-      mesh(c.tn[0], c.tf[0], c.bn[0], c.bf[0], 10, 0.55); mesh(c.tn[1], c.tf[1], c.bn[1], c.bf[1], 10, 0.55);
-      poly([c.tn[0], c.tn[1], c.bn[1], c.bn[0]], 'rgba(205,210,220,0.10)', wire, lw);
-      mesh(c.tn[0], c.tn[1], c.bn[0], c.bn[1], 9, 0.6);
+      // laterais + parede da alça (grade translúcida) + borda
+      mesh(c.tn[0], c.tf[0], c.bn[0], c.bf[0], 10, 0.5); mesh(c.tn[1], c.tf[1], c.bn[1], c.bf[1], 10, 0.5);
+      poly([c.tn[0], c.tn[1], c.bn[1], c.bn[0]], 'rgba(205,210,220,0.08)', wire, lw);
+      mesh(c.tn[0], c.tn[1], c.bn[0], c.bn[1], 9, 0.45);
       poly([c.tn[0], c.tn[1], c.tf[1], c.tf[0]], null, '#eef1f5', lw * 1.8);
-      // ímã ligado: brilho azul
+      // alça vermelha (do lado do cliente)
+      const h0 = W3(-0.33, 1.06, -len / 2 - 0.08), h1 = W3(0.33, 1.06, -len / 2 - 0.08);
+      if (h0 && h1) {
+        ctx.strokeStyle = wire; ctx.lineWidth = lw;
+        ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(c.tn[0].x, c.tn[0].y); ctx.moveTo(h1.x, h1.y); ctx.lineTo(c.tn[1].x, c.tn[1].y); ctx.stroke();
+        ctx.strokeStyle = '#d61f3c'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(2, s * 0.042);
+        ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(h1.x, h1.y); ctx.stroke();
+      }
       if (this.magnet > 0) {
         const m = W3(0, 0.75, 0);
         if (m) {
@@ -317,8 +315,7 @@
       [-1, 1].forEach((side, i) => {
         const sh = rot({ x: side * 20, y: shY + 5 });
         let hd;
-        if (hands && side > 0 && P.reach > 0.3) hd = hands;
-        else if (hands && side < 0 && P.reach > 0.3) hd = rot({ x: -24 - Math.sin(this.phase) * 6, y: shY + 48 + Math.cos(this.phase) * 3 });
+        if (hands && P.reach > 0.3) hd = hands[i];
         else if (P.arms > 1.5) hd = rot({ x: side * 8, y: shY - 34 });     // mãos na cabeça
         else if (P.arms > 0.5) hd = rot({ x: side * (30 + Math.sin(t * 9 + i) * 4), y: shY - 48 }); // braços pra cima
         else hd = rot({ x: side * 24, y: shY + 50 });
