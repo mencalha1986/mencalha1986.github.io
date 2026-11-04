@@ -55,8 +55,8 @@
       const top = o.gy - o.gap / 2, bot = o.gy + o.gap / 2, cx = o.x;
       const r = [{ x0: cx - o.w / 2, x1: cx + o.w / 2, y0: bot, y1: GY + 50 }];
       if (o.top === 'guindaste') r.push({ x0: cx - 70, x1: cx + 70, y0: top - 70, y1: top }, { x0: cx - 4, x1: cx + 4, y0: 0, y1: top - 70 });
-      else if (o.top === 'dirigivel') r.push({ x0: cx - 150, x1: cx + 150, y0: top - 220, y1: top - 120 }, { x0: cx - 60, x1: cx + 60, y0: top - 130, y1: top });
-      else r.push({ x0: cx - 75, x1: cx + 75, y0: top - 210, y1: top - 60 }, { x0: cx - 32, x1: cx + 32, y0: top - 60, y1: top });
+      else if (o.top === 'dirigivel') r.push({ x0: cx - 145, x1: cx + 145, y0: top - 268, y1: top - 172 }, { x0: cx - 60, x1: cx + 60, y0: top - 122, y1: top });
+      else r.push({ x0: cx - 92, x1: cx + 92, y0: top - 240, y1: top - 85 }, { x0: cx - 32, x1: cx + 32, y0: top - 48, y1: top });
       return r;
     }
 
@@ -210,9 +210,8 @@
     }
 
     _obstacle(ctx, o, sx, t) {
-      ctx.save(); ctx.shadowColor = 'rgba(10,20,30,0.45)'; ctx.shadowBlur = 26; ctx.shadowOffsetX = 10; ctx.shadowOffsetY = 6;
+      if (CNB.Obstacles) { CNB.Obstacles.draw(ctx, o, sx, t, GY); return; }
       this._obstacleBody(ctx, o, sx, t);
-      ctx.restore();
     }
     _obstacleBody(ctx, o, sx, t) {
       const top = o.gy - o.gap / 2, bot = o.gy + o.gap / 2, w = o.w;
