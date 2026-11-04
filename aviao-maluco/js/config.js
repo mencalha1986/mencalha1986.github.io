@@ -42,8 +42,8 @@ CNB.CONFIG = {
     turbo:    { tiktok: 'Finger Heart', coins: 5, img: 'img/presentes/finger-heart.webp', label: 'Caça reboca', action: 'turbo', duration: 6, points: 5, color: '#ffd23f', icon: 'bolt', key: '3', demo: 10 },
     buque:    { tiktok: 'Rosa', coins: 10, label: 'Buquê', action: 'advance', amount: 150, points: 10, color: '#f472b6', icon: 'bouquet', key: 'q', demo: 6 },
     escudo:   { tiktok: 'Hand Hearts', coins: 100, label: 'Escudo', action: 'shield', duration: 25, points: 100, color: '#22d3ee', icon: 'shield', key: 'y', demo: 3 },
-    festa:    { tiktok: 'Confetti', coins: 100, label: 'Festa', action: 'advance', amount: 400, points: 100, color: '#facc15', icon: 'confetti', key: 'e', demo: 2 },
-    esquadrilha: { tiktok: 'Money Gun', coins: 500, label: 'Esquadrilha', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: 't', demo: 1 },
+    festa:    { tiktok: 'Confete', coins: 100, img: 'img/presentes/confetti.png', label: 'Festa', action: 'advance', amount: 400, points: 100, color: '#facc15', icon: 'confetti', key: 'e', demo: 2 },
+    esquadrilha: { tiktok: 'Pistola de dinheiro', coins: 500, img: 'img/presentes/money-gun.png', label: 'Esquadrilha', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: 't', demo: 1 },
     // --- SABOTAGEM (atrapalham) ---
     vento:    { tiktok: 'GG', coins: 1, img: 'img/presentes/gg.webp', label: 'Vento contra', action: 'wind', amount: 60, points: 1, color: '#a78bfa', icon: 'wind', key: '5', demo: 8 },
     pane:     { tiktok: 'Ice Cream Cone', coins: 1, img: 'img/presentes/ice-cream-cone.webp', label: 'Pane no motor', action: 'engine', duration: 5, amount: 40, points: 1, color: '#fb923c', icon: 'smoke', key: '6', demo: 8 },
@@ -66,7 +66,7 @@ CNB.CONFIG = {
     'rosa (10)': 'buque', 'buquê': 'buque', 'buque': 'buque', 'rosa': 'buque',
     'hand hearts': 'escudo', 'corações nas mãos': 'escudo', 'escudo': 'escudo',
     'confetti': 'festa', 'confete': 'festa', 'festa': 'festa',
-    'money gun': 'esquadrilha', 'esquadrilha': 'esquadrilha',
+    'money gun': 'esquadrilha', 'pistola de dinheiro': 'esquadrilha', 'esquadrilha': 'esquadrilha',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 

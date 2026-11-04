@@ -18,8 +18,8 @@ Moedas aproximadas — podem variar por país/época; confira na bandeja de pres
 | 3 | Finger Heart | 5 | **caça da FAB reboca** o avião por 6 s |
 | q | Rosa | 10 | buquê: +150 m |
 | y | Hand Hearts | 100 | **ESCUDO** por 25 s: não perde caixa e **bloqueia o míssil** |
-| e | Confetti | 100 | festa: +400 m |
-| t | Money Gun | 500 | **esquadrilha de 3 caças** reboca por 15 s |
+| e | Confete | 100 | festa: +400 m |
+| t | Pistola de dinheiro (Money Gun) | 500 | **esquadrilha de 3 caças** reboca por 15 s |
 | 5 | GG | 1 | vento contra: volta 60 m |
 | 6 | Ice Cream Cone | 1 | pane no motor: volta 40 m |
 | 4 | Doughnut | 30 | urubu bate: volta 80 m |
