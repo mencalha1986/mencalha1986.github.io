@@ -6,8 +6,8 @@
   "volta": "2027-01-02",
   "issue": 1
  },
- "atualizado": "2026-11-03T21:04:59.365Z",
- "tentativa": "2026-11-03T21:04:59.365Z",
+ "atualizado": "2026-11-04T01:28:15.023Z",
+ "tentativa": "2026-11-04T01:28:15.023Z",
  "erro": null,
  "voos": [
   {
@@ -20,7 +20,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 10296,
+   "brl": 10340,
    "eur": 1677
   },
   {
@@ -33,7 +33,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "10h 25 min GRU",
-   "brl": 10348,
+   "brl": 10392,
    "eur": 1685
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 10628,
+   "brl": 10676,
    "eur": 1731
   },
   {
@@ -59,7 +59,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 10628,
+   "brl": 10676,
    "eur": 1731
   },
   {
@@ -72,7 +72,7 @@
    "chega": "GIG",
    "paradas": 2,
    "detalhe": "GRU, CWB",
-   "brl": 10721,
+   "brl": 10769,
    "eur": 1746
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 10873,
+   "brl": 10922,
    "eur": 1771
   },
   {
@@ -98,7 +98,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min MAD",
-   "brl": 11563,
+   "brl": 11615,
    "eur": 1883
   },
   {
@@ -111,7 +111,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "2h 40 min VCP",
-   "brl": 11908,
+   "brl": 11962,
    "eur": 1939
   },
   {
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 12056,
+   "brl": 12110,
    "eur": 1963
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14611,
+   "brl": 14676,
    "eur": 2379
   },
   {
@@ -150,7 +150,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 16285,
+   "brl": 16358,
    "eur": 2652
   }
  ],
@@ -469,6 +469,16 @@
    "brl": 10296,
    "eur": 1677,
    "direto": 14611,
+   "razoavelEur": 1677,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2379,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-04T01:28:15.023Z",
+   "brl": 10340,
+   "eur": 1677,
+   "direto": 14676,
    "razoavelEur": 1677,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 2379,
