@@ -148,6 +148,7 @@
         ctx.fillStyle = 'rgba(180,210,240,0.7)'; ctx.beginPath(); ctx.ellipse(sd * 42, -190, 5, 3.4, sd * 0.3, 0, 7); ctx.fill();
         ctx.fillStyle = '#111'; U.roundRect(ctx, sd * 36 - 5, -155, 10, 9, 3); ctx.fill();
       });
+      if (!this.dismounted) {   // motoboy desceu para entregar: só a moto fica
       // braços (jaqueta preta)
       const sh = (sd) => ({ x: sd * 20, y: -190 });
       [-1, 1].forEach((sd) => {
@@ -181,6 +182,7 @@
         cap(ctx, knee, boot, 9, 7, '#3a4a66', '#1e2638');
         ctx.fillStyle = '#111'; U.roundRect(ctx, boot.x - 8, boot.y - 9, 16, 12, 4); ctx.fill();
       });
+      }
       // carenagem lateral, banco
       ctx.fillStyle = '#c1121f'; U.roundRect(ctx, -22, -104, 44, 26, 10); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(-18, -100, 12, 4);
@@ -234,6 +236,40 @@
       this.headScreen = { x: hp.x, y: hp.y }; this.boxScreen = { x: bp.x, y: bp.y };
       ctx.restore();
       this.screenK = k; this.groundScreen = { x: g.x, y: g.y };
+    }
+
+    // motoboy a pé (de costas / 3/4), levando a caixa até o cliente
+    static courier(ctx, x, y, s, t, st) {
+      const k = s / 100, wk = st.walking ? Math.sin(t * 10) : 0, f = st.face || 1;
+      ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, 0, 26, 7, 0, 0, 7); ctx.fill();
+      // pernas (calça jeans) e botas
+      ctx.strokeStyle = '#3a4a66'; ctx.lineWidth = 12; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-8, -92); ctx.lineTo(-8 + wk * 8, -8); ctx.moveTo(8, -92); ctx.lineTo(8 - wk * 8, -8); ctx.stroke();
+      ctx.fillStyle = '#111'; U.roundRect(ctx, -16 + wk * 8, -12, 16, 11, 4); ctx.fill(); U.roundRect(ctx, 0 - wk * 8, -12, 16, 11, 4); ctx.fill();
+      // jaqueta preta com faixa refletiva
+      const g = ctx.createLinearGradient(-22, 0, 22, 0); g.addColorStop(0, '#0e0f13'); g.addColorStop(0.5, '#2b2e36'); g.addColorStop(1, '#0e0f13');
+      ctx.fillStyle = g; U.roundRect(ctx, -22, -160, 44, 74, 14); ctx.fill();
+      ctx.fillStyle = 'rgba(220,230,240,0.75)'; ctx.fillRect(-21, -128, 42, 4);
+      logo(ctx, 0, -146, 0.9);
+      // braços: segurando a caixa na frente (aparece pelos lados) ou balançando
+      ctx.strokeStyle = '#1b1d22'; ctx.lineWidth = 10;
+      if (st.box) {
+        ctx.beginPath(); ctx.moveTo(-20, -150); ctx.lineTo(-30 * f, -118); ctx.moveTo(20, -150); ctx.lineTo(30, -118); ctx.stroke();
+        ctx.save(); ctx.translate(24 * f, -122);
+        ctx.fillStyle = '#c69c6d'; ctx.fillRect(-24, -18, 48, 36); ctx.fillStyle = '#a77d50'; ctx.fillRect(-24, -18, 48, 5); ctx.fillStyle = '#82e8cc'; ctx.fillRect(-4, -18, 8, 36);
+        ctx.restore();
+        ctx.fillStyle = '#0b0b0d'; ctx.beginPath(); ctx.arc(-30 * f, -116, 6, 0, 7); ctx.arc(30, -116, 6, 0, 7); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(-20, -150); ctx.lineTo(-26 - wk * 6, -100); ctx.moveTo(20, -150); ctx.lineTo(26 + wk * 6, -100); ctx.stroke();
+      }
+      // capacete
+      const hg = ctx.createRadialGradient(-5, -186, 2, 0, -180, 18); hg.addColorStop(0, '#ffffff'); hg.addColorStop(0.7, '#e8ebef'); hg.addColorStop(1, '#b9c0c8');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(0, -180, 16, 17, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#82e8cc'; ctx.fillRect(-3, -197, 6, 34);
+      ctx.restore();
+      const m = ctx.getTransform(); void m;
+      return { x, y: y - s * 2.1 };
     }
 
     // cliente de frente, andando do portão até a moto

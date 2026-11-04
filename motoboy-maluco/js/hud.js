@@ -309,7 +309,7 @@
 
     drawBubbles(ctx, t) {
       for (const b of this.bubbles) {
-        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : b.who === 'policia' ? (g.city && g.city.policeHead) : g.rider.headScreen;
+        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : b.who === 'policia' ? (g.city && g.city.policeHead) : (g.courier && g.courierHead) || g.rider.headScreen;
         if (!anchor) continue;
         const pop = U.easeOutBack(U.clamp(b.age * 5, 0, 1)), fade = U.clamp((b.dur - b.age) / 0.3, 0, 1);
         ctx.font = `800 30px ${FU}`;

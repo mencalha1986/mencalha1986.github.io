@@ -85,7 +85,7 @@
       const man = this.rider.manual; this.rider.reset(); this.rider.manual = man; this._bind();
       this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = [];
       this.mode = 'playing'; this.roundTime = 0; this.delivered = []; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
-      this.chaseDog = null; this.cust = null; this.stopping = null; this.pendingGift = null; this.flyBox = null;
+      this.chaseDog = null; this.cust = null; this.courier = null; this.rider.dismounted = false; this.stopping = null; this.pendingGift = null; this.flyBox = null;
       // pedidos: um achado do site para cada casa
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.orders = this.city.stops.map((s, i) => ({ stop: s, item: items[i % items.length], stars: 5, client: null }));
@@ -265,21 +265,30 @@
       const s = this.stopping, o = this.orders[s.k], d = this.rider;
       o.client = this._clientName();
       const look = this.city.customers[s.k], sd = s.side || 1, R = ZONE.rua.road * sd, FX = R + ZONE.rua.side * sd;
-      this.cust = { x: FX + 0.3 * sd, z: s.z + 0.6, look, walking: false, box: false, wave: false, alpha: 0 };
+      this.cust = { x: FX + 0.3 * sd, z: s.z + 0.9, look, walking: false, box: false, wave: false, alpha: 0 };
       const T = (t, fn) => this.after(t, fn, 'stop');
+      const meetX = R + 0.15 * sd;
       T(0.1, () => { this.audio.honk(); this.say('chegou', { force: true }); });
-      T(0.6, () => { this.cust.walking = true; this.cust.tx = R + 0.45 * sd; });
-      T(2.1, () => { this.cust.walking = false; this.flyBox = { t: 0, item: o.item }; });
-      T(2.6, () => {
-        this.cust.box = true; this.flyBox = null; s.done = true;
+      // desce da moto e tira a caixa do baú
+      T(0.5, () => { d.dismounted = true; this.courier = { x: d.x + 0.55 * sd, z: d.z - 0.15, walking: false, box: false, face: sd }; this.audio.thud(); });
+      T(1.0, () => { this.courier.box = true; this.audio.cardboard(); });
+      T(1.2, () => { this.courier.walking = true; this.courier.tx = meetX - 0.5 * sd; this.courier.tz = s.z + 0.5; });
+      T(0.8, () => { this.cust.walking = true; this.cust.tx = R + 0.5 * sd; });
+      // entrega na mão
+      T(2.9, () => {
+        const cr = this.courier; cr.walking = false; cr.box = false;
+        this.cust.walking = false; this.cust.box = true; s.done = true;
         this.audio.deliver(); this.fx.confetti(this.customerHead ? this.customerHead.x : 700, this.customerHead ? this.customerHead.y : 1100, 50, 0.6);
         this.delivered.push({ item: o.item, client: o.client, num: s.num, stars: o.stars });
         this.hud.showCard({ item: o.item, client: o.client, num: s.num, stars: o.stars });
         this.say('cliente', { force: true });
       });
-      T(4.2, () => { this.cust.wave = true; this.say('tchau', { force: true }); });
-      T(5.4, () => {
-        this.cust.walking = true; this.cust.tx = FX + 0.6 * sd; this.cust.leaving = true;
+      T(4.4, () => { this.cust.wave = true; this.say('tchau', { force: true }); });
+      // volta e sobe na moto
+      T(4.7, () => { const cr = this.courier; cr.walking = true; cr.tx = d.x + 0.55 * sd; cr.tz = d.z - 0.15; });
+      T(5.9, () => { this.courier = null; d.dismounted = false; this.audio.thud(); });
+      T(6.3, () => {
+        this.cust.walking = true; this.cust.tx = FX + 0.6 * sd; this.cust.leaving = true; this.cust.box = true;
         this.stopping = null;
         if (this.city.stops.every((x) => x.done)) { this._endRound(); return; }
         d.force(S.RIDE); this.audio.whoosh(true);
@@ -393,7 +402,7 @@
     // semáforo / guarda: espera no vermelho, faz fila atrás dos carros, e se furar o sinal leva bronca
     _signal(K, prevZ) {
       const d = this.rider, c = this.city, sl = c.stopLine(K), wild = d.state === S.RUN || d.state === S.CHASE;
-      if (K.zc - d.z > 70) return;
+      if (K.zc - d.z > 70 || K.ctl === 'none') return;
       let capZ = Infinity;
       if (K.sig !== 'g' && d.z < sl + 0.4 && !wild && !K.ran) {
         const room = sl - (d.z + 0.9);
@@ -503,7 +512,7 @@
         this.audio.setEngine(d.speed, true);
       } else if (this.mode === 'title') {
         this._autoSteer(dt);
-        d.update(dt, c); if (d.z > 70) { d.z = 0; }
+        d.update(dt, c); if (d.z > CNB.City.WH_END + 18) { d.z = 0; }
       } else if (this.mode === 'win') {
         this.sumTime += dt; this.audio.setEngine(0, false);
         if (Math.random() < dt * 4) this.fx.rain(2);
@@ -534,6 +543,11 @@
         if (bo.pose === 'walk') { const dx = bo.tx - bo.x; bo.x += Math.sign(dx) * Math.min(Math.abs(dx), 2.2 * dt); }
         bo.alpha = U.damp(bo.alpha, bo.leaving && Math.abs(bo.tx - bo.x) < 0.3 ? 0 : 1, 5, dt);
         if ((bo.leaving && bo.alpha < 0.03) || bo.z < this.cam.z + 0.5) { this.borr = null; this.borrHead = null; }
+      }
+      const cr = this.courier;
+      if (cr && cr.walking && cr.tx !== undefined) {
+        const dx = cr.tx - cr.x, dz = cr.tz - cr.z, dist = Math.hypot(dx, dz), st = Math.min(dist, 1.4 * dt);
+        if (dist > 0.01) { cr.x += dx / dist * st; cr.z += dz / dist * st; } else cr.walking = false;
       }
       if (this.flyBox) this.flyBox.t += dt / 0.5;
       for (const o of c.obstacles) if (o.hit && !o.passed) o.knock = U.damp(o.knock, 1, 9, dt);
@@ -594,6 +608,8 @@
         cx.save(); cx.globalAlpha = cu.alpha; CNB.Rider.customer(cx, p.x, p.y, p.s, cu.look, t, cu); cx.restore();
         this.customerHead = { x: p.x, y: p.y - p.s * 1.95 };
       } });
+      const crr = this.courier;
+      if (crr) sprites.push({ z: crr.z, draw: (cx) => { const p = city.proj(c, crr.x, 0.15, crr.z); if (p) this.courierHead = CNB.Rider.courier(cx, p.x, p.y, p.s, t, crr); } });
       const bo = this.borr;
       if (bo && bo.alpha > 0.02) sprites.push({ z: bo.z, draw: (cx) => {
         const p = city.proj(c, bo.x, 0, bo.z); if (!p) return;

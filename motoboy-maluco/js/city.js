@@ -52,6 +52,15 @@
       const pick = (arr, prev) => { let v; do { v = arr[Math.floor(r() * arr.length)]; } while (v === prev && r() < 0.8); return v; };
       const ctl = () => ({ ctl: r() < 0.38 ? 'police' : 'light', sig: r() < 0.5 ? 'g' : 'r', sigT: r() * 6, cross: [], crossT: 0, turned: false });
       let z = 0, avT = null, ruT = null;
+      // SAÍDA DO GALPÃO: pátio da empresa até o portão, depois vira na avenida
+      {
+        const zc0 = City.WH_END + City.YARD, d0 = r() < 0.5 ? 1 : -1;
+        const c0 = { zc: zc0, cw: CWA, dir: d0, kind: 'T', name: 'AVENIDA', ctl: 'none', sig: 'g', sigT: 0, cross: [], crossT: 0, turned: false, exit: true };
+        this.corners.push(c0); this.curves.push({ z0: zc0, z1: zc0 + CWA, dir: d0 });
+        this.zones.push({ type: 'rua', theme: 'patio', z0: 0, z1: zc0 + CWA, stopAt: zc0 - 3, corner: c0 });
+        this.maneuvers.push({ z: zc0, type: d0 > 0 ? 'right' : 'left', name: 'AVENIDA' });
+        z = zc0 + CWA; this.startZ = z;
+      }
       for (let k = 0; k < cfg.deliveries; k++) {
         const A = rr(cfg.avenueLength), zc = z + A, dirS = r() < 0.5 ? 1 : -1;
         const streetName = STREETS[Math.floor(r() * STREETS.length)];
@@ -82,7 +91,7 @@
       this._buildCurve();
       // obstáculos (fora das curvas e longe das casas de entrega)
       this.obstacles = [];
-      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > City.WH_END + 10;
+      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > this.startZ + 10;
       let oz = 22, lastT = '';
       while (oz < this.length - 10) {
         if (freeAt(oz)) {
@@ -101,7 +110,7 @@
       }
       // TRÂNSITO: carros e ônibus na avenida; na rua, carro lento na mão e carro vindo na contramão
       const curveAt = (zz) => this.curves.some((c) => zz > c.z0 - 6 && zz < c.z1 + 6);
-      let tz = City.WH_END + 12;   // nada de trânsito dentro do galpão
+      let tz = this.startZ + 12;   // nada de trânsito dentro do galpão nem no pátio
       while (tz < this.length - 15) {
         if (!curveAt(tz) && !this.stops.some((st) => Math.abs(tz - st.z) < 14)) {
           const zone = this.zoneAt(tz), R = ZONE[zone.type].road;
@@ -121,7 +130,7 @@
 
       // árvores, postes e placas
       this.props = [];
-      for (let pz = City.WH_END + 6; pz < this.length; pz += 9 + r() * 10) {
+      for (let pz = this.startZ + 6; pz < this.length; pz += 9 + r() * 10) {
         const side = r() < 0.5 ? -1 : 1, zn = this.zoneAt(pz), zt = zn.type;
         if (this.stops.some((st) => st.side === side && Math.abs(st.z - pz) < 12)) continue;   // nada na frente da casa do cliente
         if (zn.beach && side === zn.beach) { this.props.push({ z: pz, side, kind: 'palm', seed: r() }); continue; }
@@ -200,7 +209,7 @@
     update(dt, t) {
       const K0 = this.nextCorner;
       for (const k of this.corners) {
-        if (k.turned) continue;
+        if (k.turned || k.ctl === 'none') continue;
         k.sigT += dt;
         if (k.sigT > City.SIG[k.sig]) {
           k.sigT = 0; k.sig = k.sig === 'g' ? 'y' : k.sig === 'y' ? 'r' : 'g';
@@ -422,6 +431,33 @@
       const a = P(-2.6, OY + 0.75, z - 0.02), b = P(2.6, OY + 1.35, z - 0.02);
       if (a && b) { ctx.fillStyle = '#0e3a4a'; ctx.fillRect(a.x, b.y, b.x - a.x, a.y - b.y); const hh = a.y - b.y; if (hh > 8) { ctx.fillStyle = '#82e8cc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(hh * 0.7)}px ${U.FONT_TITLE}`; ctx.fillText('ACHADOS ÚTEIS · CENTRO DE DISTRIBUIÇÃO', (a.x + b.x) / 2, (a.y + b.y) / 2 + hh * 0.05); ctx.textBaseline = 'alphabetic'; } }
     }
+    // portão de saída com cancela levantada e guarita
+    _gate(ctx, cam, K, t) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), z = K.zc - 1.5, R = ZONE.rua.road, FX = R + ZONE.rua.side;
+      const ps = P(-R - 0.3, 0.1, z), pt = P(-R - 0.3, 1.2, z), arm = P(-R - 0.3 + 0.5, 1.2 + 3.2, z);
+      if (ps && pt && arm) {
+        ctx.fillStyle = '#facc15'; ctx.fillRect(ps.x - ps.s * 0.12, pt.y, ps.s * 0.24, ps.y - pt.y);
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = Math.max(2, ps.s * 0.1); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(arm.x, arm.y); ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.setLineDash([ps.s * 0.25, ps.s * 0.25]); ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(arm.x, arm.y); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // guarita
+      const gx = R + 0.4, g0 = P(gx, 0.1, z), g1 = P(gx + 1.6, 2.5, z);
+      if (g0 && g1) {
+        const w = g1.x - g0.x, h = g0.y - g1.y;
+        ctx.fillStyle = '#e5e7eb'; ctx.fillRect(g0.x, g1.y, w, h);
+        ctx.fillStyle = '#0e3a4a'; ctx.fillRect(g0.x - w * 0.08, g1.y - h * 0.12, w * 1.16, h * 0.14);
+        ctx.fillStyle = 'rgba(120,180,220,0.85)'; ctx.fillRect(g0.x + w * 0.12, g1.y + h * 0.18, w * 0.76, h * 0.36);
+        ctx.fillStyle = '#c98c64'; ctx.beginPath(); ctx.arc(g0.x + w * 0.5, g1.y + h * 0.38, w * 0.12, 0, 7); ctx.fill();
+        ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(g0.x + w * 0.5, g1.y + h * 0.33, w * 0.12, Math.PI, 0); ctx.fill();
+        if (h > 30) { ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `${Math.round(h * 0.1)}px ${U.FONT_TITLE}`; ctx.fillText('PORTARIA', g0.x + w / 2, g1.y - h * 0.02); }
+      }
+      // placa "ATENÇÃO SAÍDA DE VEÍCULOS"
+      const s0 = P(-FX + 0.3, 2.2, z + 0.5), s1 = P(-FX + 2.0, 1.4, z + 0.5);
+      if (s0 && s1 && s1.x - s0.x > 20) {
+        ctx.fillStyle = '#facc15'; ctx.fillRect(s0.x, s0.y, s1.x - s0.x, s1.y - s0.y);
+        ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = `800 ${Math.round((s1.y - s0.y) * 0.3)}px ${U.FONT_UI}`; ctx.fillText('SAÍDA DE', (s0.x + s1.x) / 2, s0.y + (s1.y - s0.y) * 0.42); ctx.fillText('VEÍCULOS', (s0.x + s1.x) / 2, s0.y + (s1.y - s0.y) * 0.8);
+      }
+    }
     _pallet(ctx, cam, x, z, k) {   // pilhas de caixas no chão do galpão
       const p = this.proj(cam, x, 0, z); if (!p) return;
       const s = p.s, w = 1.3 * s;
@@ -443,6 +479,19 @@
     // um lado da via: calçada + o que tem atrás dela (lojas, prédios, casas, vila ou a praia)
     _sideStrip(ctx, P, cam, zn, zf, zm, dz, side, R, FX, F, zone, G, Wl, idx) {
       const av = zone.type === 'av';
+      if (zone.theme === 'patio') {   // pátio da empresa: piso de concreto, muro com grade e a marca
+        if (G) {
+          this._quad(ctx, P(side * R, 0, zn), P(side * R, 0.1, zn), P(side * R, 0.1, zf), P(side * R, 0, zf), F('#c9cdd1'));
+          this._quad(ctx, P(side * R, 0.1, zn), P(side * FX, 0.1, zn), P(side * FX, 0.1, zf), P(side * R, 0.1, zf), F(idx % 2 ? '#b3b7bb' : '#aeb2b6'));
+        }
+        if (!Wl) return;
+        const x = side * FX;
+        this._quad(ctx, P(x, 0.1, zn), P(x, 1.3, zn), P(x, 1.3, zf), P(x, 0.1, zf), F('#d9dcdf'));
+        this._quad(ctx, P(x, 0.9, zn), P(x, 1.05, zn), P(x, 1.05, zf), P(x, 0.9, zf), F('#82e8cc'));
+        if (Math.floor(zm * 2.5) % 2 === 0) this._quad(ctx, P(x, 1.3, zn), P(x, 2.6, zn), P(x, 2.6, zf), P(x, 1.3, zf), F('#4b5563'));   // grade
+        this._quad(ctx, P(x, 2.5, zn), P(x, 2.6, zn), P(x, 2.6, zf), P(x, 2.5, zf), F('#4b5563'));
+        return;
+      }
       if (av && zone.beach === side) {
         if (G) {
           this._quad(ctx, P(side * R, 0, zn), P(side * R, 0.15, zn), P(side * R, 0.15, zf), P(side * R, 0, zf), F('#b8bcc2'));
@@ -615,7 +664,8 @@
       const KC = this.nextCorner;
       if (KC && KC.zc - cam.z < 200 && KC.zc - cam.z > -60) {
         const sl = this.stopLine(KC), R = this.road(sl);
-        if (KC.ctl === 'light') {
+        if (KC.ctl === 'none') { L.push({ z: KC.zc - 1.5, x: 0, draw: (c) => this._gate(c, cam, KC, t) }); }
+        else if (KC.ctl === 'light') {
           L.push({ z: sl, x: R + 0.4, draw: (c) => this._light(c, cam, KC, R + 0.4, sl, t) });
           if (KC.kind === 'side') L.push({ z: KC.zc + KC.cw + 0.4, x: -KC.dir * (R + 0.4), draw: (c) => this._light(c, cam, KC, -KC.dir * (ZONE.av.road + 0.4), KC.zc + KC.cw + 0.6, t, true) });
         } else {
@@ -931,7 +981,8 @@
     }
   }
 
-  City.WH_END = 30;   // fim do galpão (o motoboy sai pela porta)
+  City.WH_END = 30;
+  City.YARD = 26;   // pátio entre o portão do galpão e a saída para a avenida   // fim do galpão (o motoboy sai pela porta)
   City.ZONE = ZONE; City.OB = OB; City.CARS = CARS;
   CNB.City = City; CNB.W = W; CNB.H = H;
 })();
