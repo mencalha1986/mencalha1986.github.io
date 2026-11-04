@@ -430,7 +430,7 @@
       }
       // vento: riscos voando para trás
       if (p.wind > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 4; for (let i = 0; i < 24; i++) { const y = 420 + ((i * 263) % 1250), x = ((i * 377 + t * 2600) % 1400) - 200; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 140, y); ctx.stroke(); } }
-      if (p.turbo > 0) CNB.Effects.speedLines && CNB.Effects.speedLines(ctx, W * 0.7, p.y, 1, t);
+      if (p.turbo > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineCap = 'round'; for (let i = 0; i < 14; i++) { const y = p.y - 220 + ((i * 97) % 440), x = W - ((i * 331 + t * 2400) % (W + 300)); ctx.lineWidth = 2 + (i % 3); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 120 + (i % 4) * 40, y); ctx.stroke(); } }
       ctx.restore();
       this.fx.draw(ctx);
       this.hud.draw(ctx, t);

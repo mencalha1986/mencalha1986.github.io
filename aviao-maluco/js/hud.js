@@ -108,6 +108,7 @@
     ctx.restore();
   }
 
+  const VERSAO = 'versão 04/11 15:58';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];
@@ -383,6 +384,7 @@
       });
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.fillText('Teste: 1–9 presentes · espaço/↑ pilotar · D demo · H painel · ' + this.g.catalog.items.length + ' achados', W / 2, 1520);
+      ctx.font = `700 22px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(VERSAO, W / 2, 1560);
     }
 
     // ---------------- missão cumprida ----------------

@@ -212,6 +212,11 @@
     }
 
     _obstacle(ctx, o, sx, t) {
+      ctx.save(); ctx.shadowColor = 'rgba(10,20,30,0.45)'; ctx.shadowBlur = 26; ctx.shadowOffsetX = 10; ctx.shadowOffsetY = 6;
+      this._obstacleBody(ctx, o, sx, t);
+      ctx.restore();
+    }
+    _obstacleBody(ctx, o, sx, t) {
       const top = o.gy - o.gap / 2, bot = o.gy + o.gap / 2, w = o.w;
       // ---- de baixo ----
       if (o.bot === 'predio' || o.bot === 'predioPraia') {
