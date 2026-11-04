@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Motoboy Maluco</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage"><canvas id="game" width="1080" height="1920"></canvas></div>
+
+  <aside id="test-panel">
+    <h2>MOTOBOY MALUCO</h2>
+    <p class="note">Aperte <b>H</b> para esconder este painel antes de capturar a janela.</p>
+    <div class="live-box">
+      <label for="ws-url">Conexão da live (endereço WebSocket do TikFinity)</label>
+      <div class="ws-row"><input id="ws-url" placeholder="ws://localhost:21213" autocomplete="off"><button class="ctrl" id="btn-ws">Conectar</button></div>
+      <div id="ws-status">Modo teste (sem conexão)</div>
+      <div id="unknown-gifts"></div>
+    </div>
+    <label for="ctl-select">Controle (← → assume; volta ao automático sozinho)</label>
+    <select id="ctl-select">
+      <option value="auto">Automático: pilota sozinho</option>
+      <option value="manual">Manual: eu piloto com ← → ou tocando nos lados</option>
+    </select>
+    <label for="test-user">Nome do espectador no teste (vazio = aleatório)</label>
+    <input id="test-user" placeholder="@seu_nome" autocomplete="off">
+    <div id="gift-buttons"></div>
+    <div class="row">
+      <button class="ctrl wide" id="btn-demo">Demo automático: desligado</button>
+      <button class="ctrl" id="btn-reset">Nova rodada (R)</button>
+      <button class="ctrl" id="btn-win">Pular p/ entrega (W)</button>
+      <button class="ctrl" id="btn-ann">Vozes: ligadas</button>
+      <button class="ctrl" id="btn-full">Tela cheia (F)</button>
+      <button class="ctrl wide" id="btn-hide">Esconder painel (H)</button>
+    </div>
+    <div id="voice-info"></div>
+  </aside>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/produtos-reserva.js"></script>
+  <script src="js/falas.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/city.js"></script>
+  <script src="js/rider.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/gifts.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/remote.js"></script>
+</body>
+</html>
