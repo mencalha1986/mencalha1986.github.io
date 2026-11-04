@@ -46,7 +46,7 @@
 
     draw(ctx, t) {
       const blink = this.inv > 0 && Math.floor(t * 14) % 2 === 0;
-      ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.ang);
+      ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.ang); ctx.scale(1.18, 1.18);
       if (blink) ctx.globalAlpha = 0.45;
       if (this.turbo > 0) { const g = ctx.createRadialGradient(0, 0, 20, 0, 0, 200); g.addColorStop(0, 'rgba(255,220,80,0.45)'); g.addColorStop(1, 'rgba(255,220,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 200, 0, 7); ctx.fill(); }
       // asa de trás
@@ -60,12 +60,13 @@
       ctx.fillStyle = body; ctx.beginPath();
       ctx.moveTo(-122, -14); ctx.quadraticCurveTo(-60, -40, 40, -38); ctx.quadraticCurveTo(108, -36, 118, 0); ctx.quadraticCurveTo(108, 32, 40, 34); ctx.quadraticCurveTo(-60, 32, -122, 4); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#82e8cc'; ctx.beginPath(); ctx.moveTo(-118, -2); ctx.quadraticCurveTo(-40, 6, 116, 4); ctx.lineTo(114, 12); ctx.quadraticCurveTo(-40, 16, -118, 6); ctx.fill();
-      // porta de carga + logo
-      ctx.strokeStyle = 'rgba(30,41,59,0.45)'; ctx.lineWidth = 2; U.roundRect(ctx, -70, -30, 52, 40, 6); ctx.stroke();
-      logo(ctx, -2, -12, 1.2);
-      ctx.fillStyle = '#0e3a4a'; ctx.font = `900 11px ${U.FONT_UI}`; ctx.textAlign = 'left'; ctx.fillText('ACHADOS', 14, -16); ctx.fillText('CARGO', 14, -4);
-      // janelas e cabine com o piloto
-      ctx.fillStyle = '#1e3a5f'; for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.arc(52 + i * 18, -14, 6, 0, 7); ctx.fill(); }
+      // MARCA bem grande no avião todo
+      logo(ctx, -96, -14, 1.7);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.font = `31px ${U.FONT_TITLE}`; ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff';
+      ctx.strokeText('ACHADOS ÚTEIS', -76, -6); ctx.fillStyle = '#0e3a4a'; ctx.fillText('ACHADOS ÚTEIS', -76, -6);
+      ctx.fillStyle = '#0e3a4a'; ctx.font = `900 15px ${U.FONT_UI}`; ctx.fillText('POR AÍ', -88, 29);
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-112, -58, 12, 0, 7); ctx.fill(); logo(ctx, -111, -57, 1.05);
       ctx.fillStyle = '#7dd3fc'; ctx.beginPath(); ctx.moveTo(78, -34); ctx.quadraticCurveTo(104, -30, 110, -10); ctx.lineTo(82, -10); ctx.closePath(); ctx.fill();
       ctx.save(); ctx.beginPath(); ctx.moveTo(78, -34); ctx.quadraticCurveTo(104, -30, 110, -10); ctx.lineTo(82, -10); ctx.closePath(); ctx.clip();
       ctx.fillStyle = '#c98c64'; ctx.beginPath(); ctx.arc(92, -16, 10, 0, 7); ctx.fill();                 // piloto

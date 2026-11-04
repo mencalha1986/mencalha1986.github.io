@@ -65,7 +65,7 @@
       this.birds = this.birds.filter((b) => b.x > this.x - 400);
       for (const c of this.lost) { c.vy += 1400 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.vr * dt; if (c.y > GY - 20) { c.y = GY - 20; c.vy *= -0.25; c.vx *= 0.6; c.vr *= 0.5; c.ground = true; } }
       this.lost = this.lost.filter((c) => c.x > this.x - 600);
-      for (const c of this.chutes) { if (c.y < GY - 26) { c.y += 120 * dt; c.x += Math.sin(t * 1.5 + c.seed * 6) * 30 * dt; } else { c.y = GY - 26; c.landed = true; } }
+      for (const c of this.chutes) { const gy = GY - (c.item ? 230 : 60); if (c.y < gy) { c.y += 110 * dt; c.x += Math.sin(t * 1.5 + c.seed * 6) * 30 * dt; } else { c.y = gy; c.landed = true; } }
       this.chutes = this.chutes.filter((c) => c.x > this.x - 700);
       for (const p of this.puffs) { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += 30 * dt; }
       this.puffs = this.puffs.filter((p) => p.age < p.life);
@@ -82,6 +82,7 @@
       this._sky(ctx, t, camX, st);
       this._far(ctx, camX, st, t);
       this._mid(ctx, camX, st, t);
+      this._landmarks(ctx, camX, t);
       this._ground(ctx, camX, st, t);
       for (const o of this.obstacles) { const sx = o.x - camX; if (sx > -320 && sx < W + 320) this._obstacle(ctx, o, sx, t); }
       for (const c of this.chutes) this._chute(ctx, c, c.x - camX, t);
@@ -122,6 +123,24 @@
       for (let i = -2; i < 30; i++) {
         const span = 2700, x = (((i * 90 - camX * 0.12) % span) + span) % span - 200, h = 140 + U.hash(i * 3.1) * (st === 'aeroporto' ? 120 : 320), w = 70 + U.hash(i) * 50;
         ctx.fillRect(x, base - h, w, h + 20);
+      }
+    }
+
+    // PONTOS TURÍSTICOS DO BRASIL passando ao fundo
+    _landmarks(ctx, camX, t) {
+      const L = World.LANDMARKS, par = 0.3, gapX = 1500, base = GY - 110;
+      const first = Math.floor((camX * par - 600) / gapX), last = Math.floor((camX * par + W + 600) / gapX);
+      for (let i = Math.max(0, first); i <= last; i++) {
+        const x = 700 + i * gapX - camX * par; if (x < -700 || x > W + 700) continue;
+        const lm = L[i % L.length];
+        ctx.save(); ctx.translate(x, base);
+        lm.draw(ctx, t);
+        ctx.restore();
+        // plaquinha com o nome
+        ctx.font = `800 22px ${U.FONT_UI}`; ctx.textAlign = 'center';
+        const tw = ctx.measureText(lm.name).width + 30;
+        ctx.fillStyle = 'rgba(14,58,74,0.85)'; U.roundRect(ctx, x - tw / 2, base + 10, tw, 36, 18); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillText(lm.name, x, base + 36);
       }
     }
 
@@ -277,13 +296,116 @@
         ctx.fillStyle = '#fff'; for (let i = -2; i <= 2; i += 2) { ctx.beginPath(); ctx.moveTo(i * 18, -170); ctx.lineTo(i * 30 - 12, -120); ctx.lineTo(i * 30 + 12, -120); ctx.fill(); }
         ctx.restore();
       }
-      this._crate(ctx, x, y, 48, 0, c.item, c.catalog);
-      ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center';
-      const tw = ctx.measureText(c.name).width + 24;
-      ctx.fillStyle = 'rgba(254,44,85,0.95)'; U.roundRect(ctx, x - tw / 2, y + 32, tw, 34, 12); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillText(c.name, x, y + 57);
+      // cartão do produto pendurado no paraquedas: foto, nome e preço
+      const it = c.item, cw = 230, ch = it ? 250 : 80, cx = x - cw / 2, cy = y - 22;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 14;
+      ctx.fillStyle = '#fff'; U.roundRect(ctx, cx, cy, cw, ch, 16); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = '#fe2c55'; ctx.lineWidth = 4; U.roundRect(ctx, cx, cy, cw, ch, 16); ctx.stroke();
+      if (it) {
+        if (c.catalog) c.catalog.drawPhoto(ctx, it, x - 65, cy + 10, 130, 12);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#1f2937'; ctx.font = `700 17px ${U.FONT_UI}`;
+        ctx.fillText(U.truncate(it.short || it.name || '', 24), x, cy + 164);
+        ctx.font = `36px ${U.FONT_TITLE}`; ctx.fillStyle = '#16a34a'; ctx.fillText(CNB.fmtBRL(it.price), x, cy + 200);
+      }
+      ctx.font = `800 20px ${U.FONT_UI}`; ctx.textAlign = 'center';
+      const nm = 'para ' + c.name, tw = ctx.measureText(nm).width + 24;
+      ctx.fillStyle = 'rgba(254,44,85,0.95)'; U.roundRect(ctx, x - tw / 2, cy + ch - 40, tw, 30, 12); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillText(nm, x, cy + ch - 18);
     }
   }
+
+  // silhuetas desenhadas (base no 0,0; para cima é negativo)
+  const C = { rock: '#6f8f7e', rockD: '#5a7a69', stone: '#d9d2c3', white: '#f4f4f0', shade: '#b9c3cc' };
+  World.LANDMARKS = [
+    { name: 'CRISTO REDENTOR · RJ', draw(ctx) {
+      ctx.fillStyle = C.rock; ctx.beginPath(); ctx.moveTo(-330, 0); ctx.quadraticCurveTo(-120, -300, 0, -440); ctx.quadraticCurveTo(140, -300, 330, 0); ctx.fill();
+      ctx.fillStyle = C.rockD; ctx.beginPath(); ctx.moveTo(-60, -400); ctx.quadraticCurveTo(0, -460, 60, -400); ctx.lineTo(80, -380); ctx.lineTo(-80, -380); ctx.fill();
+      ctx.fillStyle = C.white; ctx.fillRect(-14, -560, 28, 120); ctx.fillRect(-80, -548, 160, 18); ctx.beginPath(); ctx.arc(0, -572, 13, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-14, -440); ctx.lineTo(-22, -440); ctx.lineTo(-14, -530); ctx.fill(); ctx.beginPath(); ctx.moveTo(14, -440); ctx.lineTo(22, -440); ctx.lineTo(14, -530); ctx.fill();
+    } },
+    { name: 'PÃO DE AÇÚCAR · RJ', draw(ctx, t) {
+      ctx.fillStyle = C.rock; ctx.beginPath(); ctx.moveTo(-340, 0); ctx.quadraticCurveTo(-300, -200, -210, -210); ctx.quadraticCurveTo(-130, -200, -100, 0); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-40, 0); ctx.bezierCurveTo(-20, -420, 120, -460, 170, -330); ctx.quadraticCurveTo(220, -180, 260, 0); ctx.fill();
+      ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-210, -205); ctx.quadraticCurveTo(-40, -250, 110, -420); ctx.stroke();
+      const u = (t * 0.08) % 1, bx = U.lerp(-210, 110, u), by = U.lerp(-205, -420, u) + Math.sin(u * Math.PI) * 30;
+      ctx.fillStyle = '#ef4444'; U.roundRect(ctx, bx - 10, by, 20, 16, 4); ctx.fill();
+      ctx.fillStyle = '#2f8fd8'; ctx.fillRect(-380, -10, 700, 14);
+    } },
+    { name: 'CONGRESSO NACIONAL · DF', draw(ctx) {
+      ctx.fillStyle = C.stone; ctx.fillRect(-300, -40, 600, 40);
+      ctx.fillStyle = C.white; ctx.fillRect(-36, -330, 30, 290); ctx.fillRect(8, -330, 30, 290);
+      ctx.fillStyle = C.shade; for (let y = -320; y < -50; y += 14) { ctx.fillRect(-34, y, 26, 3); ctx.fillRect(10, y, 26, 3); }
+      ctx.fillStyle = C.white; ctx.beginPath(); ctx.moveTo(-250, -90); ctx.quadraticCurveTo(-180, -40, -110, -40); ctx.lineTo(-110, -40); ctx.lineTo(-250, -40); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-260, -96); ctx.quadraticCurveTo(-180, -30, -100, -96); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(180, -40, 70, Math.PI, 0); ctx.fill();
+    } },
+    { name: 'CATEDRAL DE BRASÍLIA · DF', draw(ctx) {
+      ctx.strokeStyle = C.white; ctx.lineWidth = 12; ctx.lineCap = 'round';
+      for (let i = -6; i <= 6; i++) { const x = i * 24; ctx.beginPath(); ctx.moveTo(x * 1.1, 0); ctx.quadraticCurveTo(x * 0.25, -150, x * 0.9, -300); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(80,140,200,0.35)'; ctx.beginPath(); ctx.moveTo(-140, 0); ctx.quadraticCurveTo(-30, -150, -120, -290); ctx.lineTo(120, -290); ctx.quadraticCurveTo(30, -150, 140, 0); ctx.fill();
+      ctx.strokeStyle = C.white; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(240, 0); ctx.lineTo(240, -220); ctx.stroke();
+    } },
+    { name: 'MASP · SÃO PAULO', draw(ctx) {
+      ctx.fillStyle = '#d22f27'; ctx.fillRect(-260, -260, 34, 260); ctx.fillRect(226, -260, 34, 260);
+      ctx.fillRect(-260, -270, 520, 30); ctx.fillRect(-260, -110, 520, 22);
+      ctx.fillStyle = '#56606b'; ctx.fillRect(-226, -240, 452, 130);
+      ctx.fillStyle = 'rgba(160,190,210,0.55)'; for (let x = -220; x < 220; x += 24) ctx.fillRect(x, -232, 18, 112);
+      ctx.fillStyle = '#9aa3ad'; ctx.fillRect(-160, -60, 320, 60);
+    } },
+    { name: 'PONTE ESTAIADA · SP', draw(ctx) {
+      ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 16; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-60, 0); ctx.lineTo(40, -440); ctx.moveTo(60, 0); ctx.lineTo(-40, -440); ctx.stroke();
+      ctx.strokeStyle = 'rgba(240,240,240,0.9)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 12; i++) { const y = -420 + i * 22; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(-330 + i * 16, -70); ctx.moveTo(0, y); ctx.lineTo(330 - i * 16, -70); ctx.stroke(); }
+      ctx.fillStyle = '#9ca3af'; ctx.fillRect(-360, -76, 720, 16);
+    } },
+    { name: 'ELEVADOR LACERDA · BA', draw(ctx) {
+      ctx.fillStyle = C.rock; ctx.beginPath(); ctx.moveTo(-40, 0); ctx.lineTo(-40, -300); ctx.lineTo(-360, -300); ctx.lineTo(-360, 0); ctx.fill();
+      ctx.fillStyle = '#efe7d6'; ctx.fillRect(-10, -380, 110, 380); ctx.fillRect(-90, -380, 90, 40);
+      ctx.fillStyle = '#c9b99a'; for (let y = -360; y < -10; y += 40) ctx.fillRect(10, y, 70, 14);
+      ctx.fillStyle = '#6b8fb5'; ctx.fillRect(-300, -330, 60, 30); ctx.fillStyle = '#f4d6a0'; ctx.fillRect(-230, -350, 110, 50);
+      ctx.fillStyle = '#2f8fd8'; ctx.fillRect(-60, -10, 380, 14);
+    } },
+    { name: 'TEATRO AMAZONAS · AM', draw(ctx) {
+      ctx.fillStyle = '#f2b5b0'; ctx.fillRect(-240, -170, 480, 170);
+      ctx.fillStyle = '#fff'; for (let x = -220; x < 230; x += 44) ctx.fillRect(x, -150, 16, 130);
+      ctx.fillStyle = '#e9ddc6'; ctx.fillRect(-250, -186, 500, 20);
+      ctx.save(); ctx.beginPath(); ctx.arc(0, -186, 120, Math.PI, 0); ctx.clip();
+      const cols = ['#16a34a', '#facc15', '#2563eb'];
+      for (let i = -8; i < 8; i++) { ctx.fillStyle = cols[(i + 9) % 3]; ctx.beginPath(); ctx.moveTo(0, -310); ctx.lineTo(i * 30, -186); ctx.lineTo(i * 30 + 30, -186); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+      ctx.fillStyle = '#e9ddc6'; ctx.fillRect(-8, -340, 16, 34);
+    } },
+    { name: 'CATARATAS DO IGUAÇU · PR', draw(ctx, t) {
+      ctx.fillStyle = '#4f7a52'; ctx.fillRect(-360, -300, 720, 60);
+      ctx.fillStyle = '#7b6a55'; ctx.fillRect(-360, -250, 720, 250);
+      for (let i = 0; i < 9; i++) {
+        const x = -330 + i * 80;
+        ctx.fillStyle = 'rgba(240,248,255,0.92)'; ctx.fillRect(x, -250, 46, 230);
+        ctx.fillStyle = 'rgba(190,220,240,0.9)'; for (let k = 0; k < 4; k++) ctx.fillRect(x + 6 + k * 10, -250 + ((t * 220 + k * 50 + i * 30) % 230), 4, 26);
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'; for (let i = 0; i < 12; i++) { ctx.beginPath(); ctx.arc(-330 + i * 60, -16, 30 + Math.sin(t * 2 + i) * 6, 0, 7); ctx.fill(); }
+    } },
+    { name: 'PONTE HERCÍLIO LUZ · SC', draw(ctx) {
+      ctx.fillStyle = '#2f8fd8'; ctx.fillRect(-380, -16, 760, 16);
+      ctx.fillStyle = '#e5e7eb'; ctx.fillRect(-170, -320, 22, 320); ctx.fillRect(148, -320, 22, 320); ctx.fillRect(-370, -70, 740, 12);
+      ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(-370, -150); ctx.lineTo(-160, -320); ctx.quadraticCurveTo(0, -90, 160, -320); ctx.lineTo(370, -150); ctx.stroke();
+      ctx.lineWidth = 2; for (let x = -140; x < 150; x += 22) { const y = -320 + (1 - Math.pow(x / 160, 2)) * 115; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, -70); ctx.stroke(); }
+    } },
+    { name: 'FAROL DA BARRA · BA', draw(ctx, t) {
+      ctx.fillStyle = '#c9b99a'; U.poly(ctx, [-260, 0, -220, -80, 220, -80, 260, 0]); ctx.fill();
+      ctx.fillStyle = '#f4f4f0'; U.poly(ctx, [-34, -80, -24, -300, 24, -300, 34, -80]); ctx.fill();
+      ctx.fillStyle = '#111'; for (let y = -270; y < -90; y += 60) ctx.fillRect(-30, y, 60, 24);
+      ctx.fillStyle = '#fde68a'; ctx.fillRect(-18, -330, 36, 30); ctx.fillStyle = '#334155'; U.poly(ctx, [-24, -330, 0, -356, 24, -330]); ctx.fill();
+      ctx.fillStyle = '#2f8fd8'; ctx.fillRect(-380, -10, 760, 14);
+    } },
+    { name: 'LENÇÓIS MARANHENSES · MA', draw(ctx) {
+      ctx.fillStyle = '#f6ecd4';
+      for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(i * 120 - 120, 0); ctx.quadraticCurveTo(i * 120, -150 - (i % 2 ? 40 : 0), i * 120 + 120, 0); ctx.fill(); }
+      ctx.fillStyle = '#3fb6c9'; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.ellipse(i * 120 + 60, -8, 46, 10, 0, 0, 7); ctx.fill(); }
+    } }
+  ];
 
   World.PXM = PXM; World.GY = GY; World.TOP = TOP;
   CNB.World = World;

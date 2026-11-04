@@ -18,11 +18,15 @@ e os heróis do voo.
 | 6 | Ice Cream Cone | pane no motor: fumaça e volta 40 m |
 | 7 | Galaxy | **MÍSSIL**: explode o avião (GAME OVER) |
 | 8 | Heart Me | looping radical |
-| 9 | Seguir (grátis) | cai uma caixa de paraquedas com o nome do novo seguidor |
+| 9 | Seguir (grátis) | cai de paraquedas um **produto do site** (foto, nome e preço) para o novo seguidor |
 
 **Combo:** presentes seguidos (até 3 s entre um e outro) deixam o próximo mais forte (até 2,5×).
 **Ajuda x Sabotagem:** a barra no topo mostra quantos metros a live empurrou para frente e para trás.
 **Recorde:** o menor tempo até o aeroporto fica salvo e aparece no final.
+
+No fundo passam **pontos turísticos do Brasil**: Cristo Redentor, Pão de Açúcar, Congresso, Catedral de Brasília,
+MASP, Ponte Estaiada, Elevador Lacerda, Teatro Amazonas, Cataratas do Iguaçu, Ponte Hercílio Luz, Farol da Barra
+e Lençóis Maranhenses.
 
 Cada batida derruba uma caixa (aparece qual produto caiu). Sem vozes neste jogo.
 Distância, quantidade de caixas, velocidade e dificuldade: `js/config.js` (`goal`, `crates`, `gap`, `spacing`).

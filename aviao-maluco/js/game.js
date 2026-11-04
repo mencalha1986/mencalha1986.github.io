@@ -124,7 +124,7 @@
 
     _follow(user) {
       const w = this.world, p = this.plane, items = this.catalog.items;
-      w.chutes.push({ x: w.x - 30, y: p.y + 40, name: user, item: items.length ? U.choice(items) : null, catalog: this.catalog, seed: Math.random() });
+      w.chutes.push({ x: w.x + 160, y: p.y + 40, name: user, item: items.length ? U.choice(items) : null, catalog: this.catalog, seed: Math.random() });
       this.audio.chime(); this.fx.confetti(p.x, p.y, 40, 0.6);
       this.hud.banner('NOVO SEGUIDOR!', `caixa de paraquedas para ${user}`, '#fe2c55', 2.4);
       this.after(0.6, () => this.say('seguidor', { force: true }));
