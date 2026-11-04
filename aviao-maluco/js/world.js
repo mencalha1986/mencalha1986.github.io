@@ -44,8 +44,9 @@
         if (prev) gy = U.clamp(gy, prev.gy - 270, prev.gy + 270);
         const w = U.rand(150, 200);
         const bot = st === 'cidade' ? (Math.random() < 0.8 ? 'predio' : 'antena') : st === 'praia' ? (Math.random() < 0.55 ? 'predioPraia' : 'farol') : (Math.random() < 0.6 ? 'torre' : 'rocha');
-        const top = st === 'cidade' ? 'guindaste' : st === 'praia' ? 'dirigivel' : 'balao';
-        this.obstacles.push({ x: ox, w, gy, gap, bot, top, color: U.choice(BLD), seed: Math.random(), hit: false, passed: false });
+        const top = st === 'praia' ? 'dirigivel' : st === 'serra' && Math.random() < 0.4 ? 'balao' : 'guindaste';
+        const items = (CNB.game && CNB.game.catalog.items) || [], item = items.length ? items[Math.floor(Math.random() * items.length)] : null;
+        this.obstacles.push({ x: ox, w, gy, gap, bot, top, item, color: U.choice(BLD), seed: Math.random(), hit: false, passed: false });
         this.nextObs += U.rand(cfg.spacing[0], cfg.spacing[1]) * (st === 'serra' ? 1.05 : 1);
       }
       this.obstacles = this.obstacles.filter((o) => o.x > this.x - 3500);
@@ -54,8 +55,8 @@
     rects(o) {
       const top = o.gy - o.gap / 2, bot = o.gy + o.gap / 2, cx = o.x;
       const r = [{ x0: cx - o.w / 2, x1: cx + o.w / 2, y0: bot, y1: GY + 50 }];
-      if (o.top === 'guindaste') r.push({ x0: cx - 70, x1: cx + 70, y0: top - 70, y1: top }, { x0: cx - 4, x1: cx + 4, y0: 0, y1: top - 70 });
-      else if (o.top === 'dirigivel') r.push({ x0: cx - 145, x1: cx + 145, y0: top - 268, y1: top - 172 }, { x0: cx - 60, x1: cx + 60, y0: top - 122, y1: top });
+      if (o.top === 'guindaste') r.push({ x0: cx - 95, x1: cx + 95, y0: top - 165, y1: top }, { x0: cx - 4, x1: cx + 4, y0: 0, y1: top - 165 });
+      else if (o.top === 'dirigivel') r.push({ x0: cx - 145, x1: cx + 145, y0: top - 300, y1: top - 204 }, { x0: cx - 80, x1: cx + 80, y0: top - 160, y1: top });
       else r.push({ x0: cx - 92, x1: cx + 92, y0: top - 240, y1: top - 85 }, { x0: cx - 32, x1: cx + 32, y0: top - 48, y1: top });
       return r;
     }

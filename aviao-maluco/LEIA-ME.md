@@ -1,7 +1,8 @@
 # AVIÃO MALUCO — jogo de carga aérea para TikTok LIVE
 
 O avião de carga do **Achados Úteis Por Aí** leva caixas com **achados do site** (foto, nome e preço reais)
-desviando de prédios, guindastes, dirigíveis e balões. No fim ele **pousa no aeroporto** e o **caminhão
+desviando de prédios, torres e dos **próprios produtos do site** pendurados em guindastes e dirigíveis
+(foto, nome e preço). No fim ele **pousa no aeroporto** e o **caminhão
 da marca chega de ré e descarrega as caixas**, mostrando cada produto. Depois aparece o resumo com QR do site
 e os heróis do voo.
 

@@ -204,6 +204,27 @@
     return c;
   }
 
+  // caixa de produto do site: foto, nome e preço
+  function productBox(ctx, it, cat, cx, y, w = 190, h = 165) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; U.roundRect(ctx, cx - w / 2 + 6, y + 8, w, h, 14); ctx.fill();
+    ctx.fillStyle = lin(ctx, 0, y, 0, y + h, [[0, '#ffffff'], [1, '#e9eef0']]); U.roundRect(ctx, cx - w / 2, y, w, h, 14); ctx.fill();
+    ctx.strokeStyle = '#82e8cc'; ctx.lineWidth = 4; U.roundRect(ctx, cx - w / 2, y, w, h, 14); ctx.stroke();
+    const ps = h - 56;
+    if (it && cat) cat.drawPhoto(ctx, it, cx - ps / 2, y + 8, ps, 10);
+    ctx.fillStyle = '#0e3a4a'; ctx.fillRect(cx - w / 2 + 2, y + h - 44, w - 4, 42);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = `700 14px ${U.FONT_UI}`;
+    if (it) ctx.fillText(U.truncate(it.short || it.name || '', 22), cx, y + h - 26);
+    ctx.font = `800 11px ${U.FONT_UI}`; ctx.fillStyle = '#82e8cc'; ctx.fillText('achadosuteisporai.com.br', cx, y + h - 10);
+    if (it) {   // etiqueta de preço
+      ctx.save(); ctx.translate(cx + w / 2 - 14, y + 18); ctx.rotate(0.18);
+      const tx = CNB.fmtBRL(it.price); ctx.font = `30px ${U.FONT_TITLE}`; const tw = ctx.measureText(tx).width + 20;
+      ctx.fillStyle = '#fe2c55'; U.roundRect(ctx, -tw / 2, -18, tw, 36, 8); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(tx, 0, 10); ctx.restore();
+    }
+    ctx.restore();
+  }
+
   const cache = new WeakMap();
   function sprites(o, GY) {
     let s = cache.get(o); if (s) return s;
@@ -229,13 +250,21 @@
     if (o.bot === 'farol') { ctx.fillStyle = `rgba(255,236,160,${0.18 + 0.12 * Math.sin(t * 2.5)})`; U.poly(ctx, [sx, bot - 34, sx - 300, bot - 110, sx - 300, bot + 40]); ctx.fill(); }
     // de cima
     const k = s.top;
+    const cat = CNB.game && CNB.game.catalog;
     if (o.top === 'guindaste') {
       const sw = Math.sin(t * 1.3 + o.seed * 6) * 3;
-      ctx.strokeStyle = '#2a2d31'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx + sw, top - 148); ctx.stroke();
-      ctx.save(); ctx.translate(sx + sw, top - 148); ctx.rotate(sw * 0.004); ctx.drawImage(k, -100, 0); ctx.restore();
+      ctx.strokeStyle = '#2a2d31'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx + sw, top - 222); ctx.stroke();
+      ctx.save(); ctx.translate(sx + sw, top - 165); ctx.rotate(sw * 0.004);
+      // moitão e cintas
+      ctx.fillStyle = '#e0b21e'; U.roundRect(ctx, -14, -60, 28, 22, 4); ctx.fill(); ctx.fillStyle = '#1f2328'; for (let i = 0; i < 3; i++) ctx.fillRect(-12 + i * 9, -58, 4, 18);
+      ctx.strokeStyle = '#3a3e43'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(-88, 0); ctx.moveTo(0, -38); ctx.lineTo(88, 0); ctx.stroke();
+      productBox(ctx, o.item, cat, 0, 0);
+      ctx.restore();
     } else if (o.top === 'dirigivel') {
       const bob = Math.sin(t * 1.1 + o.seed * 9) * 5;
-      ctx.drawImage(k, sx - 210, top - 280 + bob);
+      ctx.drawImage(k, 0, 0, 420, 132, sx - 210, top - 312 + bob, 420, 132);   // só o dirigível (sem a faixa antiga)
+      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sx - 30, top - 188 + bob); ctx.lineTo(sx - 74, top - 160); ctx.moveTo(sx + 30, top - 188 + bob); ctx.lineTo(sx + 74, top - 160); ctx.stroke();
+      ctx.save(); ctx.translate(sx, top - 160); productBox(ctx, o.item, cat, 0, 0, 160, 160); ctx.restore();
     } else {
       const bob = Math.sin(t * 0.9 + o.seed * 7) * 6;
       ctx.drawImage(k, sx - 130, top - 255 + bob);
