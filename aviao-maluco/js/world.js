@@ -81,8 +81,9 @@
       const st = this.stageAt(camX + 600);
       this._sky(ctx, t, camX, st);
       this._far(ctx, camX, st, t);
+      ctx.fillStyle = st === 'praia' ? '#3b8fd0' : st === 'serra' ? '#93b59c' : '#a7c7b4'; ctx.fillRect(0, GY - 110, W, 112);   // planície até o horizonte
+      this._landmarks(ctx, camX, t);   // pontos turísticos lá no fundo
       this._mid(ctx, camX, st, t);
-      this._landmarks(ctx, camX, t);
       this._ground(ctx, camX, st, t);
       // placas dos pontos turísticos (embaixo, sobre o chão)
       for (const L of this._labels || []) {
@@ -131,17 +132,18 @@
         return;
       }
       // cidade / aeroporto: prédios ao longe
-      ctx.fillStyle = st === 'aeroporto' ? '#b8cbd9' : '#a9c1d4';
-      for (let i = -2; i < 30; i++) {
-        const span = 2700, x = (((i * 90 - camX * 0.12) % span) + span) % span - 200, h = 140 + U.hash(i * 3.1) * (st === 'aeroporto' ? 120 : 320), w = 70 + U.hash(i) * 50;
-        ctx.fillRect(x, base - h, w, h + 20);
-      }
+      // morros suaves bem ao longe (sem prédios)
+      [[0.05, '#b9d3d8', 230, 520], [0.09, '#9fc2b4', 150, 380]].forEach(([par, col, amp, wl], k) => {
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, base + 20);
+        for (let x = 0; x <= W; x += 20) { const wx = x + camX * par; const y = base - 40 - amp * (0.5 + 0.5 * Math.sin(wx / wl + k * 2)) * (0.6 + 0.4 * Math.sin(wx / (wl * 2.7) + 1)); ctx.lineTo(x, y); }
+        ctx.lineTo(W, base + 20); ctx.closePath(); ctx.fill();
+      });
     }
 
     // PONTOS TURÍSTICOS DO BRASIL passando ao fundo (ilustrações em js/landmarks.js)
     _landmarks(ctx, camX, t) {
       const LM = CNB.Landmarks; if (!LM) return;
-      const par = 0.3, gapX = 1500, base = GY + 4, sc = LM.scale; this._labels = [];
+      const par = 0.18, gapX = 1250, base = GY - 70, sc = LM.scale; this._labels = [];
       const first = Math.floor((camX * par - 800) / gapX), last = Math.floor((camX * par + W + 800) / gapX);
       for (let i = Math.max(0, first); i <= last; i++) {
         const x = 700 + i * gapX - camX * par;
@@ -172,13 +174,9 @@
       for (let i = -2; i < 18; i++) {
         const span = 3000, x = (((i * 190 - camX * k) % span) + span) % span - 250, hs = U.hash(i * 1.7 + (st === 'praia' ? 50 : st === 'serra' ? 90 : 0));
         if (st === 'cidade') {
-          const h = 180 + hs * 260, w = 120 + hs * 60;
-          const bc = ['#cfd9e2', '#d7dde5', '#c9d4de', '#d3dbe2', '#cdd6e0'][Math.floor(hs * 5)];
-          ctx.fillStyle = bc; ctx.fillRect(x, base - h, w, h);
-          ctx.fillStyle = 'rgba(120,140,160,0.25)'; ctx.fillRect(x + w * 0.7, base - h, w * 0.3, h);             // lado na sombra
-          ctx.fillStyle = 'rgba(150,170,190,0.45)'; for (let yy = base - h + 18; yy < base - 20; yy += 22) ctx.fillRect(x + 8, yy, w - 16, 6);   // faixas de janelas
-          ctx.fillStyle = 'rgba(160,175,190,0.9)'; ctx.fillRect(x + w * 0.3, base - h - 14, w * 0.25, 14);       // casa de máquinas
+          continue;   // sem prédios no fundo
         } else if (st === 'praia') {
+          if (i % 3) continue;   // poucos coqueiros, para não tampar a paisagem
           // coqueiros
           const h = 200 + hs * 120;
           ctx.strokeStyle = '#8b6b43'; ctx.lineWidth = 12; ctx.lineCap = 'round';

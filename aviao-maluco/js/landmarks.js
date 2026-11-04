@@ -34,7 +34,7 @@
     const r = rnd(seed); ctx.fillStyle = 'rgba(255,255,255,0.35)';
     for (let i = 0; i < 70; i++) ctx.fillRect(r() * w, y + 4 + r() * (h - y - 6), 10 + r() * 34, 2);
   }
-  function haze(ctx, w, h, a0 = 0.12, a1 = 0.34) {
+  function haze(ctx, w, h, a0 = 0.2, a1 = 0.4) {
     ctx.save(); ctx.globalCompositeOperation = 'source-atop';
     ctx.fillStyle = lin(ctx, 0, 0, 0, h, [[0, `rgba(205,228,245,${a0})`], [1, `rgba(205,228,245,${a1})`]]); ctx.fillRect(0, 0, w, h);
     ctx.restore();
@@ -358,5 +358,5 @@
     return { ...L, img: cache[L.key], liveFn: L.live ? B[L.live] : null };
   }
 
-  CNB.Landmarks = { LIST, get, scale: 0.86 };
+  CNB.Landmarks = { LIST, get, scale: 0.62 };
 })();
