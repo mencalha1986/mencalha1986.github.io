@@ -21,6 +21,11 @@ e entrega um **achado do site** (foto, nome e preço reais). São 4 entregas por
 Presente que chega durante a entrega acontece quando o motoboy sai da casa.
 Nomes dos presentes reais: `giftAliases` em `js/config.js`.
 
+## Caminhos diferentes a cada rodada
+Cada rodada sorteia um caminho novo: vira à direita ou à esquerda, avenida de **lojas**, **centro** (prédios altos)
+ou **orla** (calçadão, areia, mar e coqueiros); rua de **casas**, de **prédios** (condomínio com portaria) ou **vila**
+(casinhas coloridas com caixa d'água). A casa do cliente pode ficar de qualquer lado da rua.
+
 ## Esquinas
 A avenida segue reto e o motoboy **liga a seta, encosta, freia e vira** na rua (a câmera vira junto).
 Na volta, a rua termina num "T" com a avenida e ele vira à esquerda. Os carros da avenida seguem reto.

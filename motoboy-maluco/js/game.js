@@ -255,7 +255,7 @@
       if (d.z >= s.z - 14) {
         d.turbo = 0; d.impulse = 0; d.retreat = 0;
         if (d.chase > 0) { d.chase = 0; this._dogGiveUp(); }
-        d.stopZ = s.z; d.force(S.ARRIVE);
+        d.stopZ = s.z; d.stopSide = s.side || 1; d.force(S.ARRIVE);
         this.stopping = s;
         this.say('gps', { index: 2, force: true });
       }
@@ -264,11 +264,11 @@
     _deliver() {
       const s = this.stopping, o = this.orders[s.k], d = this.rider;
       o.client = this._clientName();
-      const look = this.city.customers[s.k], R = ZONE.rua.road, FX = R + ZONE.rua.side;
-      this.cust = { x: FX + 0.3, z: s.z + 0.6, look, walking: false, box: false, wave: false, alpha: 0 };
+      const look = this.city.customers[s.k], sd = s.side || 1, R = ZONE.rua.road * sd, FX = R + ZONE.rua.side * sd;
+      this.cust = { x: FX + 0.3 * sd, z: s.z + 0.6, look, walking: false, box: false, wave: false, alpha: 0 };
       const T = (t, fn) => this.after(t, fn, 'stop');
       T(0.1, () => { this.audio.honk(); this.say('chegou', { force: true }); });
-      T(0.6, () => { this.cust.walking = true; this.cust.tx = R + 0.45; });
+      T(0.6, () => { this.cust.walking = true; this.cust.tx = R + 0.45 * sd; });
       T(2.1, () => { this.cust.walking = false; this.flyBox = { t: 0, item: o.item }; });
       T(2.6, () => {
         this.cust.box = true; this.flyBox = null; s.done = true;
@@ -279,7 +279,7 @@
       });
       T(4.2, () => { this.cust.wave = true; this.say('tchau', { force: true }); });
       T(5.4, () => {
-        this.cust.walking = true; this.cust.tx = FX + 0.6; this.cust.leaving = true;
+        this.cust.walking = true; this.cust.tx = FX + 0.6 * sd; this.cust.leaving = true;
         this.stopping = null;
         if (this.city.stops.every((x) => x.done)) { this._endRound(); return; }
         d.force(S.RIDE); this.audio.whoosh(true);
@@ -349,7 +349,7 @@
       for (const o of obs) if (o.seen === undefined) o.seen = Math.random() < (fast ? ap.dodgeFast : ap.dodge);
       let pref = this.city.zoneAt(d.z + 8).type === 'rua' ? R * 0.45 : 1.8;
       const K = this.city.nextCorner;
-      if (K && K.zc - d.z < 50) pref = K.dir > 0 ? R - 0.6 : ZONE.rua.road * 0.33;   // fica na faixa (atrás dos carros) para virar   // encosta do lado da conversão
+      if (K && K.zc - d.z < 50) pref = K.kind === 'side' ? K.dir * (R - 0.6) : ZONE.rua.road * 0.33;   // fica na faixa (atrás dos carros) para virar   // encosta do lado da conversão
       let best = d.targetX, bestS = -1e9;
       for (let x = -R; x <= R + 1e-6; x += 0.4) {
         let sc = -Math.abs(x - d.x) * 0.9 - Math.abs(x - pref) * (K && K.zc - d.z < 50 ? 1.6 : 0.35);
@@ -371,7 +371,7 @@
       // não dá ré para antes da esquina que já virou
       if (L && d.z < L.zc + L.cw + 0.3) { d.z = L.zc + L.cw + 0.3; d.retreat = 0; }
       const tn = this.turning;
-      const near = !!(tn || this.borr || (K && K.dir > 0 && K.zc - d.z < 34));
+      const near = !!(tn || this.borr || (K && K.kind === 'side' && K.dir > 0 && K.zc - d.z < 34));
       this.guideAlpha = U.damp(this.guideAlpha === undefined ? 1 : this.guideAlpha, near ? 0 : 1, 5, dt);
       d.blink = tn ? tn.k.dir : K && K.zc - d.z < 38 && !d.finished ? K.dir : 0;
       d.speedCap = tn ? 5.5 : K ? 5.5 + Math.max(0, K.zc - d.z) * 0.5 : 99;
@@ -379,9 +379,9 @@
       if (d.blink) { this.blinkT = (this.blinkT || 0) + dt; if (this.blinkT > 0.38) { this.blinkT = 0; this.audio.blinker(); } }
       if (!tn && K) {
         // curva de verdade: arco de círculo da faixa atual até a faixa certa da rua nova
-        const from = K.dir > 0 ? ZONE.av : ZONE.rua, E = K.dir * from.road, pc = K.zc + K.cw / 2;
-        const laneB = K.dir > 0 ? ZONE.rua.road * 0.45 : 1.8, zEnd = pc - K.dir * laneB;
-        const r = Math.max(K.dir > 0 ? 4 : 6, K.dir * (E - d.x) + 0.6), z0 = zEnd - r;
+        const sideK = K.kind === 'side', from = sideK ? ZONE.av : ZONE.rua, E = K.dir * from.road, pc = K.zc + K.cw / 2;
+        const laneB = sideK ? ZONE.rua.road * 0.45 : 1.8, zEnd = pc - K.dir * laneB;
+        const r = Math.max(sideK ? 4 : (K.dir > 0 ? 4.5 : 6), K.dir * (E - d.x) + 0.6), z0 = zEnd - r;
         if (d.z > K.zc + K.cw + 3) { K.turned = true; cam.hd += K.dir * Math.PI / 2 * 1.25; return; }   // pulou (tecla W)
         if (d.z >= z0) {
           this.turning = { k: K, th: 0, r, x0: d.x, z0, E, pc, laneB, zs: K.zc + K.cw, lag: Math.max(0, (d.z - CAM.ride.dist) - cam.z) };
@@ -447,10 +447,10 @@
         const xa = T.x0 + k.dir * T.r, za = T.z0 + T.r;              // ponto final (mundo antigo)
         d.z = T.zs + k.dir * (xa - T.E); d.x = d.baseX = d.targetX = this.apLane = k.dir * (T.pc - za);
         const cam = this.cam; cam.turn = null; cam.z = d.z - CAM.ride.dist; cam.x = d.x * 0.88; cam.hd += k.dir * Math.PI / 2 * 1.25;
-        if (k.dir > 0) this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
+        if (k.kind === 'side') this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
       }
     }
-    _turnGeom(K) { const from = K.dir > 0 ? ZONE.av : ZONE.rua; return { k: K, dir: K.dir, E: K.dir * from.road, zs: K.zc + K.cw, pc: K.zc + K.cw / 2 }; }
+    _turnGeom(K) { const from = K.kind === 'side' ? ZONE.av : ZONE.rua; return { k: K, dir: K.dir, E: K.dir * from.road, zs: K.zc + K.cw, pc: K.zc + K.cw / 2 }; }
     // câmera atrás da moto, girando junto
     _turnCam() {
       const T = this.turning, cam = this.cam, k = T.k, d = this.rider;
@@ -496,8 +496,7 @@
         for (const m of c.maneuvers) {
           const key = m.type + m.z;
           if (this.announced.has(key)) continue;
-          if (m.type === 'right' && m.z - d.z < 55 && m.z - d.z > 20) { this.announced.add(key); this.say('gps', { index: 0, force: true }); }
-          if (m.type === 'left' && m.z - d.z < 14 && m.z - d.z > 0) { this.announced.add(key); this.say('gps', { index: 1, force: true }); }
+          if ((m.type === 'right' || m.type === 'left') && m.z - d.z < 55 && m.z - d.z > 12) { this.announced.add(key); this.say('gps', { index: m.type === 'right' ? 0 : 1, force: true }); }
         }
         this.audio.tempoMul = U.damp(this.audio.tempoMul, d.state === S.RUN || d.state === S.CHASE ? 1.22 : 1, 3, dt);
         this.audio.intensity = d.state === S.RUN || d.state === S.CHASE ? 1 : 0;
@@ -549,7 +548,7 @@
       const tz = d.z - P.dist;
       c.z = U.damp(c.z, tz, tz < c.z ? 9 : 5, dt);
       if (d.z - c.z < 3.0) c.z = d.z - 3.0;
-      c.x = U.damp(c.x, d.x * 0.88 + P.side, 2.4, dt);
+      c.x = U.damp(c.x, d.x * 0.88 + P.side * (P === CAM.stop ? (d.stopSide || 1) : 1), 2.4, dt);
       this.shake = Math.max(0, this.shake - dt * 45);
       c.sx = (Math.random() - 0.5) * this.shake;
       c.sy = (Math.random() - 0.5) * this.shake + (d.speed > 0.5 && !d.busy ? Math.sin(this.time * 30) * Math.min(1.5, d.speed * 0.1) : 0);

@@ -103,7 +103,7 @@
 
       // direção
       const R = city.road(this.z) - 0.6;
-      if (this.state === S.ARRIVE || this.state === S.STOP) this.targetX = R - 0.4;
+      if (this.state === S.ARRIVE || this.state === S.STOP) this.targetX = (this.stopSide || 1) * (R - 0.4);
       else if (this.manual && !this.busy) this.targetX += (this.steer || 0) * 5 * dt;
       this.targetX = U.clamp(this.targetX, -R, R);
       if (!this.busy || this.state === S.WOBBLE) this.baseX = U.damp(this.baseX, this.targetX, this.manual ? 4 : this.state === S.RUN || this.state === S.CHASE ? 3.4 : 2.6, dt);
@@ -118,7 +118,7 @@
       this.fall = fallT;
       this.legsUp = U.damp(this.legsUp, this.state === S.CHASE ? 1 : 0, 8, dt);
       this.footDown = U.damp(this.footDown, [S.STOP, S.NEAR, S.FLAT, S.NOGAS].includes(this.state) || (this.speed < 0.6 && !this.finished && this.state !== S.FALL && this.state !== S.DOWN) ? 1 : 0, 8, dt);
-      this.lookSide = U.damp(this.lookSide, this.state === S.STOP ? 1 : this.state === S.CHASE ? -0.6 * Math.sign(Math.sin(this.t * 2)) : 0, 5, dt);
+      this.lookSide = U.damp(this.lookSide, this.state === S.STOP ? (this.stopSide || 1) : this.state === S.CHASE ? -0.6 * Math.sign(Math.sin(this.t * 2)) : 0, 5, dt);
       this.phase += this.speed * dt * 3;
     }
 
@@ -169,7 +169,7 @@
       ctx.fillStyle = '#1a1b1f'; U.roundRect(ctx, -9, -206, 18, 10, 4); ctx.fill();
       ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(hx, hy, 16, 17, 0, 0, 7); ctx.fill();
       ctx.fillStyle = '#82e8cc'; ctx.fillRect(hx - 3, hy - 17, 6, 34);
-      if (this.lookSide > 0.3) { ctx.fillStyle = '#20252b'; ctx.beginPath(); ctx.ellipse(hx + 11, hy + 1, 5, 9, 0, 0, 7); ctx.fill(); }
+      if (Math.abs(this.lookSide) > 0.3) { const ls = Math.sign(this.lookSide); ctx.fillStyle = '#20252b'; ctx.beginPath(); ctx.ellipse(hx + 11 * ls, hy + 1, 5, 9, 0, 0, 7); ctx.fill(); }
       // pernas (dobradas na pedaleira; para cima fugindo do cachorro; pé no chão parado)
       [-1, 1].forEach((sd) => {
         const hip = { x: sd * 14, y: -112 };
