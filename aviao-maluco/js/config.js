@@ -50,7 +50,7 @@ CNB.CONFIG = {
     urubus:   { tiktok: 'Doughnut', coins: 30, img: 'img/presentes/doughnut.webp', label: 'Urubu', action: 'birds', amount: 80, points: 30, color: '#a3a3a3', icon: 'bird', key: '4', demo: 6 },
     gasolina: { tiktok: 'Galaxy', coins: 1000, img: 'img/presentes/galaxy.webp', label: 'Míssil', action: 'gameover', points: 1000, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     // --- DIVERSÃO / GRÁTIS ---
-    looping:  { tiktok: 'Heart Me', coins: 1, label: 'Looping', action: 'loop', points: 1, color: '#38bdf8', icon: 'loop', key: '8', demo: 8 },
+    looping:  { tiktok: 'Heart Me', coins: 1, img: 'img/presentes/heart-me.png', label: 'Looping', action: 'loop', points: 1, color: '#38bdf8', icon: 'loop', key: '8', demo: 8 },
     seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 4, free: true }
   },
 

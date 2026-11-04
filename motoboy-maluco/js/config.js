@@ -51,7 +51,7 @@ CNB.CONFIG = {
     gasolina: { tiktok: 'Galaxy', img: 'img/presentes/galaxy.webp', label: 'Sem gasolina', action: 'gameover', points: 50, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     // NOVO SEGUIDOR (de graça): o seguidor vira cliente da próxima entrega e a moto volta 10 m
     // BUZINA: não cancela nada — o motoboy buzina, carros abrem caminho, pedestres correm e o caramelo foge
-    buzina:   { tiktok: 'Heart Me', label: 'Buzina', action: 'horn', points: 1, color: '#38bdf8', icon: 'horn', key: '8', demo: 14 },
+    buzina:   { tiktok: 'Heart Me', img: 'img/presentes/heart-me.png', label: 'Buzina', action: 'horn', points: 1, color: '#38bdf8', icon: 'horn', key: '8', demo: 14 },
     seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor',    action: 'follow',  back: 10, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6, free: true }
   },
 
