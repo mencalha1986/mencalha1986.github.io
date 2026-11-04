@@ -451,7 +451,7 @@
         ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
         ctx.font = `800 24px ${FU}`; ctx.fillText('QUER ESSES ACHADOS? TÁ TUDO NO SITE:', 262, ly + 48);
         ctx.font = `58px ${FT}`; ctx.fillText(g.cfg.siteUrl, 262, ly + 108);
-        const tip = `📌 link na bio do ${g.cfg.profile}  ·  ou escaneie o QR`;
+        const tip = `📌 link na bio  ·  ou escaneie o QR`;
         let fs = 24; ctx.font = `700 ${fs}px ${FU}`;
         while (ctx.measureText(tip).width > 725 && fs > 16) { fs--; ctx.font = `700 ${fs}px ${FU}`; }
         ctx.fillStyle = '#fff3c4'; ctx.fillText(tip, 262, ly + 146);
