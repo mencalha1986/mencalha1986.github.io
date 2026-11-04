@@ -55,7 +55,7 @@ CNB.CONFIG = {
     recusado:  { tiktok: 'Galaxy', img: 'img/presentes/galaxy.webp', label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 },
     // NOVO SEGUIDOR (de graça): o carrinho volta e achados caem de volta no corredor para serem pegos de novo.
     // Não cancela a ação em andamento. Cada pessoa conta uma vez só.
-    seguir:    { tiktok: 'Seguir', label: 'Seguidor', action: 'follow', back: 8, drop: 2, points: 1, color: '#ff4fa3', icon: 'follow', key: '9', demo: 6 }
+    seguir:    { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 8, drop: 2, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6 }
   },
 
   // nome do presente que chega da live -> presente do jogo (minúsculas)

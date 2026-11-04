@@ -47,11 +47,10 @@
         ctx.fillStyle = '#fb7185'; U.poly(ctx, [-16, -6, -2, -20, 18, -20, 18, 0, 4, 14]); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(11, -13, 3, 0, 7); ctx.fill();
         ctx.font = `900 13px ${FU}`; ctx.textAlign = 'center'; ctx.fillText('%', 0, 2); break;
-      case 'follow':
-        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(-4, -9, 7, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-17, 14); ctx.quadraticCurveTo(-17, -1, -4, -1); ctx.quadraticCurveTo(9, -1, 9, 14); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#ff4fa3'; ctx.beginPath(); ctx.arc(13, -10, 8, 0, 7); ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(13, -15); ctx.lineTo(13, -5); ctx.moveTo(8, -10); ctx.lineTo(18, -10); ctx.stroke(); break;
+      case 'follow':   // botão "+" vermelho de seguir do TikTok
+        ctx.fillStyle = '#fe2c55'; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(0, 11); ctx.moveTo(-11, 0); ctx.lineTo(11, 0); ctx.stroke(); break;
       case 'card':
         ctx.fillStyle = '#e879f9'; U.roundRect(ctx, -18, -12, 36, 24, 4); ctx.fill();
         ctx.fillStyle = '#1a0820'; ctx.fillRect(-18, -6, 36, 5);
