@@ -17,7 +17,7 @@ Moedas aproximadas — podem variar por país/época; confira na bandeja de pres
 | 2 | TikTok | 1 | empurra +60 m |
 | 3 | Finger Heart | 5 | **caça da FAB reboca** o avião por 6 s |
 | q | Rosa | 10 | buquê: +150 m |
-| y | Hand Hearts | 100 | **ESCUDO** por 25 s: não perde caixa e **bloqueia o míssil** |
+| y | Fogos de artifício (Fireworks) | 5 | **ESCUDO** por 15 s: não perde caixa e **bloqueia o míssil** |
 | e | Confete | 100 | festa: +400 m |
 | t | Pistola de dinheiro (Money Gun) | 500 | **esquadrilha de 3 caças** reboca por 15 s |
 | 5 | GG | 1 | vento contra: volta 60 m |

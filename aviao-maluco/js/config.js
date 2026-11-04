@@ -41,7 +41,7 @@ CNB.CONFIG = {
     tiktok:   { tiktok: 'TikTok', coins: 1, img: 'img/presentes/tiktok.webp', label: 'TikTok', action: 'advance', amount: 60, points: 1, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
     turbo:    { tiktok: 'Finger Heart', coins: 5, img: 'img/presentes/finger-heart.webp', label: 'Caça reboca', action: 'turbo', duration: 6, points: 5, color: '#ffd23f', icon: 'bolt', key: '3', demo: 10 },
     buque:    { tiktok: 'Rosa', coins: 10, label: 'Buquê', action: 'advance', amount: 150, points: 10, color: '#f472b6', icon: 'bouquet', key: 'q', demo: 6 },
-    escudo:   { tiktok: 'Hand Hearts', coins: 100, label: 'Escudo', action: 'shield', duration: 25, points: 100, color: '#22d3ee', icon: 'shield', key: 'y', demo: 3 },
+    escudo:   { tiktok: 'Fogos de artifício', coins: 5, img: 'img/presentes/fireworks.png', label: 'Escudo', action: 'shield', duration: 15, points: 5, color: '#22d3ee', icon: 'shield', key: 'y', demo: 3 },
     festa:    { tiktok: 'Confete', coins: 100, img: 'img/presentes/confetti.png', label: 'Festa', action: 'advance', amount: 400, points: 100, color: '#facc15', icon: 'confetti', key: 'e', demo: 2 },
     esquadrilha: { tiktok: 'Pistola de dinheiro', coins: 500, img: 'img/presentes/money-gun.png', label: 'Esquadrilha', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: 't', demo: 1 },
     // --- SABOTAGEM (atrapalham) ---
@@ -64,7 +64,7 @@ CNB.CONFIG = {
     'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina', 'missil': 'gasolina', 'míssil': 'gasolina',
     'heart me': 'looping', 'looping': 'looping',
     'rosa (10)': 'buque', 'buquê': 'buque', 'buque': 'buque', 'rosa': 'buque',
-    'hand hearts': 'escudo', 'corações nas mãos': 'escudo', 'escudo': 'escudo',
+    'fireworks': 'escudo', 'fogos de artifício': 'escudo', 'fogos de artificio': 'escudo', 'fogos': 'escudo', 'escudo': 'escudo',
     'confetti': 'festa', 'confete': 'festa', 'festa': 'festa',
     'money gun': 'esquadrilha', 'pistola de dinheiro': 'esquadrilha', 'esquadrilha': 'esquadrilha',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
