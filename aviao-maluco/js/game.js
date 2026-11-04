@@ -442,15 +442,54 @@
     const j = this.jet, p = this.plane;
     if (j.phase !== 'out') { ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x + 128 * Math.cos(p.ang), p.y + 128 * Math.sin(p.ang)); ctx.quadraticCurveTo((p.x + j.x) / 2, Math.max(p.y, j.y) + 30 + Math.sin(t * 6) * 6, j.x - 120, j.y + 10); ctx.stroke(); }
     ctx.save(); ctx.translate(j.x, j.y); ctx.rotate(j.phase === 'out' ? -0.3 : Math.sin(t * 2) * 0.03);
-    ctx.fillStyle = `rgba(255,${140 + Math.random() * 90},40,0.9)`; ctx.beginPath(); ctx.ellipse(-150, 4, 40 + Math.random() * 20, 12, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#64748b'; U.poly(ctx, [-130, -8, -96, -66, -70, -66, -80, -8]); ctx.fill();
-    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(-130, -10); ctx.lineTo(60, -16); ctx.quadraticCurveTo(120, -10, 150, 4); ctx.quadraticCurveTo(120, 18, 60, 20); ctx.lineTo(-130, 18); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#475569'; U.poly(ctx, [-60, 4, 30, 4, -30, 56, -70, 56]); ctx.fill();
-    ctx.fillStyle = '#7dd3fc'; ctx.beginPath(); ctx.ellipse(70, -16, 34, 13, -0.1, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(-40, 6, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(-40, 6, 5, 0, 7); ctx.fill();
+    // pós-combustor (animado) + caça desenhado uma vez só
+    const fl = 0.8 + Math.random() * 0.4;
+    const fg = ctx.createLinearGradient(-150 - 90 * fl, 0, -150, 0); fg.addColorStop(0, 'rgba(255,120,40,0)'); fg.addColorStop(0.5, 'rgba(255,160,60,0.85)'); fg.addColorStop(1, 'rgba(255,245,220,1)');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-148, -9); ctx.quadraticCurveTo(-150 - 100 * fl, 0, -148, 9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(140,200,255,0.7)'; ctx.beginPath(); ctx.ellipse(-158, 0, 10 * fl, 5, 0, 0, 7); ctx.fill();
+    ctx.drawImage(Game.jetSprite(), -170, -80);
     ctx.restore();
     ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.fillStyle = '#ffd23f';
     ctx.strokeText(`✈ ${j.name}`, j.x, j.y - 80); ctx.fillText(`✈ ${j.name}`, j.x, j.y - 80);
+  };
+
+  // caça (estilo Gripen da FAB) visto de lado, nariz para a direita
+  Game.jetSprite = function () {
+    if (Game._jet) return Game._jet;
+    const c = document.createElement('canvas'); c.width = 340; c.height = 160; const x = c.getContext('2d');
+    x.translate(170, 80);
+    const L = (x0, y0, x1, y1, st) => { const g = x.createLinearGradient(x0, y0, x1, y1); st.forEach(([o, cc]) => g.addColorStop(o, cc)); return g; };
+    // asa delta (lado de lá, mais escura)
+    x.fillStyle = '#5d6670'; U.poly(x, [-40, 4, 40, 4, -70, -24, -96, -24]); x.fill();
+    // deriva (cauda vertical)
+    x.fillStyle = L(0, -70, 0, -6, [[0, '#9aa4ad'], [1, '#6f7a84']]); U.poly(x, [-148, -6, -100, -6, -122, -64, -146, -68]); x.fill();
+    x.fillStyle = '#1f9d55'; x.fillRect(-140, -48, 8, 22); x.fillStyle = '#f2c230'; x.fillRect(-132, -48, 8, 22);   // faixa verde-amarela
+    // fuselagem
+    x.fillStyle = L(0, -22, 0, 22, [[0, '#c3cbd2'], [0.45, '#97a1aa'], [1, '#5f6973']]);
+    x.beginPath(); x.moveTo(-150, -10); x.lineTo(-150, 10); x.lineTo(-40, 16); x.quadraticCurveTo(60, 18, 110, 8); x.quadraticCurveTo(150, 3, 165, 0); x.quadraticCurveTo(150, -4, 110, -10); x.quadraticCurveTo(60, -20, 20, -18); x.lineTo(-40, -16); x.closePath(); x.fill();
+    // radome escuro
+    x.fillStyle = '#4a525a'; x.beginPath(); x.moveTo(128, -6); x.quadraticCurveTo(152, -3, 165, 0); x.quadraticCurveTo(152, 3, 128, 6); x.closePath(); x.fill();
+    // entrada de ar
+    x.fillStyle = '#2a3036'; U.poly(x, [10, -2, 52, -6, 54, 8, 14, 10]); x.fill(); x.fillStyle = '#7d8790'; x.fillRect(10, -3, 44, 2);
+    // canard
+    x.fillStyle = '#7d8790'; U.poly(x, [40, -10, 72, -10, 58, -30, 48, -30]); x.fill();
+    // cabine
+    x.fillStyle = L(70, -32, 120, -10, [[0, '#d7ecff'], [0.5, '#5c8fbf'], [1, '#1e3a5f']]);
+    x.beginPath(); x.moveTo(64, -16); x.quadraticCurveTo(84, -36, 120, -14); x.closePath(); x.fill();
+    x.fillStyle = 'rgba(255,255,255,0.6)'; x.beginPath(); x.moveTo(78, -24); x.quadraticCurveTo(88, -31, 102, -26); x.lineTo(98, -24); x.quadraticCurveTo(88, -28, 80, -22); x.fill();
+    x.fillStyle = '#2b2f33'; x.beginPath(); x.arc(86, -20, 5, 0, 7); x.fill();   // capacete
+    // asa delta (lado de cá)
+    x.fillStyle = L(0, 0, 0, 40, [[0, '#a5aeb6'], [1, '#6c7680']]); U.poly(x, [-50, 6, 46, 6, -78, 40, -112, 40]); x.fill();
+    x.strokeStyle = 'rgba(40,50,60,0.35)'; x.lineWidth = 1; x.beginPath(); x.moveTo(-60, 22); x.lineTo(10, 10); x.stroke();
+    // míssil na ponta da asa
+    x.fillStyle = '#e5e7eb'; U.roundRect(x, -112, 38, 70, 6, 3); x.fill(); x.fillStyle = '#c1121f'; x.fillRect(-46, 38, 6, 6);
+    // bocal do motor
+    x.fillStyle = '#3a4047'; U.poly(x, [-150, -11, -160, -9, -160, 9, -150, 11]); x.fill();
+    // linhas de painel, roundel da FAB e número
+    x.strokeStyle = 'rgba(40,50,60,0.3)'; x.lineWidth = 1; [-100, -40, 30].forEach((px) => { x.beginPath(); x.moveTo(px, -15); x.lineTo(px, 15); x.stroke(); });
+    [[11, '#1f9d55'], [8, '#f2c230'], [5.5, '#1d4ed8'], [3, '#ffffff']].forEach(([r, cc]) => { x.fillStyle = cc; x.beginPath(); x.arc(-78, 24, r, 0, 7); x.fill(); });
+    x.fillStyle = '#2b2f33'; x.font = `900 11px ${U.FONT_UI}`; x.fillText('FAB 4100', -30, 2);
+    Game._jet = c; return c;
   };
 
   CNB.Game = Game;

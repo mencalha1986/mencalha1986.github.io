@@ -108,7 +108,7 @@
     ctx.restore();
   }
 
-  const VERSAO = 'versão 04/11 16:06';
+  const VERSAO = 'versão 04/11 16:07';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];
@@ -248,7 +248,9 @@
 
     // guia de presentes: aparece no começo e de tempos em tempos (para não tampar os obstáculos)
     drawGiftGuide(ctx, y0, t) {
-      const g = this.g, rt = g.roundTime, cyc = (rt - 18) % 45, a = rt < 18 ? 1 : U.clamp(Math.min(cyc, 12 - cyc), 0, 1) * (cyc < 12 ? 1 : 0);
+      const g = this.g, rt = g.roundTime, cyc = (rt - 18) % 45;
+      g.guideA = U.lerp(g.guideA === undefined ? 1 : g.guideA, g.jet || g.missile || g.vulture ? 0 : 1, 0.15);   // some quando o caça/míssil/urubu passa por ali
+      const a = (rt < 18 ? 1 : U.clamp(Math.min(cyc, 12 - cyc), 0, 1) * (cyc < 12 ? 1 : 0)) * g.guideA;
       if (a <= 0.01) return;
       const G = g.cfg.gifts, keys = Object.keys(G), rowH = 44;
       ctx.save(); ctx.globalAlpha = a * 0.95;
