@@ -92,7 +92,7 @@
       this.announced = new Set();
       this.cam.z = -5; this.cam.x = 0; this.cam.yaw = 0; this.cam.hd = 0; this.turning = null;
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
-      this.hud.banner(`RODADA ${this.roundNo}`, `${this.orders.length} entregas no baú — mandem presentes!`, '#82e8cc', 2.4);
+      this.hud.banner(`RODADA ${this.roundNo}`, `saindo do centro de distribuição com ${this.orders.length} entregas`, '#82e8cc', 2.4);
       this.after(1.0, () => this.say('partida', { force: true }));
     }
 

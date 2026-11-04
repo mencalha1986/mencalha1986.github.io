@@ -82,7 +82,7 @@
       this._buildCurve();
       // obstáculos (fora das curvas e longe das casas de entrega)
       this.obstacles = [];
-      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > 18;
+      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > City.WH_END + 10;
       let oz = 22, lastT = '';
       while (oz < this.length - 10) {
         if (freeAt(oz)) {
@@ -101,7 +101,7 @@
       }
       // TRÂNSITO: carros e ônibus na avenida; na rua, carro lento na mão e carro vindo na contramão
       const curveAt = (zz) => this.curves.some((c) => zz > c.z0 - 6 && zz < c.z1 + 6);
-      let tz = 12;
+      let tz = City.WH_END + 12;   // nada de trânsito dentro do galpão
       while (tz < this.length - 15) {
         if (!curveAt(tz) && !this.stops.some((st) => Math.abs(tz - st.z) < 14)) {
           const zone = this.zoneAt(tz), R = ZONE[zone.type].road;
@@ -121,7 +121,7 @@
 
       // árvores, postes e placas
       this.props = [];
-      for (let pz = 6; pz < this.length; pz += 9 + r() * 10) {
+      for (let pz = City.WH_END + 6; pz < this.length; pz += 9 + r() * 10) {
         const side = r() < 0.5 ? -1 : 1, zn = this.zoneAt(pz), zt = zn.type;
         if (this.stops.some((st) => st.side === side && Math.abs(st.z - pz) < 12)) continue;   // nada na frente da casa do cliente
         if (zn.beach && side === zn.beach) { this.props.push({ z: pz, side, kind: 'palm', seed: r() }); continue; }
@@ -349,6 +349,7 @@
       const P = (x, y, z) => this.proj(cam, x, y, z), G = part !== 'walls', Wl = part !== 'ground', turnMode = !!cam.turn;
       const zm = (zn + zf) / 2, dz = zm - cam.z, K = this.nextCorner, L = this.lastCorner, F = (c) => this._fog(c, dz);
       // na curva, a via nova (frame B) antes do seu começo: no "T" é o outro braço da avenida; na direita não existe
+      if (this.frame !== 'B' && zm < City.WH_END) { this._warehouse(ctx, P, zn, zf, zm, F, G, Wl, only); return; }   // galpão de saída
       let skipSide = 0, forceAv = false;
       if (turnMode && this.frame === 'B' && this.turnK && zm < this.turnK.zc + this.turnK.cw) {
         if (this.turnK.kind === 'side') return;
@@ -377,6 +378,60 @@
         this._sideStrip(ctx, P, cam, zn, zf, zm, dz, side, R, FX, F, zone, G, Wl && !corner, idx);
       }
       if (this._afterSeg) { const f = this._afterSeg; this._afterSeg = null; f(); }
+    }
+
+    // ---------------- CENTRO DE DISTRIBUIÇÃO (de onde o motoboy sai) ----------------
+    _warehouse(ctx, P, zn, zf, zm, F, G, Wl, only) {
+      const WX = 6.2, HH = 5.6, idx = Math.floor(zm);
+      if (G) {
+        this._quad(ctx, P(-WX, 0, zn), P(WX, 0, zn), P(WX, 0, zf), P(-WX, 0, zf), idx % 2 ? '#8d9297' : '#888d92');   // piso de concreto
+        this._quad(ctx, P(-0.08, 0.01, zn), P(0.08, 0.01, zn), P(0.08, 0.01, zf), P(-0.08, 0.01, zf), '#e8c547');       // faixa amarela de circulação
+        [-2.6, 2.6].forEach((lx) => this._quad(ctx, P(lx - 0.06, 0.01, zn), P(lx + 0.06, 0.01, zn), P(lx + 0.06, 0.01, zf), P(lx - 0.06, 0.01, zf), '#f1f1f1'));
+      }
+      if (!Wl) return;
+      for (const side of [-1, 1]) {
+        if (only && side !== only) continue;
+        const x = side * WX;
+        this._quad(ctx, P(x, 0, zn), P(x, HH, zn), P(x, HH, zf), P(x, 0, zf), side < 0 ? '#b9bec3' : '#a9aeb3');   // parede
+        // porta-palete com caixas
+        const rx = side * (WX - 0.05);
+        for (const y of [0.15, 1.55, 2.95, 4.35]) {
+          this._quad(ctx, P(rx, y, zn), P(rx, y + 0.12, zn), P(rx, y + 0.12, zf), P(rx, y, zf), '#e06d1a');
+          if (y < 4.3 && Math.floor(zm * 1.7 + y * 3) % 5 !== 0) {
+            const k = Math.floor(zm * 2.3 + y * 7) % 3;
+            this._quad(ctx, P(rx, y + 0.14, zn + 0.05), P(rx, y + 1.18, zn + 0.05), P(rx, y + 1.18, zf - 0.05), P(rx, y + 0.14, zf - 0.05), ['#c69c6d', '#b98c5c', '#d4ab7c'][k]);
+            this._quad(ctx, P(rx, y + 0.55, zn + 0.05), P(rx, y + 0.7, zn + 0.05), P(rx, y + 0.7, zf - 0.05), P(rx, y + 0.55, zf - 0.05), '#82e8cc');
+          }
+        }
+        if (idx % 3 === 0) this._quad(ctx, P(rx, 0, zn), P(rx, HH - 0.6, zn), P(rx, HH - 0.6, zn + 0.12), P(rx, 0, zn + 0.12), '#2563eb');   // colunas do porta-palete
+      }
+      // telhado com luminárias
+      this._quad(ctx, P(-WX, HH, zn), P(WX, HH, zn), P(WX, HH, zf), P(-WX, HH, zf), '#4b5157');
+      if (idx % 4 === 0) [-3, 3].forEach((lx) => this._quad(ctx, P(lx - 0.6, HH - 0.02, zn), P(lx + 0.6, HH - 0.02, zn), P(lx + 0.6, HH - 0.02, zn + 0.4), P(lx - 0.6, HH - 0.02, zn + 0.4), '#fffbe6'));
+    }
+    // portão do galpão (parede da frente com a abertura para a avenida) e o caminhão estacionado
+    _whPortal(ctx, cam) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), z = City.WH_END, WX = 6.2, HH = 5.6, OX = 4.0, OY = 4.0;
+      const col = '#9aa0a6';
+      this._quad(ctx, P(-WX, 0, z), P(-OX, 0, z), P(-OX, HH, z), P(-WX, HH, z), col);
+      this._quad(ctx, P(OX, 0, z), P(WX, 0, z), P(WX, HH, z), P(OX, HH, z), col);
+      this._quad(ctx, P(-OX, OY, z), P(OX, OY, z), P(OX, HH, z), P(-OX, HH, z), col);
+      this._quad(ctx, P(-OX, OY - 0.5, z), P(OX, OY - 0.5, z), P(OX, OY, z), P(-OX, OY, z), '#6b7177');   // porta de enrolar recolhida
+      this._quad(ctx, P(-OX, 0, z), P(-OX + 0.25, 0, z), P(-OX + 0.25, OY, z), P(-OX, OY, z), '#f2c230');
+      this._quad(ctx, P(OX - 0.25, 0, z), P(OX, 0, z), P(OX, OY, z), P(OX - 0.25, OY, z), '#f2c230');
+      const a = P(-2.6, OY + 0.75, z - 0.02), b = P(2.6, OY + 1.35, z - 0.02);
+      if (a && b) { ctx.fillStyle = '#0e3a4a'; ctx.fillRect(a.x, b.y, b.x - a.x, a.y - b.y); const hh = a.y - b.y; if (hh > 8) { ctx.fillStyle = '#82e8cc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(hh * 0.7)}px ${U.FONT_TITLE}`; ctx.fillText('ACHADOS ÚTEIS · CENTRO DE DISTRIBUIÇÃO', (a.x + b.x) / 2, (a.y + b.y) / 2 + hh * 0.05); ctx.textBaseline = 'alphabetic'; } }
+    }
+    _pallet(ctx, cam, x, z, k) {   // pilhas de caixas no chão do galpão
+      const p = this.proj(cam, x, 0, z); if (!p) return;
+      const s = p.s, w = 1.3 * s;
+      ctx.fillStyle = '#a0764a'; ctx.fillRect(p.x - w / 2, p.y - s * 0.15, w, s * 0.15);
+      for (let r = 0; r < 2 + k % 2; r++) for (let c = 0; c < 2; c++) { const bx = p.x - w / 2 + c * w / 2, by = p.y - s * 0.15 - (r + 1) * s * 0.42;
+        ctx.fillStyle = ['#c69c6d', '#d4ab7c'][(r + c) % 2]; ctx.fillRect(bx + 1, by, w / 2 - 2, s * 0.4); ctx.fillStyle = '#82e8cc'; ctx.fillRect(bx + w * 0.2, by, w * 0.08, s * 0.4); }
+    }
+    _whTruck(ctx, cam) {
+      const p = this.proj(cam, -3.7, 0, 13); if (!p) return;
+      City.truckRear(ctx, p.x, p.y, p.s);
     }
 
     _themeZone(zm, forceAv) {
@@ -552,6 +607,11 @@
       for (const p of this.props) if (vis(p.z)) L.push({ z: p.z, x: p.side * (this.road(p.z) + 0.7), draw: (c) => this._prop(c, cam, p, t) });
       for (const s of this.signs) if (vis(s.z)) L.push({ z: s.z, x: 6, draw: (c) => this._streetSign(c, cam, s) });
       for (const o of this.obstacles) if (!o.gone && vis(o.z, o)) L.push({ z: o.z, x: o.x, draw: (c) => this._ob(c, cam, o, t) });
+      if (this.frame !== 'B') {
+        if (City.WH_END - cam.z > 0.6) L.push({ z: City.WH_END, x: 0, draw: (c) => this._whPortal(c, cam) });
+        if (13 - cam.z > 0.6) L.push({ z: 13, x: -3.7, draw: (c) => this._whTruck(c, cam) });
+        for (const [px, pz, k] of [[3.9, 9, 0], [4.2, 19, 1], [-4.3, 23, 2]]) if (pz - cam.z > 0.6) L.push({ z: pz, x: px, draw: (c) => this._pallet(c, cam, px, pz, k) });
+      }
       const KC = this.nextCorner;
       if (KC && KC.zc - cam.z < 200 && KC.zc - cam.z > -60) {
         const sl = this.stopLine(KC), R = this.road(sl);
@@ -684,6 +744,28 @@
       ctx.fillStyle = '#f5f5f5'; ctx.fillRect(-w * 0.1, -s * 0.62, w * 0.2, s * 0.14);
       ctx.fillStyle = F('#2b2d31'); ctx.fillRect(-w / 2, -s * 0.42, w, s * 0.14);
       if (s > 30) { ctx.fillStyle = F('#333'); ctx.font = `800 ${Math.round(s * 0.12)}px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('CUIDADO, SAÍDA DE PASSAGEIROS', 0, -h * 0.47); }
+      ctx.restore();
+    }
+
+    // caminhão baú da marca visto de trás, portas abertas, carregado de caixas
+    static truckRear(ctx, x, y, s) {
+      const w = 2.5 * s, h = 3.3 * s;
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.62, s * 0.18, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#16181b'; ctx.fillRect(-w * 0.46, -s * 0.5, w * 0.2, s * 0.5); ctx.fillRect(w * 0.26, -s * 0.5, w * 0.2, s * 0.5);   // rodas
+      ctx.fillStyle = '#2b3036'; ctx.fillRect(-w / 2, -s * 0.62, w, s * 0.16);                                                   // para-choque
+      const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d9e0e4');
+      ctx.fillStyle = g; ctx.fillRect(-w / 2, -h, w, h - s * 0.6);
+      // interior com caixas
+      ctx.fillStyle = '#20262c'; ctx.fillRect(-w * 0.44, -h + s * 0.12, w * 0.88, h - s * 0.85);
+      const bw = w * 0.2;
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) { if (r === 3 && c > 1) continue; const bx = -w * 0.42 + c * (bw + s * 0.02), by = -s * 0.86 - (r + 1) * s * 0.5;
+        ctx.fillStyle = ['#c69c6d', '#b98c5c', '#d4ab7c'][(r + c) % 3]; ctx.fillRect(bx, by, bw, s * 0.48); ctx.fillStyle = '#82e8cc'; ctx.fillRect(bx + bw * 0.42, by, bw * 0.16, s * 0.48); }
+      // portas abertas para os lados
+      ctx.fillStyle = '#eef2f4'; ctx.fillRect(-w / 2 - w * 0.12, -h, w * 0.12, h - s * 0.62); ctx.fillRect(w / 2, -h, w * 0.12, h - s * 0.62);
+      ctx.fillStyle = '#0e3a4a'; ctx.fillRect(-w / 2, -h, w, s * 0.14);
+      ctx.fillStyle = '#ff3b3b'; ctx.fillRect(-w / 2, -s * 0.78, w * 0.06, s * 0.14); ctx.fillRect(w / 2 - w * 0.06, -s * 0.78, w * 0.06, s * 0.14);
+      if (s > 30) { ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `${Math.round(s * 0.12)}px ${U.FONT_TITLE}`; ctx.fillText('ACHADOS ÚTEIS', 0, -h + s * 0.11); }
       ctx.restore();
     }
 
@@ -849,6 +931,7 @@
     }
   }
 
+  City.WH_END = 30;   // fim do galpão (o motoboy sai pela porta)
   City.ZONE = ZONE; City.OB = OB; City.CARS = CARS;
   CNB.City = City; CNB.W = W; CNB.H = H;
 })();

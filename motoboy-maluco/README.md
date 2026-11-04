@@ -1,6 +1,7 @@
 # MOTOBOY MALUCO — jogo de entregas para TikTok LIVE
 
-O motoboy do **Achados Úteis Por Aí** roda pela avenida, vira nas ruas, para na casa do cliente
+O motoboy do **Achados Úteis Por Aí** sai do **centro de distribuição** (galpão com porta-paletes,
+caixas e o caminhão da marca descarregando), roda pela avenida, vira nas ruas, para na casa do cliente
 e entrega um **achado do site** (foto, nome e preço reais). São 4 entregas por rodada.
 
 **Jogar:** https://mencalha1986.github.io/motoboy-maluco/
