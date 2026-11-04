@@ -49,14 +49,16 @@
       this.roundNo++;
       this.world.reset(); this.plane.reset();
       this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = [];
-      this.mode = 'playing'; this.roundTime = 0; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
+      this.mode = 'takeoff'; this.toQueue = []; this.roundTime = 0; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
       this.truck = null; this.worker = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
       this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.likeAcc = 0; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.feathers = []; this.newRecord = false;
       try { this.record = parseFloat(localStorage.getItem('am-record')) || 0; } catch (e) { this.record = 0; }
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
-      this.hud.banner(`VOO ${this.roundNo}`, `${this.cargo.length} caixas de achados até o aeroporto!`, '#82e8cc', 2.4);
+      // começa parado na pista: acelera, decola e recolhe o trem de pouso
+      const p = this.plane; p.y = TD; p.landed = true; p.wheels = 1; p.speed = 0; p.ang = 0;
+      this.hud.banner(`VOO ${this.roundNo}`, `decolando com ${this.cargo.length} caixas de achados!`, '#82e8cc', 2.4);
       this.after(1.0, () => this.say('partida', { force: true }));
     }
 
@@ -73,6 +75,7 @@
     }
     applyGift(key, def, n, user) {
       const p = this.plane, head = p.headScreen || { x: 420, y: 900 };
+      if (this.mode === 'takeoff') { this.toQueue.push([key, def, n, user]); this.audio.gift(0); return; }   // vale depois de decolar
       if (this.mode !== 'playing') { this.audio.gift(0); return; }
       if (def.action === 'follow') { this.followQueue.push(user); return; }
       if (def.action === 'likes') {   // a cada X curtidas o avião anda um pouco
@@ -313,6 +316,24 @@
       this.bridge.update(dt, this.mode === 'playing');
       if (this.mode === 'title') {
         p.update(dt); this._titleFly(dt);
+      } else if (this.mode === 'takeoff') {
+        this.roundTime += dt;
+        const vr = 15;   // velocidade de rotação (m/s)
+        p.speed = Math.min(vr + 4, p.speed + 4.2 * dt); w.x += p.speed * PXM * dt; p.prop += dt * 40;
+        if (p.landed) {
+          p.y = TD + Math.sin(this.time * 40) * 0.8; p.ang = U.damp(p.ang, 0, 6, dt);
+          if (Math.random() < dt * 20) this.fx.dust(p.x - 60, GY, 2, 0.6);
+          if (p.speed >= vr) { p.landed = false; this.audio.whoosh(true); }
+        } else {
+          p.ang = U.damp(p.ang, -0.22, 3, dt); p.y -= (120 + (TD - p.y) * 0.9) * dt;
+          if (p.y < TD - 140) p.wheels = U.damp(p.wheels, 0, 3, dt);
+          if (p.y <= 1000) {
+            this.mode = 'playing'; p.vy = -100; p.wheels = 0; p.speed = this.cfg.cruiseSpeed + 4;
+            this.hud.banner('DECOLAMOS!', 'agora é com vocês — mandem presentes!', '#82e8cc', 2);
+            const q = this.toQueue; this.toQueue = []; q.forEach((a, i) => this.after(0.6 + i * 0.4, () => this.applyGift(...a)));
+          }
+        }
+        this.audio.setEngine(3 + p.speed * 0.6, true);
       } else if (this.mode === 'playing' || this.mode === 'landing') {
         this.roundTime += dt;
         if (this.followQueue.length && (this.followT = (this.followT || 0) - dt) <= 0) { this._follow(this.followQueue.shift()); this.followT = 1.3; }

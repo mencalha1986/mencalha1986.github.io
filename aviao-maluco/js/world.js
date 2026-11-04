@@ -20,14 +20,14 @@
       const cfg = this.cfg;
       this.x = 0;                       // quanto o mundo já andou (px)
       this.goalX = cfg.goal * PXM;
-      this.obstacles = []; this.nextObs = 900; this.obsN = 0;
+      this.obstacles = []; this.nextObs = 150 * PXM; this.obsN = 0;
       this.birds = []; this.lost = []; this.chutes = []; this.puffs = [];
       this.stageLen = Math.max(600, cfg.goal / 3) * PXM;
     }
     get meters() { return this.x / PXM; }
     get left() { return Math.max(0, Math.ceil((this.goalX - this.x) / PXM)); }
     stageAt(x) {
-      if (x > this.goalX - 75 * PXM) return 'aeroporto';
+      if (x > this.goalX - 75 * PXM || x < 75 * PXM) return 'aeroporto';   // aeroporto de saída e de chegada
       return STAGES[Math.floor(Math.max(0, x) / this.stageLen) % STAGES.length];
     }
 
@@ -162,7 +162,7 @@
       const base = GY - 40, k = 0.4;
       if (st === 'aeroporto') {
         // hangar e torre de controle
-        const tx = this.goalX - 18 * PXM - camX * 1, hx = this.goalX + 6 * PXM - camX;
+        const A = camX < this.goalX / 2 ? 14 * PXM : this.goalX, tx = A - 18 * PXM - camX * 1, hx = A + 6 * PXM - camX;
         ctx.fillStyle = '#d7dde3'; ctx.beginPath(); ctx.moveTo(hx - 220, base); ctx.lineTo(hx - 220, base - 160); ctx.quadraticCurveTo(hx, base - 300, hx + 220, base - 160); ctx.lineTo(hx + 220, base); ctx.fill();
         ctx.fillStyle = '#6b7c8c'; ctx.fillRect(hx - 140, base - 130, 280, 130);
         ctx.fillStyle = '#fff'; ctx.font = `800 26px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('ACHADOS CARGO', hx, base - 170);
@@ -201,7 +201,7 @@
       ctx.fillStyle = col[1]; for (let i = 0; i < 16; i++) { const x = ((i * 90 - camX) % 1440 + 1440) % 1440 - 180; ctx.fillRect(x, GY + 6, 46, 10); }
       ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(0, GY, W, 6);
       // pista do aeroporto
-      const r0 = this.goalX - 40 * PXM - camX, r1 = this.goalX + 60 * PXM - camX;
+      const RA = camX < this.goalX / 2 ? 0 : this.goalX, r0 = RA - 40 * PXM - camX, r1 = RA + (RA ? 60 : 80) * PXM - camX;
       if (r1 > 0 && r0 < W) {
         ctx.fillStyle = '#4a4d55'; ctx.fillRect(Math.max(0, r0), GY - 6, Math.min(W, r1) - Math.max(0, r0), 46);
         ctx.fillStyle = '#f5f5f5'; for (let x = r0 + 40; x < r1; x += 140) if (x > -80 && x < W) ctx.fillRect(x, GY + 14, 80, 8);

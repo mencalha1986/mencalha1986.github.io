@@ -124,7 +124,7 @@
     ctx.restore();
   }
 
-  const VERSAO = 'versão 04/11 16:51';
+  const VERSAO = 'versão 04/11 17:14';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];
@@ -159,7 +159,7 @@
       const g = this.g, top = g.cfg.ui.safeTop;
       if (g.mode === 'loading') return this.drawLoading(ctx, t);
       if (g.mode === 'title') return this.drawTitle(ctx, t);
-            if (g.mode === 'playing' || g.mode === 'landing' || g.mode === 'unload') {
+            if (g.mode === 'playing' || g.mode === 'takeoff' || g.mode === 'landing' || g.mode === 'unload') {
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 250);
         this.drawRanking(ctx, top + 250);
