@@ -124,7 +124,7 @@
     ctx.restore();
   }
 
-  const VERSAO = 'versão 04/11 17:14';
+  const VERSAO = 'versão 04/11 19:43';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];
@@ -142,7 +142,7 @@
     actionText(def) {
       switch (def.action) {
         case 'advance': return `acelera +${def.amount} m`;
-        case 'turbo': return `caça reboca ${def.duration}s (voa rápido)`;
+        case 'turbo': return def.duration >= 12 ? `3 caças rebocam ${def.duration}s` : `caça reboca ${def.duration}s`;
         case 'birds': return `urubu bate: volta ${def.amount} m`;
         case 'wind': return `vento contra −${def.amount} m`;
         case 'engine': return `pane: volta ${def.amount} m`;
@@ -163,7 +163,7 @@
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 250);
         this.drawRanking(ctx, top + 250);
-        if (g.mode === 'playing' && g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 250 + 214 + 16, t);
+        if ((g.mode === 'playing' || g.mode === 'takeoff') && g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 250 + 214 + 12, t);
         if (g.mode === 'landing' || g.mode === 'unload') this.drawFinal(ctx, t);
         this.drawCard(ctx, t);
         this.drawBanners(ctx, t);
@@ -266,21 +266,31 @@
     }
 
     // guia de presentes: aparece no começo e de tempos em tempos (para não tampar os obstáculos)
+    // guia de presentes SEMPRE visível: cada presente, quanto custa e o que faz
     drawGiftGuide(ctx, y0, t) {
-      const g = this.g, rt = g.roundTime, cyc = (rt - 18) % 45;
-      g.guideA = U.lerp(g.guideA === undefined ? 1 : g.guideA, g.jet || g.missile || g.vulture ? 0 : 1, 0.15);   // some quando o caça/míssil/urubu passa por ali
-      const a = (rt < 18 ? 1 : U.clamp(Math.min(cyc, 12 - cyc), 0, 1) * (cyc < 12 ? 1 : 0)) * g.guideA;
-      if (a <= 0.01) return;
-      const G = g.cfg.gifts, keys = Object.keys(G), rowH = 34;
-      ctx.save(); ctx.globalAlpha = a * 0.95;
-      glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.7);
-      ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
-      keys.forEach((k, i) => {
-        const def = G[k], y = y0 + 56 + i * rowH;
-        giftIcon(ctx, def.icon, 760, y + 16, 14, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 16px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 16), 782, y + 12);
-        ctx.font = `600 13px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 32), 782, y + 29);
-      });
+      const g = this.g, G = g.cfg.gifts, keys = Object.keys(G);
+      const help = keys.filter((k) => ['advance', 'turbo', 'shield'].includes(G[k].action));
+      const sab = keys.filter((k) => ['wind', 'engine', 'birds', 'gameover'].includes(G[k].action));
+      const fun = keys.filter((k) => !help.includes(k) && !sab.includes(k));
+      const groups = [['AJUDA', '#4ade80', help], ['SABOTAGEM', '#f87171', sab], ['DIVERSÃO', '#38bdf8', fun]].filter((x) => x[2].length);
+      const rowH = 37, headH = 30, h = 58 + groups.length * headH + keys.length * rowH + 8;
+      ctx.save();
+      glass(ctx, 718, y0, 326, h, 24, 0.82);
+      ctx.textAlign = 'left'; ctx.font = `32px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 740, y0 + 40);
+      let y = y0 + 52;
+      for (const [title, col, list] of groups) {
+        ctx.fillStyle = col; ctx.font = `900 15px ${FU}`; ctx.fillText(title, 740, y + 21); ctx.fillRect(740 + ctx.measureText(title).width + 8, y + 15, 1020 - (740 + ctx.measureText(title).width + 8), 2);
+        y += headH;
+        for (const k of list) {
+          const def = G[k];
+          giftIcon(ctx, def.icon, 756, y + 17, 16, def.color);
+          ctx.textAlign = 'left'; ctx.font = `800 17px ${FU}`; ctx.fillStyle = '#fff';
+          const nm = U.truncate(def.tiktok || def.label, 17); ctx.fillText(nm, 780, y + 14);
+          if (def.coins) { const nw = ctx.measureText(nm).width; ctx.font = `800 13px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(`🪙${def.coins}`, 786 + nw, y + 14); }
+          ctx.font = `700 14px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 32), 780, y + 32);
+          y += rowH;
+        }
+      }
       ctx.restore();
     }
 

@@ -390,7 +390,7 @@
         const jt = this.jet;
         if (jt) {
           jt.t += dt;
-          const tx = p.x + 380, ty = p.y - 50;
+          const tx = p.x + 310, ty = p.y - 50;
           if (jt.phase === 'in') { jt.x = U.damp(jt.x, tx, 4, dt); jt.y = U.damp(jt.y, ty, 5, dt); if (Math.abs(jt.x - tx) < 12) { jt.phase = 'tow'; this.audio.pop(); } }
           else if (jt.phase === 'tow') { jt.x = tx + Math.sin(this.time * 3) * 6; jt.y = U.damp(jt.y, ty, 8, dt); if (p.turbo <= 0) jt.phase = 'out'; }
           else { jt.x += 1600 * dt; jt.y -= 500 * dt; if (jt.x > W + 400) this.jet = null; }
