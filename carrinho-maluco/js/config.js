@@ -15,9 +15,9 @@ CNB.CONFIG = {
   trackLength: 260,          // metros até o CAIXA
   itemSpacing: [8, 13],      // distância entre achados no chão
   obstacleSpacing: [7, 12],  // distância entre "furadas" (menor = mais obstáculos)
-  autoWalkSpeed: 0.35,       // anda sozinho bem devagar sem presentes
-  walkSpeed: 2.4,
-  runSpeed: 11,
+  autoWalkSpeed: 0.6,        // anda sozinho devagar sem presentes
+  walkSpeed: 3.2,
+  runSpeed: 13,
   backSpeed: 3,
   control: 'auto',           // 'auto' (vai atrás dos achados sozinho) | 'manual' (você conduz com ← →)
   // piloto automático (chances de 0 a 1)

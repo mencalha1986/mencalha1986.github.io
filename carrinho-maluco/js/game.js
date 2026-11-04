@@ -352,7 +352,9 @@
 
     // ------------------------------------------------------------ loop
     loop(now) {
-      const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
+      // em máquina lenta (poucos quadros por segundo) roda o tempo em passos de até 0,05 s, sem deixar o jogo em câmera lenta
+      let dt = Math.min(0.2, (now - this.last) / 1000); this.last = now;
+      while (dt > 0.05) { this.update(0.05); dt -= 0.05; }
       this.update(dt); this.render();
       requestAnimationFrame((t) => this.loop(t));
     }
