@@ -29,6 +29,8 @@
     puddle:   { w: 1.6, hit: 'wobble', banner: 'SPLASH!' },
     parked:   { w: 1.9, hit: 'crash', banner: 'BATEU NO CARRO!' },
     traffic:  { w: 1.9, hit: 'crash', banner: 'BATEU NA TRASEIRA!', move: true },
+    bus:      { w: 2.5, hit: 'crash', banner: 'BATEU NO ÔNIBUS!', move: true },
+    oncoming: { w: 1.9, hit: 'crash', banner: 'BATEU DE FRENTE!', move: true },
     dumpster: { w: 1.7, hit: 'crash', banner: 'BATEU NA CAÇAMBA!' },
     ped:      { w: 0.8, hit: 'stop',  banner: 'FREIOU NO SUSTO!', move: true },
     dogx:     { w: 0.9, hit: 'stop',  banner: 'CACHORRO ATRAVESSOU!', move: true }
@@ -40,26 +42,33 @@
     reset(seed) {
       const r = (this.rand = U.mulberry32(seed * 6151 + 11)), cfg = this.cfg;
       const rr = (a) => U.lerp(a[0], a[1], r());
-      this.zones = []; this.curves = []; this.stops = []; this.maneuvers = []; this.signs = [];
-      const T = 24;      // comprimento de cada curva
+      this.zones = []; this.curves = []; this.stops = []; this.maneuvers = []; this.signs = []; this.corners = [];
+      // ESQUINAS DE VERDADE: a avenida segue reto e a moto vira na rua (direita);
+      // a rua termina num "T" com a avenida e a moto vira à esquerda.
+      const CWR = ZONE.rua.road * 2, CWA = ZONE.av.road * 2;   // largura do cruzamento
       let z = 0;
       for (let k = 0; k < cfg.deliveries; k++) {
-        const A = rr(cfg.avenueLength);
-        this.zones.push({ type: 'av', z0: z, z1: z + A + T / 2 });
-        this.curves.push({ z0: z + A, z1: z + A + T, dir: 1 });
+        const A = rr(cfg.avenueLength), zc = z + A;
         const streetName = STREETS[Math.floor(r() * STREETS.length)];
-        this.maneuvers.push({ z: z + A, type: 'right', name: streetName });
-        this.signs.push({ z: z + A - 3, name: streetName });
-        const zs = z + A + T / 2, S = rr(cfg.streetLength);
-        const hz = zs + T / 2 + S;
+        const cR = { zc, cw: CWR, dir: 1, turned: false, name: streetName };
+        this.corners.push(cR);
+        this.zones.push({ type: 'av', z0: z, z1: zc + CWR, corner: cR, stopAt: Infinity });
+        this.curves.push({ z0: zc, z1: zc + CWR, dir: 1 });
+        this.maneuvers.push({ z: zc, type: 'right', name: streetName });
+        this.signs.push({ z: zc - 3, name: streetName });
+        const zs = zc + CWR, S = rr(cfg.streetLength), hz = zs + S;
         const num = 10 + Math.floor(r() * 890);
         this.stops.push({ z: hz, num, street: streetName, done: false, k });
         this.maneuvers.push({ z: hz, type: 'dest', num, name: streetName });
         const last = k === cfg.deliveries - 1;
         const ze = last ? hz + 40 : hz + 22;
-        this.zones.push({ type: 'rua', z0: zs, z1: last ? ze : ze + T / 2 });
-        if (!last) { this.curves.push({ z0: ze, z1: ze + T, dir: -1 }); this.maneuvers.push({ z: ze, type: 'left', name: 'AVENIDA' }); }
-        z = ze + (last ? 0 : T);
+        this.zones.push({ type: 'rua', z0: zs, z1: last ? ze : ze + CWA, stopAt: last ? ze - 8 : ze - 3 });
+        if (!last) {
+          this.corners.push({ zc: ze, cw: CWA, dir: -1, turned: false, name: 'AVENIDA' });
+          this.curves.push({ z0: ze, z1: ze + CWA, dir: -1 });
+          this.maneuvers.push({ z: ze, type: 'left', name: 'AVENIDA' });
+        }
+        z = ze + (last ? 0 : CWA);
       }
       this.length = z;
       this._buildCurve();
@@ -70,11 +79,11 @@
       while (oz < this.length - 10) {
         if (freeAt(oz)) {
           const zt = this.zoneAt(oz).type, R = ZONE[zt].road;
-          const pool = zt === 'av' ? ['hole', 'cone', 'bump', 'puddle', 'traffic', 'traffic', 'dumpster', 'ped', 'dogx'] : ['hole', 'cone', 'bump', 'puddle', 'parked', 'parked', 'ped', 'dogx', 'dumpster'];
+          const pool = zt === 'av' ? ['hole', 'cone', 'bump', 'puddle', 'dumpster', 'ped', 'dogx', 'cone'] : ['hole', 'cone', 'bump', 'puddle', 'parked', 'parked', 'ped', 'dogx', 'dumpster'];
           let t; do { t = pool[Math.floor(r() * pool.length)]; } while (t === lastT);
           lastT = t;
           let x;
-          if (t === 'parked' || t === 'dumpster') x = (r() < 0.5 ? -1 : 1) * (R - 1.1);
+          if (t === 'parked' || t === 'dumpster') x = (r() < 0.5 ? -1 : 1) * (zt === 'rua' ? R - 0.45 : R - 1.1);
           else if (t === 'traffic') x = [-3.6, 0, 3.6][Math.floor(r() * 3)];
           else x = (r() * 2 - 1) * (R - 0.9);
           this.obstacles.push({ type: t, z: oz, x, x0: x, w: OB[t].w, hit: false, knock: 0, seed: r(), color: CARS[Math.floor(r() * CARS.length)],
@@ -82,6 +91,26 @@
         }
         oz += rr(cfg.obstacleSpacing);
       }
+      // TRÂNSITO: carros e ônibus na avenida; na rua, carro lento na mão e carro vindo na contramão
+      const curveAt = (zz) => this.curves.some((c) => zz > c.z0 - 6 && zz < c.z1 + 6);
+      let tz = 12;
+      while (tz < this.length - 15) {
+        if (!curveAt(tz) && !this.stops.some((st) => Math.abs(tz - st.z) < 14)) {
+          const zone = this.zoneAt(tz), R = ZONE[zone.type].road;
+          let type, x, v;
+          if (zone.type === 'av') {
+            type = r() < cfg.busChance ? 'bus' : 'traffic';
+            x = [-3.6, 0, 3.6][Math.floor(r() * 3)];
+            v = type === 'bus' ? U.lerp(2.5, 4, r()) : U.lerp(3, 6, r());
+          } else if (r() < 0.55) { type = 'oncoming'; x = -R * 0.33; v = -U.lerp(3, 5, r()); }
+          else { type = 'traffic'; x = R * 0.33; v = U.lerp(2, 3.5, r()); }
+          this.obstacles.push({ type, z: tz, x, x0: x, tx: x, w: OB[type].w, hit: false, knock: 0, seed: r(), color: CARS[Math.floor(r() * CARS.length)], v, zone, vehicle: true,
+            bus: type === 'bus' ? ['#f2b705', '#2a9d8f', '#e63946', '#3a86ff'][Math.floor(r() * 4)] : null, line: 100 + Math.floor(r() * 800) });
+        }
+        tz += rr(cfg.trafficSpacing);
+      }
+      this.obstacles.sort((a, b) => a.z - b.z);
+
       // árvores, postes e placas
       this.props = [];
       for (let pz = 6; pz < this.length; pz += 9 + r() * 10) {
@@ -90,6 +119,22 @@
       }
       // parados na calçada da casa de entrega: cliente
       this.customers = this.stops.map(() => ({ shirt: WALLS[Math.floor(r() * WALLS.length)], hair: ['#2b1d14', '#5a3a1a', '#d4a24c', '#1b1b1b'][Math.floor(r() * 4)], skin: ['#c98c64', '#8d5a3b', '#e0b08e', '#a86e4b'][Math.floor(r() * 4)], fem: r() < 0.5 }));
+    }
+
+    // o que a câmera enxerga: antes de virar, depois da esquina aparece a avenida seguindo reto (ou o "T")
+    get nextCorner() { return this.corners.find((c) => !c.turned); }
+    get lastCorner() { let l = null; for (const c of this.corners) if (c.turned) l = c; return l; }
+    viewType(z) {
+      const K = this.nextCorner;
+      if (K && z >= K.zc + K.cw) return K.dir > 0 ? 'av' : null;
+      return this.zoneAt(z).type;
+    }
+    visibleZ(z, o) {
+      const K = this.nextCorner, L = this.lastCorner;
+      if (o && o.ghost) return !!(K && o.zone.corner === K);
+      if (K && z >= K.zc - 0.3) return false;
+      if (L && z < L.zc + L.cw) return false;
+      return true;
     }
 
     zoneAt(z) { return this.zones.find((zn) => z >= zn.z0 && z < zn.z1) || this.zones[this.zones.length - 1]; }
@@ -104,7 +149,7 @@
       for (let i = 1; i < n; i++) {
         const z = i * STEP;
         let c = 0;
-        for (const cv of this.curves) if (z >= cv.z0 && z < cv.z1) { const u = (z - cv.z0) / (cv.z1 - cv.z0); c = cv.dir * DELTA * Math.PI / (2 * (cv.z1 - cv.z0)) * Math.sin(u * Math.PI); }
+        for (const cv of (this.bends || [])) if (z >= cv.z0 && z < cv.z1) { const u = (z - cv.z0) / (cv.z1 - cv.z0); c = cv.dir * DELTA * Math.PI / (2 * (cv.z1 - cv.z0)) * Math.sin(u * Math.PI); }
         this.cS[i] = this.cS[i - 1] + c * STEP;
         this.cX[i] = this.cX[i - 1] + this.cS[i - 1] * STEP;
       }
@@ -117,7 +162,7 @@
       const dz = z - cam.z;
       if (dz < 0.05) return null;
       const s = cam.F / dz;
-      const off = this.offset(cam.z, z);
+      const off = this.offset(cam.z, z) - (cam.yaw || 0) * dz;
       return { x: W / 2 + (x + off - cam.x) * s + cam.sx, y: cam.horizon + (cam.y - y) * s + cam.sy, s, dz };
     }
     fogT(dz) { return Math.pow(U.clamp((dz - 25) / 230, 0, 1), 0.85) * 0.75; }
@@ -129,19 +174,33 @@
 
     // obstáculos que andam
     update(dt, t) {
+      // trânsito: carro não atravessa o da frente na mesma faixa (acompanha a velocidade dele)
+      const veh = this.obstacles.filter((o) => o.vehicle && !o.hit);
+      for (const a of veh) {
+        a.vNow = a.v;
+        if (a.v <= 0) continue;
+        for (const b of veh) if (b !== a && b.v > 0 && Math.abs(b.x - a.x) < 1.6 && b.z > a.z && b.z - a.z < (b.type === 'bus' || a.type === 'bus' ? 11 : 8)) a.vNow = Math.min(a.vNow, b.v * 0.95);
+      }
       for (const o of this.obstacles) {
-        if (o.type === 'traffic' && !o.hit) o.z += o.v * dt;
+        if (o.vehicle && !o.hit) {
+          // anda; não sai da avenida/rua onde nasceu (espera no fim, como num cruzamento)
+          const nz = o.z + (o.vNow !== undefined ? o.vNow : o.v) * dt;
+          if (nz > o.zone.z0 + 2 && nz < o.zone.stopAt && nz < o.zone.z1 + 260) o.z = nz;
+          if (o.zone.corner && o.z > o.zone.corner.zc - 2) o.ghost = true;   // seguiu reto pela avenida
+          if (o.tx !== undefined) o.x = U.damp(o.x, o.tx, 2.5, dt);   // abrindo caminho (buzina)
+        }
         if (o.cross) {
           const R = this.road(o.z) + 0.5;
-          o.x += o.cross * (o.type === 'dogx' ? 2.2 : 1.2) * dt;
-          if (Math.abs(o.x) > R) { o.x = U.clamp(o.x, -R, R); o.cross *= -1; }
+          o.x += o.cross * (o.type === 'dogx' ? 2.2 : 1.2) * (o.flee ? 3 : 1) * dt;
+          if (o.flee) { if (Math.abs(o.x) > R + 1.2) { o.cross = 0; o.x = Math.sign(o.x) * (R + 1.2); } }
+          else if (Math.abs(o.x) > R) { o.x = U.clamp(o.x, -R, R); o.cross *= -1; }
         }
       }
     }
 
     // ---------------- céu e cenário de fundo ----------------
     drawSky(ctx, cam, t) {
-      const hz = cam.horizon + cam.sy, hd = this.heading(cam.z);
+      const hz = cam.horizon + cam.sy, hd = this.heading(cam.z) + (cam.hd || 0) + (cam.yaw || 0) * 1.25;
       const g = ctx.createLinearGradient(0, 0, 0, hz);
       g.addColorStop(0, SKY_TOP); g.addColorStop(1, SKY_BOT);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, hz + 2);
@@ -179,8 +238,13 @@
 
     _segment(ctx, cam, zn, zf, t) {
       const P = (x, y, z) => this.proj(cam, x, y, z);
-      const zm = (zn + zf) / 2, dz = zm - cam.z, zone = this.zoneAt(zm), Z = ZONE[zone.type], R = Z.road, SW = Z.side, FX = R + SW;
-      const idx = Math.floor(zm), F = (c) => this._fog(c, dz);
+      const zm = (zn + zf) / 2, dz = zm - cam.z, K = this.nextCorner, L = this.lastCorner, F = (c) => this._fog(c, dz);
+      if (K && zm >= K.zc && zm < K.zc + K.cw) return this._junction(ctx, cam, zn, zf, zm, K, F, true);
+      if (L && zm >= L.zc && zm < L.zc + L.cw) return this._junction(ctx, cam, zn, zf, zm, L, F, false);
+      if (K && K.dir < 0 && zm >= K.zc + K.cw) { this._tFar(ctx, cam, zn, zf, zm, K, F); return; }
+      const vt = this.viewType(zm), zone = { type: vt || this.zoneAt(zm).type }, Z = ZONE[zone.type], R = Z.road, SW = Z.side, FX = R + SW;
+      if (K && K.dir > 0 && zf > K.zc + K.cw + 2.3 && zn <= K.zc + K.cw + 2.3) this._afterSeg = () => this._crossFacade(ctx, cam, K, F);
+      const idx = Math.floor(zm);
       // asfalto
       this._quad(ctx, P(-R, 0, zn), P(R, 0, zn), P(R, 0, zf), P(-R, 0, zf), F(idx % 2 ? '#4a4d55' : '#474a52'));
       // faixas
@@ -197,6 +261,67 @@
         const chunk = Math.floor(zm / (zone.type === 'av' ? 12 : 13)) + (side > 0 ? 700 : 0);
         if (zone.type === 'av') this._shop(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
         else this._house(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
+        // esquina à direita: a rua lateral corta a calçada
+      }
+      if (this._afterSeg) { const f = this._afterSeg; this._afterSeg = null; f(); }
+    }
+
+    // cruzamento: antes de virar (pre) a rua lateral se abre do lado da seta; depois, é a via que ficou para trás
+    _junction(ctx, cam, zn, zf, zm, C, F, pre) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), BIG = 90;
+      const from = C.dir > 0 ? ZONE.av : ZONE.rua, R = from.road, FX = R + from.side;
+      const both = !pre || C.dir < 0;          // "T" com a avenida, ou a via de onde viemos: asfalto dos dois lados
+      const xl = both || C.dir < 0 ? -BIG : -R, xr = both || C.dir > 0 ? BIG : R;
+      this._quad(ctx, P(xl, 0, zn), P(xr, 0, zn), P(xr, 0, zf), P(xl, 0, zf), F('#4a4d55'));
+      // faixas pintadas da via que cruza (no sentido do x)
+      const mid = C.zc + C.cw / 2, lines = C.dir > 0 ? [[mid, '#f2c94c']] : [[mid - 1.8, '#f1f1f1'], [mid + 1.8, '#f1f1f1']];
+      for (const [lz, col] of lines) if (lz >= zn && lz < zf + 0.2) for (let x = (C.dir > 0 && pre ? R + 1 : -BIG); x < BIG; x += 3) this._quad(ctx, P(x, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz + 0.07), P(x, 0.01, lz + 0.07), F(col));
+      if (pre && C.dir > 0) {
+        // lado esquerdo continua com calçada e lojas da avenida
+        this._quad(ctx, P(-R, 0, zn), P(-R, 0.15, zn), P(-R, 0.15, zf), P(-R, 0, zf), F('#b8bcc2'));
+        this._quad(ctx, P(-R, 0.15, zn), P(-FX, 0.15, zn), P(-FX, 0.15, zf), P(-R, 0.15, zf), F('#d3ccbf'));
+        this._shop(ctx, P, cam, zn, zf, zm, zm - cam.z, -1, FX, Math.floor(zm / 12), F);
+      }
+    }
+    // fachada das casas do outro lado da rua lateral (de frente para a câmera)
+    _crossFacade(ctx, cam, K, F) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), z0 = K.zc + K.cw, z1 = z0 + 2.3, R = ZONE.av.road, FX = R + ZONE.av.side;
+      this._quad(ctx, P(R, 0.15, z0), P(90, 0.15, z0), P(90, 0.15, z1), P(R, 0.15, z1), F('#d3ccbf'));
+      this._quad(ctx, P(R, 0, z0), P(90, 0, z0), P(90, 0.15, z0), P(R, 0.15, z0), F('#b8bcc2'));
+      for (let x = FX, i = 0; x < 90; x += 7, i++) {
+        const h = 4 + U.hash(i + K.zc) * 2.2, col = WALLS[Math.floor(U.hash(i * 3 + K.zc) * WALLS.length)];
+        this._quad(ctx, P(x, 0.15, z1), P(x + 7, 0.15, z1), P(x + 7, h, z1), P(x, h, z1), F(col));
+        this._quad(ctx, P(x, h, z1), P(x + 7, h, z1), P(x + 7, h + 1.2, z1 + 1.4), P(x, h + 1.2, z1 + 1.4), F('#b5523b'));
+        this._quad(ctx, P(x + 1.2, 1.2, z1 - 0.01), P(x + 2.6, 1.2, z1 - 0.01), P(x + 2.6, 2.6, z1 - 0.01), P(x + 1.2, 2.6, z1 - 0.01), F('#5d7a8c'));
+        this._quad(ctx, P(x + 4, 0.15, z1 - 0.01), P(x + 5.4, 0.15, z1 - 0.01), P(x + 5.4, 2.4, z1 - 0.01), P(x + 4, 2.4, z1 - 0.01), F('#6b4a2f'));
+      }
+      // placa da rua na esquina
+      const b = P(R + 0.6, 0.15, z0 + 0.3), tp = P(R + 0.6, 3.2, z0 + 0.3);
+      if (b && tp) {
+        ctx.strokeStyle = F('#4b5563'); ctx.lineWidth = Math.max(1, b.s * 0.08); ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(tp.x, tp.y); ctx.stroke();
+      }
+    }
+    // fim da rua: do outro lado da avenida, uma fileira de lojas de frente
+    _tFar(ctx, cam, zn, zf, zm, K, F) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), z0 = K.zc + K.cw, z1 = z0 + 3;
+      if (zn > z1 + 0.5) return;
+      if (zn <= z1 && zf > z0) {
+        this._quad(ctx, P(-120, 0, z0), P(120, 0, z0), P(120, 0.15, z0), P(-120, 0.15, z0), F('#b8bcc2'));
+        this._quad(ctx, P(-120, 0.15, z0), P(120, 0.15, z0), P(120, 0.15, z1), P(-120, 0.15, z1), F('#d3ccbf'));
+      }
+      if (zf > z1 && zn <= z1 + 0.5) {
+        for (let x = -120, i = 0; x < 120; x += 9, i++) {
+          const shop = SHOPS[Math.floor(U.hash(i + K.zc * 0.37) * SHOPS.length)], h = 4.5 + U.hash(i * 5 + K.zc) * 3;
+          const wall = ['#efe6d8', '#e8d5b7', '#d9e4dd', '#f2d0a4', '#e5e5e5', '#cfd8e3'][Math.floor(U.hash(i * 7 + K.zc) * 6)];
+          this._quad(ctx, P(x, 0.15, z1), P(x + 9, 0.15, z1), P(x + 9, h, z1), P(x, h, z1), F(wall));
+          this._quad(ctx, P(x + 0.8, 0.25, z1 - 0.01), P(x + 8.2, 0.25, z1 - 0.01), P(x + 8.2, 2.5, z1 - 0.01), P(x + 0.8, 2.5, z1 - 0.01), F('#3e5566'));
+          this._quad(ctx, P(x + 0.5, 2.6, z1 - 0.02), P(x + 8.5, 2.6, z1 - 0.02), P(x + 8.5, 2.9, z1 - 0.9), P(x + 0.5, 2.9, z1 - 0.9), F(shop[1]));
+          const a = P(x + 1.5, 3.9, z1 - 0.03), b = P(x + 7.5, 3.1, z1 - 0.03);
+          if (a && b) {
+            ctx.fillStyle = F(shop[1]); ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+            const hh = b.y - a.y; if (hh > 7) { ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(Math.min(hh * 0.7, (b.x - a.x) / shop[0].length * 1.7))}px ${U.FONT_TITLE}`; ctx.fillText(shop[0], (a.x + b.x) / 2, a.y + hh * 0.55); ctx.textBaseline = 'alphabetic'; }
+          }
+        }
       }
     }
 
@@ -236,14 +361,14 @@
 
     // ---------------- sprites ----------------
     collect(cam, t) {
-      const L = [], vis = (z) => z - cam.z > 0.6 && z - cam.z < 230;
+      const L = [], vis = (z, o) => z - cam.z > 0.6 && z - cam.z < 230 && this.visibleZ(z, o);
       for (const p of this.props) if (vis(p.z)) L.push({ z: p.z, draw: (c) => this._prop(c, cam, p, t) });
       for (const s of this.signs) if (vis(s.z)) L.push({ z: s.z, draw: (c) => this._streetSign(c, cam, s) });
-      for (const o of this.obstacles) if (vis(o.z)) L.push({ z: o.z, draw: (c) => this._ob(c, cam, o, t) });
+      for (const o of this.obstacles) if (vis(o.z, o)) L.push({ z: o.z, draw: (c) => this._ob(c, cam, o, t) });
       this.stops.forEach((s, i) => { if (vis(s.z) && !s.done) L.push({ z: s.z + 0.5, draw: (c) => this._pin(c, cam, s, t) }); });
       // placas das lojas (perpendiculares, de frente para a câmera)
       for (let z = Math.floor(cam.z / 12) * 12 + 12; z < cam.z + 160; z += 12) {
-        if (this.zoneAt(z).type !== 'av' || this.curves.some((c) => z > c.z0 - 4 && z < c.z1 + 4)) continue;
+        if (this.viewType(z) !== 'av' || this.curves.some((c) => z > c.z0 - 4 && z < c.z1 + 4)) continue;
         for (const side of [-1, 1]) {
           const chunk = Math.floor(z / 12) + (side > 0 ? 700 : 0);
           if (U.hash(chunk * 1.9) < 0.35) continue;
@@ -332,6 +457,40 @@
       ctx.restore();
     }
 
+    static busRear(ctx, x, y, s, color, line, F, brake) {
+      const w = 2.5 * s, h = 3.1 * s;
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.6, s * 0.2, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#16171a'; ctx.fillRect(-w * 0.44, -s * 0.38, w * 0.14, s * 0.38); ctx.fillRect(w * 0.3, -s * 0.38, w * 0.14, s * 0.38);
+      ctx.fillStyle = F('#f1f1ee'); U.roundRect(ctx, -w / 2, -h, w, h - s * 0.25, s * 0.12); ctx.fill();
+      ctx.fillStyle = F(color); ctx.fillRect(-w / 2, -h * 0.42, w, h * 0.16); ctx.fillRect(-w / 2, -h + s * 0.05, w, s * 0.22);
+      ctx.fillStyle = F('#22303a'); U.roundRect(ctx, -w * 0.42, -h * 0.86, w * 0.84, h * 0.36, s * 0.06); ctx.fill();   // vidro traseiro
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-w * 0.3, -h * 0.84, w * 0.1, h * 0.3);
+      ctx.fillStyle = '#111'; U.roundRect(ctx, -w * 0.32, -h * 0.98, w * 0.64, s * 0.22, s * 0.04); ctx.fill();         // letreiro
+      if (s > 18) { ctx.fillStyle = '#ffb703'; ctx.font = `${Math.round(s * 0.17)}px ${U.FONT_TITLE}`; ctx.textAlign = 'center'; ctx.fillText(`${line} CENTRO`, 0, -h * 0.98 + s * 0.17); }
+      ctx.fillStyle = brake ? '#ff2a2a' : '#b91c1c'; ctx.fillRect(-w * 0.48, -h * 0.4, w * 0.1, s * 0.4); ctx.fillRect(w * 0.38, -h * 0.4, w * 0.1, s * 0.4);
+      ctx.fillStyle = '#f5f5f5'; ctx.fillRect(-w * 0.1, -s * 0.62, w * 0.2, s * 0.14);
+      ctx.fillStyle = F('#2b2d31'); ctx.fillRect(-w / 2, -s * 0.42, w, s * 0.14);
+      if (s > 30) { ctx.fillStyle = F('#333'); ctx.font = `800 ${Math.round(s * 0.12)}px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('CUIDADO, SAÍDA DE PASSAGEIROS', 0, -h * 0.47); }
+      ctx.restore();
+    }
+
+    static carFront(ctx, x, y, s, color, F, t) {
+      const w = 1.75 * s;
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.62, s * 0.16, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#16171a'; ctx.fillRect(-w * 0.46, -s * 0.34, w * 0.16, s * 0.34); ctx.fillRect(w * 0.3, -s * 0.34, w * 0.16, s * 0.34);
+      ctx.fillStyle = F(color); U.roundRect(ctx, -w / 2, -s * 0.95, w, s * 0.67, s * 0.12); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-w * 0.42, -s * 0.93); ctx.lineTo(-w * 0.3, -s * 1.38); ctx.lineTo(w * 0.3, -s * 1.38); ctx.lineTo(w * 0.42, -s * 0.93); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = F('#3b5566'); ctx.beginPath(); ctx.moveTo(-w * 0.37, -s * 0.97); ctx.lineTo(-w * 0.27, -s * 1.33); ctx.lineTo(w * 0.27, -s * 1.33); ctx.lineTo(w * 0.37, -s * 0.97); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = F('#c98c64'); ctx.beginPath(); ctx.arc(-w * 0.14, -s * 1.13, s * 0.09, 0, 7); ctx.fill();          // motorista
+      ctx.fillStyle = F('#1f2328'); ctx.fillRect(-w * 0.22, -s * 0.66, w * 0.44, s * 0.16);                              // grade
+      ctx.fillStyle = '#fffbe0'; ctx.beginPath(); ctx.ellipse(-w * 0.38, -s * 0.68, w * 0.08, s * 0.07, 0, 0, 7); ctx.ellipse(w * 0.38, -s * 0.68, w * 0.08, s * 0.07, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,250,210,0.25)'; ctx.beginPath(); ctx.arc(-w * 0.38, -s * 0.68, s * 0.3, 0, 7); ctx.arc(w * 0.38, -s * 0.68, s * 0.3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#f5f5f5'; ctx.fillRect(-w * 0.13, -s * 0.46, w * 0.26, s * 0.12);
+      ctx.restore();
+    }
+
     _person(ctx, x, y, s, t, o, F) {
       const sw = Math.sin(t * 9 + o.seed * 7) * 0.35;
       ctx.save(); ctx.translate(x, y); ctx.scale(o.cross < 0 ? -1 : 1, 1);
@@ -393,6 +552,8 @@
         case 'parked': case 'traffic':
           City.carRear(ctx, p.x, p.y, s, o.color, F, o.type === 'traffic' && Math.sin(t * 2 + o.seed * 9) > 0.6);
           break;
+        case 'bus': City.busRear(ctx, p.x, p.y, s, o.bus, o.line, F, Math.sin(t * 1.5 + o.seed * 9) > 0.5); break;
+        case 'oncoming': City.carFront(ctx, p.x, p.y, s, o.color, F, t); break;
         case 'dumpster': {
           const w = 1.6 * s, h = 1.0 * s;
           ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(p.x, p.y, w * 0.6, s * 0.12, 0, 0, 7); ctx.fill();

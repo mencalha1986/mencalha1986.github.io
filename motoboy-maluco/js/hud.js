@@ -51,6 +51,10 @@
         ctx.fillStyle = '#fe2c55'; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 7); ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(0, 11); ctx.moveTo(-11, 0); ctx.lineTo(11, 0); ctx.stroke(); break;
+      case 'horn':   // buzina
+        ctx.fillStyle = '#38bdf8'; U.poly(ctx, [-16, -7, -6, -7, 10, -17, 10, 17, -6, 7, -16, 7]); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        [8, 14].forEach((r) => { ctx.beginPath(); ctx.arc(10, 0, r, -0.7, 0.7); ctx.stroke(); }); break;
       case 'card':
         ctx.fillStyle = '#e879f9'; U.roundRect(ctx, -18, -12, 36, 24, 4); ctx.fill();
         ctx.fillStyle = '#1a0820'; ctx.fillRect(-18, -6, 36, 5);
@@ -123,7 +127,8 @@
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 240);
         this.drawRanking(ctx, top + 240);
-        if (g.cfg.ui.giftGuide && !g.rider.finished) this.drawGiftGuide(ctx, top + 240 + 214 + 16);
+        const ga = g.guideAlpha === undefined ? 1 : g.guideAlpha;   // some na esquina para mostrar a rua
+        if (g.cfg.ui.giftGuide && !g.rider.finished && ga > 0.02) { ctx.save(); ctx.globalAlpha *= ga; this.drawGiftGuide(ctx, top + 240 + 214 + 16); ctx.restore(); }
         this.drawMirror(ctx, t);
         this.drawCard(ctx, t);
         this.drawBanners(ctx, t);
@@ -219,6 +224,7 @@
         case 'flat': return 'fura o pneu';
         case 'gameover': return 'GAME OVER';
         case 'follow': return 'vira cliente da entrega';
+        case 'horn': return 'BI-BI! abre caminho';
       }
       return '';
     }
@@ -303,14 +309,14 @@
 
     drawBubbles(ctx, t) {
       for (const b of this.bubbles) {
-        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : g.rider.headScreen;
+        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : g.rider.headScreen;
         if (!anchor) continue;
         const pop = U.easeOutBack(U.clamp(b.age * 5, 0, 1)), fade = U.clamp((b.dur - b.age) / 0.3, 0, 1);
         ctx.font = `800 30px ${FU}`;
         const lines = wrap(ctx, b.text, 520), lh = 36, bw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 44, bh = lines.length * lh + 26;
         const bx = U.clamp(anchor.x - bw / 2, 30, W - bw - 30), by = U.clamp(anchor.y - bh - 30, 420, 1600);
         ctx.save(); ctx.globalAlpha = fade; ctx.translate(anchor.x, by + bh); ctx.scale(pop, pop); ctx.translate(-anchor.x, -(by + bh));
-        ctx.fillStyle = b.who === 'cliente' ? '#e6fff7' : '#ffffff';
+        ctx.fillStyle = b.who === 'cliente' ? '#e6fff7' : b.who === 'borr' ? '#fff4d6' : '#ffffff';
         U.roundRect(ctx, bx, by, bw, bh, 22); ctx.fill();
         ctx.beginPath(); ctx.moveTo(U.clamp(anchor.x - 14, bx + 24, bx + bw - 44), by + bh - 2); ctx.lineTo(U.clamp(anchor.x + 16, bx + 44, bx + bw - 24), by + bh - 2); ctx.lineTo(anchor.x, anchor.y - 6); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#1b1410'; ctx.lineWidth = 3; U.roundRect(ctx, bx, by, bw, bh, 22); ctx.stroke();
@@ -376,7 +382,7 @@
         ctx.font = `500 21px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText(this.actionText(def), x + 68, y + 50);
       });
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.fillText('Teste: 1–8 presentes · ← → pilotar · D demo · H painel · ' + this.g.catalog.items.length + ' achados', W / 2, 1490);
+      ctx.fillText('Teste: 1–9 presentes · ← → pilotar · D demo · H painel · ' + this.g.catalog.items.length + ' achados', W / 2, 1490);
     }
 
     // ---------------- final do expediente ----------------

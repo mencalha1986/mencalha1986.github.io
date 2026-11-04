@@ -48,7 +48,7 @@
 
     cancelAction() {
       if (this.finished) return;
-      this.turbo = 0; this.impulse = 0; this.retreat = 0; this.chase = 0; this.slowT = 0;
+      this.turbo = 0; this.impulse = 0; this.retreat = 0; this.chase = 0; this.slowT = 0; this.waitFix = false; this.tireOk = false;
       if ([S.RUN, S.CHASE, S.BACK, S.WOBBLE, S.NEAR, S.FLAT].includes(this.state)) this.force(S.RIDE);
       else if ([S.FALL, S.DOWN].includes(this.state)) { this.force(S.GETUP); this.st = 0.4; }
     }
@@ -81,7 +81,7 @@
         case S.FALL: target = 0; lerp = 4; if (this.st > 0.45) { this.setState(S.DOWN); this.onEvent && this.onEvent('impact'); } break;
         case S.DOWN: target = 0; if (this.st > 1.3) this.setState(S.GETUP); break;
         case S.GETUP: target = 0; if (this.st > 1.0) this.setState(S.RIDE); break;
-        case S.FLAT: target = 0; lerp = 6; if (this.st > 2.8) { this.slowT = 3; this.setState(S.RIDE); } break;
+        case S.FLAT: target = 0; lerp = 6; if (!this.waitFix && this.st > 2.8) { this.slowT = 3; this.setState(S.RIDE); } break;   // waitFix: esperando o borracheiro
         case S.ARRIVE: {
           const left = this.stopZ - this.z;
           target = U.clamp(left * 1.3, 0.8, Math.max(2.5, this.speed)); lerp = 4; this.brake = 1;
@@ -91,6 +91,7 @@
         case S.STOP: target = 0; lerp = 20; break;
         case S.NOGAS: target = 0; lerp = 1.2; break;
       }
+      if (target > 0 && this.speedCap) target = Math.min(target, this.speedCap);   // freia para virar a esquina
       this.speed = U.damp(this.speed, target, lerp, dt);
       if (this.state === S.STOP) this.speed = 0;
       if (this.slide > 0) { const r = Math.min(this.slide, dt * 4); this.slide -= r; this.z += r; }
@@ -134,7 +135,7 @@
 
       ctx.save(); ctx.translate(p.x, p.y); ctx.scale(k, k);
       if (this.fall) { const px = this.fallDir * 22; ctx.translate(px, 0); ctx.rotate(this.fallDir * this.fall); ctx.translate(-px, 0); }
-      ctx.rotate(this.roll);
+      ctx.rotate(this.roll + (this.turnLean || 0));
       const L = this.legsUp, FD = this.footDown;
       const vib = this.speed > 0.3 && !this.finished ? Math.sin(t * 60) * 0.6 : 0;
       ctx.translate(0, vib);
@@ -175,7 +176,7 @@
         let knee = { x: sd * 32, y: -96 }, boot = { x: sd * 28, y: -42 };
         if (L > 0.01) { knee = { x: U.lerp(knee.x, sd * 46, L), y: U.lerp(knee.y, -140, L) }; boot = { x: U.lerp(boot.x, sd * 60 + Math.sin(t * 20 + sd) * 4 * L, L), y: U.lerp(boot.y, -122, L) }; }
         if (sd < 0 && FD > 0.01) { knee = { x: U.lerp(knee.x, -36, FD), y: U.lerp(knee.y, -66, FD) }; boot = { x: U.lerp(boot.x, -42, FD), y: U.lerp(boot.y, 0, FD) }; }
-        if (this.state === S.FLAT && sd > 0) { boot = { x: 30 + Math.max(0, Math.sin(this.st * 9)) * 16, y: -30 }; }
+        if (this.state === S.FLAT && sd > 0 && this.st < 2.2) { boot = { x: 30 + Math.max(0, Math.sin(this.st * 9)) * 16, y: -30 }; }
         cap(ctx, hip, knee, 10, 9, '#3a4a66', '#1e2638');
         cap(ctx, knee, boot, 9, 7, '#3a4a66', '#1e2638');
         ctx.fillStyle = '#111'; U.roundRect(ctx, boot.x - 8, boot.y - 9, 16, 12, 4); ctx.fill();
@@ -187,7 +188,7 @@
       cap(ctx, { x: 18, y: -38 }, { x: 30, y: -58 }, 5, 6, '#d6d9de', '#7c828a');
       if (this.speed > 0.3 && Math.random() < 0.3) { ctx.fillStyle = 'rgba(200,200,200,0.25)'; ctx.beginPath(); ctx.arc(34 + Math.random() * 6, -36 + Math.random() * 6, 5, 0, 7); ctx.fill(); }
       // pneu traseiro
-      const flat = this.state === S.FLAT ? 1 : 0;
+      const flat = this.state === S.FLAT && !this.tireOk ? 1 : 0;
       ctx.fillStyle = '#121214'; U.roundRect(ctx, -9 - flat * 4, -64 + flat * 8, 18 + flat * 8, 64 - flat * 8, 9); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.12)'; for (let i = 0; i < 6; i++) ctx.fillRect(-7, -60 + ((i * 11 + this.phase * 30) % 60), 14, 2);
       // para-lama, placa e lanterna
@@ -206,6 +207,16 @@
       ctx.strokeStyle = 'rgba(130,232,204,0.6)'; ctx.lineWidth = 1.4; U.roundRect(ctx, -25, -157, 50, 56, 5); ctx.stroke();
       logo(ctx, 0, -138, 1.25);
       ctx.fillStyle = '#ff3b3b'; ctx.fillRect(-24, -104, 6, 3); ctx.fillRect(18, -104, 6, 3);
+      // SETA piscando (atrás, nas laterais da lanterna, e na frente, no guidão)
+      if (this.blink && Math.floor(t * 2.6) % 2 === 0) {
+        const sd = this.blink;
+        ctx.fillStyle = '#ffb000'; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 24;
+        U.roundRect(ctx, sd * 34 - 7, -94, 14, 9, 3); ctx.fill();
+        ctx.beginPath(); ctx.arc(sd * 50, -176, 6, 0, 7); ctx.fill();
+        ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,176,0,0.25)'; ctx.beginPath(); ctx.arc(sd * 34, -90, 26, 0, 7); ctx.fill();
+      } else if (this.blink !== undefined) {
+        ctx.fillStyle = '#8a5a00'; [-1, 1].forEach((sd) => { U.roundRect(ctx, sd * 34 - 6, -93, 12, 7, 3); ctx.fill(); });
+      }
       const m = ctx.getTransform();
       const hp = m.transformPoint(new DOMPoint(0, -240)), bp = m.transformPoint(new DOMPoint(0, -168));
       this.headScreen = { x: hp.x, y: hp.y }; this.boxScreen = { x: bp.x, y: bp.y };
@@ -239,6 +250,62 @@
       ctx.fillStyle = '#1b1410'; ctx.beginPath(); ctx.arc(-5, -169, 1.8, 0, 7); ctx.arc(5, -169, 1.8, 0, 7); ctx.fill();
       ctx.strokeStyle = '#7a2d2d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -163, 5, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
       ctx.restore();
+    }
+
+    // borracheiro: macacão azul, boné, pneu no ombro / ajoelhado trocando o pneu / joinha
+    static repairman(ctx, x, y, s, t, st) {
+      const k = s / 100, face = st.face || -1;
+      ctx.save(); ctx.translate(x, y); ctx.scale(k * face, k);
+      ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(0, 0, 30, 8, 0, 0, 7); ctx.fill();
+      const suit = '#1f4fa3', suitD = '#163a7a', skin = '#b9805a', walk = st.pose === 'walk' ? Math.sin(t * 11) : 0;
+      const kneel = st.pose === 'work' ? 1 : 0, by = kneel * 42;   // abaixa o corpo
+      // pernas
+      ctx.strokeStyle = suitD; ctx.lineWidth = 13; ctx.lineCap = 'round';
+      if (kneel) {
+        ctx.beginPath(); ctx.moveTo(-6, -50); ctx.lineTo(-22, -26); ctx.lineTo(-30, -4); ctx.moveTo(8, -50); ctx.lineTo(24, -12); ctx.lineTo(4, -4); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(-8, -88); ctx.lineTo(-8 + walk * 10, -6); ctx.moveTo(8, -88); ctx.lineTo(8 - walk * 10, -6); ctx.stroke();
+      }
+      ctx.fillStyle = '#2a1d14';
+      if (kneel) { U.roundRect(ctx, -38, -10, 18, 10, 4); ctx.fill(); U.roundRect(ctx, -4, -10, 18, 10, 4); ctx.fill(); }
+      else [-1, 1].forEach((sd) => { U.roundRect(ctx, sd * 8 - 9 + (sd < 0 ? walk : -walk) * 10, -10, 18, 10, 4); ctx.fill(); });
+      ctx.save(); ctx.translate(0, by);
+      // tronco (macacão) com bolso e nome
+      ctx.fillStyle = suit; U.roundRect(ctx, -22, -152, 44, 70, 14); ctx.fill();
+      ctx.fillStyle = suitD; ctx.fillRect(-22, -100, 44, 6);
+      ctx.fillStyle = '#ffd23f'; ctx.fillRect(-14, -140, 4, 30); ctx.fillRect(10, -140, 4, 30);
+      ctx.fillStyle = '#fff'; ctx.font = `900 9px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.save(); ctx.scale(face, 1); ctx.fillText('BORRACHARIA', 0, -124); ctx.restore();
+      // braços
+      ctx.strokeStyle = suit; ctx.lineWidth = 10;
+      if (st.pose === 'walk') {
+        // pneu no ombro + caixa de ferramentas na outra mão
+        ctx.beginPath(); ctx.moveTo(-18, -144); ctx.lineTo(-30, -178); ctx.moveTo(18, -144); ctx.lineTo(24, -100); ctx.stroke();
+        ctx.fillStyle = '#c1121f'; U.roundRect(ctx, 14, -100, 26, 18, 3); ctx.fill(); ctx.fillStyle = '#7a0b13'; ctx.fillRect(20, -106, 14, 6);
+        ctx.fillStyle = '#121214'; ctx.beginPath(); ctx.arc(-26, -176, 30, 0, 7); ctx.fill();
+        ctx.fillStyle = '#5b5e66'; ctx.beginPath(); ctx.arc(-26, -176, 13, 0, 7); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(-26, -176, 24, 0, 7); ctx.stroke();
+      } else if (st.pose === 'work') {
+        const r = Math.sin(t * 16) * 10;   // girando a chave
+        ctx.beginPath(); ctx.moveTo(-18, -144); ctx.lineTo(-40, -118 + r * 0.4); ctx.moveTo(18, -144); ctx.lineTo(-30, -126 - r * 0.4); ctx.stroke();
+        ctx.strokeStyle = '#c9ccd2'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-36, -122); ctx.lineTo(-56, -112 + r); ctx.stroke();
+        ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(-38, -120, 6, 0, 7); ctx.fill();
+      } else {
+        // joinha
+        ctx.beginPath(); ctx.moveTo(-18, -144); ctx.lineTo(-22, -100); ctx.moveTo(18, -144); ctx.lineTo(34, -178); ctx.stroke();
+        ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(35, -182, 7, 0, 7); ctx.fill(); ctx.fillRect(32, -198, 5, 12);
+        ctx.fillStyle = '#c1121f'; U.roundRect(ctx, -34, -100, 26, 18, 3); ctx.fill();
+      }
+      // cabeça + boné virado
+      ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(0, -170, 15, 0, 7); ctx.fill();
+      ctx.fillStyle = '#1b1410'; ctx.beginPath(); ctx.arc(-4, -170, 1.8, 0, 7); ctx.arc(5, -170, 1.8, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#3b2416'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-6, -161); ctx.quadraticCurveTo(0, -158, 7, -161); ctx.stroke();   // bigode
+      ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(0, -176, 15.5, Math.PI, 0); ctx.fill();
+      ctx.fillRect(-18, -178, 14, 4);
+      ctx.fillStyle = '#c1121f'; ctx.fillRect(-15.5, -180, 31, 3);
+      ctx.restore();
+      const m = ctx.getTransform(), hp = m.transformPoint(new DOMPoint(0, -200 + by));
+      ctx.restore();
+      return { x: hp.x, y: hp.y };
     }
 
     // caramelo correndo atrás da moto (visto de trás)

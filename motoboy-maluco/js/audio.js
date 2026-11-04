@@ -382,10 +382,24 @@
       this.eng.f.frequency.setTargetAtTime(380 + v * 90, t, 0.1);
       this.eng.g.gain.setTargetAtTime(on && !this.muted ? 0.045 + Math.min(v, 16) * 0.004 : 0.0001, t, 0.15);
     }
+    blinker() { // "tic" da seta
+      if (!this.ok) return;
+      this._osc('square', 2400, this.now, 0.015, 0.035, null, { filter: 'bandpass', ff: 2400, q: 8 });
+    }
+    wrench() { // catraca da chave de roda "trrrec"
+      if (!this.ok) return;
+      const t = this.now;
+      for (let i = 0; i < 6; i++) this._osc('square', 1800 + Math.random() * 400, t + i * 0.045, 0.02, 0.06, null, { filter: 'bandpass', ff: 2600, q: 6 });
+      this._osc('triangle', 640, t + 0.3, 0.25, 0.05, null, { rev: true });
+    }
+    air(dur = 1.2) { // calibrador enchendo o pneu "tssss"
+      if (!this.ok) return;
+      this._noise(this.now, dur, 0.18, 'highpass', 3500, null, { attack: 0.05 });
+    }
     honk() { // buzina da moto "bi-bi"
       if (!this.ok) return;
       const t = this.now;
-      [0, 0.22].forEach((d) => { this._osc('square', 440, t + d, 0.16, 0.08, null, { filter: 'lowpass', ff: 1800 }); this._osc('square', 554, t + d, 0.16, 0.06, null, { filter: 'lowpass', ff: 1800 }); });
+      [0, 0.24].forEach((d) => { this._osc('square', 415, t + d, 0.19, 0.16, null, { filter: 'lowpass', ff: 2200 }); this._osc('square', 523, t + d, 0.19, 0.13, null, { filter: 'lowpass', ff: 2200 }); });
     }
     skid() {
       if (!this.ok) return;

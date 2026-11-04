@@ -3,7 +3,7 @@
 CNB.VOICE_CLIPS_F = {
  "Ô meu parceiro... só mais um pouquinho...": {
   "src": "sounds/voz-mulher/o_meu_parceiro_so_mais_um_pouquinho_3827.mp3",
-  "dur": 3.79
+  "dur": 2.87
  },
  "Cadê esse bar, meu Deus?": {
   "src": "sounds/voz-mulher/cade_esse_bar_meu_deus_f82e.mp3",
@@ -39,7 +39,7 @@ CNB.VOICE_CLIPS_F = {
  },
  "Ô Zé! Guarda uma gelada pra mim!": {
   "src": "sounds/voz-mulher/o_ze_guarda_uma_gelada_pra_mim_4d51.mp3",
-  "dur": 3.49
+  "dur": 2.57
  },
  "Agora vai, agora vai!": {
   "src": "sounds/voz-mulher/agora_vai_agora_vai_31f7.mp3",
@@ -171,7 +171,7 @@ CNB.VOICE_CLIPS_F = {
  },
  "Ô Zé! Abre a gelada!": {
   "src": "sounds/voz-mulher/o_ze_abre_a_gelada_46df.mp3",
-  "dur": 2.89
+  "dur": 2.02
  },
  "EU CONSEGUI, RAPAZ!": {
   "src": "sounds/voz-mulher/eu_consegui_rapaz_10a9.mp3",
@@ -207,7 +207,7 @@ CNB.VOICE_CLIPS_F = {
  },
  "Ô CACHORRO! NA MINHA PERNA NÃO!": {
   "src": "sounds/voz-mulher/o_cachorro_na_minha_perna_nao_1896.mp3",
-  "dur": 2.83
+  "dur": 1.99
  },
  "Sai daqui, bicho! Eu não sou poste!": {
   "src": "sounds/voz-mulher/sai_daqui_bicho_eu_nao_sou_poste_e755.mp3",

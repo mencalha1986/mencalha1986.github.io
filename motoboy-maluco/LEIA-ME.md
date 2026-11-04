@@ -13,19 +13,24 @@ e entrega um **achado do site** (foto, nome e preço reais). São 4 entregas por
 | 3 | Finger Heart | turbo por 6 s |
 | 4 | Doughnut | **um caramelo corre atrás da moto latindo** (aparece no retrovisor) e o motoboy levanta as pernas |
 | 5 | GG | endereço errado: volta 25 m |
-| 6 | Ice Cream Cone | pneu furado |
+| 6 | Ice Cream Cone | pneu furado: a moto para, o motoboy liga e **o borracheiro chega a pé, troca o pneu** e libera |
 | 7 | Galaxy | sem gasolina: GAME OVER |
-| 8 | Seguir (grátis) | o seguidor vira o cliente da próxima entrega e a moto volta 10 m |
+| 8 | Heart Me | **buzina** (não cancela nada): carros abrem caminho, pedestres correm e o caramelo foge |
+| 9 | Seguir (grátis) | o seguidor vira o cliente da próxima entrega e a moto volta 10 m |
 
 Presente que chega durante a entrega acontece quando o motoboy sai da casa.
 Nomes dos presentes reais: `giftAliases` em `js/config.js`.
+
+## Esquinas
+A avenida segue reto e o motoboy **liga a seta, encosta, freia e vira** na rua (a câmera vira junto).
+Na volta, a rua termina num "T" com a avenida e ele vira à esquerda. Os carros da avenida seguem reto.
 
 ## Avaliação
 Cada entrega começa com 5 estrelas. Bater (−1), buraco/cone (−½), pneu furado e endereço errado (−½)
 tiram estrelas. No final aparecem as entregas, a avaliação média, o QR/link do site e quem mais ajudou.
 
 ## Obstáculos
-Buraco, cone, lombada (voa se estiver rápido), poça, carro estacionado, carro no trânsito (anda),
+Buraco, cone, lombada (voa se estiver rápido), poça, carro estacionado, trânsito de carros e ônibus na avenida, carro na contramão na rua,
 caçamba, pedestre no celular atravessando e cachorro atravessando (freada de susto).
 
 ## Controles

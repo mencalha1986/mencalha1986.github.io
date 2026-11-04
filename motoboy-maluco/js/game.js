@@ -26,7 +26,7 @@
       this.cam = { x: 0, y: 2.5, z: -5, F: 1380, horizon: 760, sx: 0, sy: 0 };
       this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
       this.seed = Math.floor(Math.random() * 1000);
-      this.timers = []; this.followQueue = []; this.followClients = []; this.delivered = [];
+      this.timers = []; this.followQueue = []; this.borr = null; this.borrHead = null; this.followClients = []; this.delivered = [];
       // vozes (áudios gerados)
       this.voiceEls = {}; this.lastLine = {};
       for (const cat in CNB.FALAS || {}) CNB.FALAS[cat].forEach((l) => { const a = new Audio(l.src); a.preload = 'auto'; this.voiceEls[l.src] = a; });
@@ -67,7 +67,7 @@
       let pick = opts.index !== undefined ? list[opts.index] : list[Math.floor(Math.random() * list.length)];
       if (opts.index === undefined && list.length > 1 && pick === this.lastLine[cat]) pick = list[(list.indexOf(pick) + 1) % list.length];
       this.lastLine[cat] = pick; this.lastSay = this.time;
-      if (pick.who !== 'g') this.hud.bubble(cat === 'cliente' ? 'cliente' : 'motoboy', pick.text, pick.dur + 0.6);
+      if (pick.who !== 'g') this.hud.bubble(cat === 'cliente' ? 'cliente' : pick.who === 'b' ? 'borr' : 'motoboy', pick.text, pick.dur + 0.6);
       if (!this.cfg.voice.enabled || this.voiceMuted || this.audio.muted) return;
       const el = this.voiceEls[pick.src] || new Audio(pick.src);
       if (this.voiceNow && pick.who !== 'g' && cat !== 'cliente') this.voiceNow.pause();
@@ -90,7 +90,7 @@
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.orders = this.city.stops.map((s, i) => ({ stop: s, item: items[i % items.length], stars: 5, client: null }));
       this.announced = new Set();
-      this.cam.z = -5; this.cam.x = 0;
+      this.cam.z = -5; this.cam.x = 0; this.cam.yaw = 0; this.cam.hd = 0; this.turning = null;
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
       this.hud.banner(`RODADA ${this.roundNo}`, `${this.orders.length} entregas no baú — mandem presentes!`, '#82e8cc', 2.4);
       this.after(1.0, () => this.say('partida', { force: true }));
@@ -108,6 +108,7 @@
     // ------------------------------------------------------------ presentes
     cancelCurrentAction() {
       this.rider.cancelAction();
+      this._repairLeave();
       if (this.chaseDog && !this.chaseDog.giveUp) this._dogGiveUp(true);
       this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
       this.fx.clearTag('gift');
@@ -118,6 +119,7 @@
       const d = this.rider, head = d.headScreen;
       if (this.mode !== 'playing') { this.audio.gift(0); return; }
       if (def.action === 'follow') { this.followQueue.push(user); return; }
+      if (def.action === 'horn') { this._horn(user, def); return; }   // buzina não cancela nada
       if (d.finished) { this.pendingGift = [key, def, n, user]; this.audio.gift(0); return; }   // entregando: acontece quando sair
       this.cancelCurrentAction();   // o último presente manda
       this.fx.text(U.clamp(head.x, 200, 880), head.y - 110, user, def.color, 30, { life: 1.6, vy: -70, rot: 0, tag: 'gift' });
@@ -141,15 +143,31 @@
           this._penalty(0.5);
           break;
         case 'flat':
-          d.force(S.FLAT); this.audio.slip(); this.audio.splash();
+          d.force(S.FLAT); d.waitFix = true; d.tireOk = false; this.audio.slip(); this.audio.splash();
           this.fx.text(head.x + 60, head.y + 120, 'PFSSSS!', '#fff', 46, { life: 1.4 });
           this.hud.banner('PNEU FURADO!', `${user} jogou um prego`, def.color, 1.9);
           this.after(0.5, () => this.say('pneu', { force: true }), 'gift');
+          this.after(2.0, () => this.say('chamar', { force: true }), 'gift');
+          this.after(2.6, () => this._callRepair(), 'gift');
           this._penalty(0.5);
           break;
         case 'gameover': this.gameOver(user); break;
       }
     }
+    // borracheiro vem da calçada, troca o pneu e vai embora
+    _callRepair() {
+      const d = this.rider, R = this.city.road(d.z), G = (t, fn) => this.after(t, fn, 'gift');
+      const fx = d.x + 0.8;
+      this.borr = { x: R + 2.6, tx: fx, z: d.z + 0.7, pose: 'walk', face: -1, alpha: 0, t: 0 };
+      this.hud.banner('BORRACHEIRO A CAMINHO!', 'socorro 24 horas', '#facc15', 1.6);
+      G(1.7, () => { const b = this.borr; if (!b) return; b.pose = 'work'; b.x = b.tx; this.say('borracheiro', { index: Math.random() < 0.5 ? 0 : 2, force: true }); this.audio.wrench(); });
+      [2.4, 3.1, 3.8].forEach((tt) => G(tt, () => { this.audio.wrench(); const p = this.borrHead; if (p) { this.fx.sparks(p.x - 40, p.y + 140, 6, '#ffd23f'); this.fx.text(p.x - 60, p.y + 60, 'TREC TREC', '#ffd23f', 34, { life: 0.8, tag: 'gift' }); } }));
+      G(4.3, () => { d.tireOk = true; this.audio.air(1.1); const p = this.borrHead; if (p) this.fx.text(p.x - 50, p.y + 70, 'TSSSS', '#bfe9ff', 40, { life: 1.1, tag: 'gift' }); });
+      G(5.5, () => { const b = this.borr; if (!b) return; b.pose = 'thumb'; this.say('borracheiro', { index: 1, force: true }); this.audio.chime(); });
+      G(7.2, () => { d.waitFix = false; d.tireOk = false; d.slowT = 1.5; if (d.state === S.FLAT) d.setState(S.RIDE); this._repairLeave(); this.after(0.6, () => this.say('valeu')); });
+    }
+    _repairLeave() { const b = this.borr; if (!b) return; b.pose = 'walk'; b.face = 1; b.tx = this.city.road(b.z) + 3; b.leaving = true; }
+
     _applyPending() { const p = this.pendingGift; this.pendingGift = null; if (p) this.applyGift(...p); }
 
     _follow(user) {
@@ -159,6 +177,32 @@
       this.audio.chime(); this.fx.confetti(d.headScreen.x, d.headScreen.y + 80, 40, 0.6);
       this.hud.banner('NOVO SEGUIDOR!', `${user} vai receber uma entrega!`, '#fe2c55', 2.4);
       this.after(0.6, () => this.say('seguidor', { force: true }));
+    }
+
+    // BI-BI! carros abrem caminho, pedestres e cachorros correm, o caramelo foge
+    _horn(user, def) {
+      const d = this.rider, c = this.city;
+      this.audio.honk(); this.after(0.5, () => this.audio.honk());
+      this.fx.text(U.clamp(d.headScreen.x, 220, 860), d.headScreen.y - 30, 'BI-BI!', '#38bdf8', 64, { life: 1.2, vy: -120, rot: -0.08 });
+      this.fx.text(U.clamp(d.headScreen.x, 200, 880), d.headScreen.y - 140, user, def.color, 30, { life: 1.6, vy: -70, rot: 0 });
+      this.say('buzina', { force: true });
+      let moved = 0;
+      for (const o of c.obstacles) {
+        const dz = o.z - d.z; if (o.hit || o.ghost || dz < 1 || dz > 40) continue;
+        const R = c.road(o.z);
+        if (o.vehicle && o.type !== 'oncoming') {
+          // muda para a faixa mais longe do motoboy
+          const lanes = c.zoneAt(o.z).type === 'av' ? [-3.6, 0, 3.6] : [R * 0.33];
+          o.tx = lanes.reduce((a, b) => (Math.abs(b - d.x) > Math.abs(a - d.x) ? b : a), lanes[0]);
+          if (o.v > 0) o.v += 2;   // e acelera
+          moved++;
+        } else if (o.type === 'ped' || o.type === 'dogx') {
+          o.cross = o.x >= d.x ? 1 : -1; o.flee = true; o.hit = true; o.passed = true; moved++;
+          this.fx.text(this.rider.headScreen.x + (o.x > d.x ? 200 : -200), this.rider.headScreen.y + 60, o.type === 'ped' ? 'AAAH!' : 'CAIN!', '#fff', 40, { life: 1 });
+        }
+      }
+      if (this.chaseDog && !this.chaseDog.giveUp) { d.chase = 0; d.setState(S.RIDE); this._dogGiveUp(true); this.hud.banner('BI-BI!', 'o caramelo levou um susto e fugiu!', def.color, 2); return; }
+      this.hud.banner('BI-BI!', moved ? `${user} buzinou — abriram caminho!` : `${user} apertou a buzina`, def.color, 1.6);
     }
 
     // ------------------------------------------------------------ o caramelo
@@ -265,7 +309,7 @@
       const d = this.rider; if (d.finished || d.busy || d.state === S.BACK) return;
       const f0 = prevZ + 0.9, f1 = d.z + 0.9;
       for (const o of this.city.obstacles) {
-        if (o.hit) continue;
+        if (o.hit || o.ghost) continue;
         const z0 = o.zPrev !== undefined ? o.zPrev : o.z;
         if (!(f0 - z0 < 0 && f1 - o.z >= 0)) continue;
         const def = OB[o.type];
@@ -300,9 +344,11 @@
       if (this.apT > 0 && this.apLane !== undefined) { d.targetX = this.apLane; return; }
       this.apT = U.rand(0.22, 0.5);
       const fast = d.speed > 9, R = this.city.road(d.z + 8) - 0.6, look = fast ? 26 : 16;
-      const obs = this.city.obstacles.filter((o) => !o.hit && OB[o.type].w < 50 && o.z - d.z > 1.4 && o.z - d.z < look);
+      const obs = this.city.obstacles.filter((o) => !o.hit && !o.ghost && OB[o.type].w < 50 && o.z - d.z > 1.4 && o.z - d.z < look);
       for (const o of obs) if (o.seen === undefined) o.seen = Math.random() < (fast ? ap.dodgeFast : ap.dodge);
-      const pref = this.city.zoneAt(d.z + 8).type === 'rua' ? R * 0.45 : 1.8;
+      let pref = this.city.zoneAt(d.z + 8).type === 'rua' ? R * 0.45 : 1.8;
+      const K = this.city.nextCorner;
+      if (K && K.zc - d.z < 30) pref = K.dir > 0 ? R - 0.6 : -R * 0.35;   // encosta do lado da conversão
       let best = d.targetX, bestS = -1e9;
       for (let x = -R; x <= R + 1e-6; x += 0.4) {
         let sc = -Math.abs(x - d.x) * 0.9 - Math.abs(x - pref) * 0.35;
@@ -316,6 +362,43 @@
       }
       if (Math.random() < ap.distract) best = U.clamp(best + U.rand(-1.4, 1.4), -R, R);
       this.apLane = best; d.targetX = best;
+    }
+
+    // ------------------------------------------------------------ esquinas: seta, freia, vira
+    _corners(dt) {
+      const d = this.rider, c = this.city, cam = this.cam, K = c.nextCorner, L = c.lastCorner;
+      // não dá ré para antes da esquina que já virou
+      if (L && d.z < L.zc + L.cw + 0.3) { d.z = L.zc + L.cw + 0.3; d.retreat = 0; }
+      const tn = this.turning;
+      const near = !!(tn || this.borr || (K && K.dir > 0 && K.zc - d.z < 34));
+      this.guideAlpha = U.damp(this.guideAlpha === undefined ? 1 : this.guideAlpha, near ? 0 : 1, 5, dt);
+      d.blink = tn ? tn.k.dir : K && K.zc - d.z < 38 && !d.finished ? K.dir : 0;
+      d.speedCap = tn ? 6 : K ? 6.5 + Math.max(0, K.zc - d.z) * 0.55 : 99;
+      if (d.blink) { this.blinkT = (this.blinkT || 0) + dt; if (this.blinkT > 0.38) { this.blinkT = 0; this.audio.blinker(); } }
+      if (!tn && K && d.z >= K.zc + K.cw * 0.42) {
+        if (d.z > K.zc + K.cw + 3) { K.turned = true; cam.hd += K.dir * 1.1; return; }   // pulou (tecla W)
+        this.turning = { k: K, t: 0, swapped: false }; this.audio.skid(); this.audio.whoosh(true);
+        this.fx.text(W / 2 + K.dir * 200, 900, K.dir > 0 ? 'VIROU À DIREITA ➜' : '⬅ VIROU À ESQUERDA', '#ffffff', 46, { life: 1.1, vy: -40, rot: 0 });
+      }
+      if (this.turning) {
+        const T = this.turning, k = T.k, A = 0.65, T1 = 0.45, T2 = 0.55;
+        T.t += dt;
+        d.turnLean = k.dir * 0.42 * Math.sin(Math.PI * U.clamp(T.t / (T1 + T2), 0, 1));
+        if (T.t < T1) cam.yaw = k.dir * A * U.easeInCubic(T.t / T1);
+        else {
+          if (!T.swapped) {
+            T.swapped = true; k.turned = true; cam.hd += k.dir * A * 2 * 1.25;
+            d.z = Math.max(d.z, k.zc + k.cw + 0.4);
+            const R = c.road(d.z), nx = k.dir > 0 ? R * 0.45 : 1.8;
+            d.x = d.baseX = d.targetX = nx; this.apLane = nx;
+            const P = CAM.ride; cam.z = d.z - P.dist; cam.x = nx * 0.88;
+            if (k.dir > 0) this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
+          }
+          const u = U.clamp((T.t - T1) / T2, 0, 1);
+          cam.yaw = -k.dir * A * (1 - (1 - Math.pow(1 - u, 3)));
+          if (u >= 1) { cam.yaw = 0; d.turnLean = 0; this.turning = null; }
+        }
+      }
     }
 
     // ------------------------------------------------------------ loop
@@ -345,6 +428,7 @@
         this._collide(prevZ);
         this._checkArrive();
         this._updateDog(dt);
+        this._corners(dt);
         // GPS fala as curvas
         for (const m of c.maneuvers) {
           const key = m.type + m.z;
@@ -382,6 +466,13 @@
         if (cu.walking && cu.tx !== undefined) { const dx = cu.tx - cu.x; cu.x += Math.sign(dx) * Math.min(Math.abs(dx), 1.1 * dt); if (Math.abs(dx) < 0.02) cu.walking = cu.leaving ? false : false; }
         if (cu.leaving && cu.alpha < 0.03) this.cust = null;
       }
+      const bo = this.borr;
+      if (bo) {
+        bo.t += dt;
+        if (bo.pose === 'walk') { const dx = bo.tx - bo.x; bo.x += Math.sign(dx) * Math.min(Math.abs(dx), 2.2 * dt); }
+        bo.alpha = U.damp(bo.alpha, bo.leaving && Math.abs(bo.tx - bo.x) < 0.3 ? 0 : 1, 5, dt);
+        if ((bo.leaving && bo.alpha < 0.03) || bo.z < this.cam.z + 0.5) { this.borr = null; this.borrHead = null; }
+      }
       if (this.flyBox) this.flyBox.t += dt / 0.5;
       for (const o of c.obstacles) if (o.hit && !o.passed) o.knock = U.damp(o.knock, 1, 9, dt);
       this._camera(dt);
@@ -406,20 +497,29 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       if (!this.city) { this.hud.draw(ctx, t); return; }
       const city = this.city, d = this.rider;
+      const tb = this.turning ? Math.sin(Math.PI * U.clamp(this.turning.t / 1, 0, 1)) : 0;
       city.drawSky(ctx, c, t);
       city.drawGround(ctx, c, t);
       const sprites = city.collect(c, t);
-      sprites.push({ z: d.z, draw: (cx) => d.draw(cx, city, c) });
+      const cr = c.yaw ? Object.assign({}, c, { yaw: 0 }) : c;   // a moto vira junto com a câmera
+      sprites.push({ z: d.z, draw: (cx) => d.draw(cx, city, cr) });
       const cu = this.cust;
       if (cu && cu.alpha > 0.02) sprites.push({ z: cu.z, draw: (cx) => {
         const p = city.proj(c, cu.x, 0.15, cu.z); if (!p) return;
         cx.save(); cx.globalAlpha = cu.alpha; CNB.Rider.customer(cx, p.x, p.y, p.s, cu.look, t, cu); cx.restore();
         this.customerHead = { x: p.x, y: p.y - p.s * 1.95 };
       } });
+      const bo = this.borr;
+      if (bo && bo.alpha > 0.02) sprites.push({ z: bo.z, draw: (cx) => {
+        const p = city.proj(c, bo.x, 0, bo.z); if (!p) return;
+        cx.save(); cx.globalAlpha = bo.alpha; this.borrHead = CNB.Rider.repairman(cx, p.x, p.y, p.s, t, bo); cx.restore();
+      } });
       const dog = this.chaseDog;
-      if (dog && dog.z - c.z > 0.8) sprites.push({ z: dog.z, draw: (cx) => { const p = city.proj(c, dog.x, 0, dog.z); if (p) CNB.Rider.dogChaser(cx, p.x, p.y, p.s, dog.giveUp ? 0 : t, !dog.giveUp); } });
+      if (dog && dog.z - c.z > 0.8) sprites.push({ z: dog.z, draw: (cx) => { const p = city.proj(cr, dog.x, 0, dog.z); if (p) CNB.Rider.dogChaser(cx, p.x, p.y, p.s, dog.giveUp ? 0 : t, !dog.giveUp); } });
       sprites.sort((a, b) => b.z - a.z);
-      for (const s of sprites) s.draw(ctx);
+      for (const s of sprites) { if (tb > 0.2 && s.z !== d.z && s.z - c.z < 7) continue; s.draw(ctx); }   // na virada, some com o que está colado na câmera
+      if (tb > 0) { ctx.fillStyle = `rgba(230,240,248,${(tb * 0.28).toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
+      if (this.turning) { ctx.save(); ctx.globalAlpha = 0.25 * Math.sin(Math.PI * U.clamp(this.turning.t / 1, 0, 1)); ctx.fillStyle = '#fff'; for (let i = 0; i < 26; i++) { const y = 200 + ((i * 137) % 1500); ctx.fillRect(((i * 311 + t * 4000 * -this.turning.k.dir) % 1300 + 1300) % 1300 - 110, y, 220, 3); } ctx.restore(); }
       if (d.state === S.RUN || d.state === S.CHASE) CNB.Effects.speedLines(ctx, W / 2, c.horizon, d.state === S.RUN ? 1 : 0.6, t);
       // caixa voando do baú para o cliente
       if (this.flyBox && this.customerHead) {

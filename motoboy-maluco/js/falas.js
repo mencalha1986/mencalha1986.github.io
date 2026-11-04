@@ -126,7 +126,7 @@ CNB.FALAS = {
   {
    "text": "Ôoopa, lombada!",
    "src": "sounds/voz/lombada_0.mp3",
-   "dur": 1.35,
+   "dur": 1.53,
    "who": "m"
   }
  ],
@@ -142,7 +142,7 @@ CNB.FALAS = {
   {
    "text": "Ô de casa! Chegou seu pedido!",
    "src": "sounds/voz/chegou_0.mp3",
-   "dur": 2.85,
+   "dur": 2.12,
    "who": "m"
   },
   {
@@ -264,6 +264,68 @@ CNB.FALAS = {
    "src": "sounds/voz/gps_3.mp3",
    "dur": 1.61,
    "who": "g"
+  }
+ ],
+ "buzina": [
+  {
+   "text": "Bi-bi! Sai da frente!",
+   "src": "sounds/voz/buzina_0.mp3",
+   "dur": 1.57,
+   "who": "m"
+  },
+  {
+   "text": "Abre caminho que é entrega!",
+   "src": "sounds/voz/buzina_1.mp3",
+   "dur": 1.78,
+   "who": "m"
+  },
+  {
+   "text": "Licença, licença, motoboy passando!",
+   "src": "sounds/voz/buzina_2.mp3",
+   "dur": 2.4,
+   "who": "m"
+  }
+ ],
+ "borracheiro": [
+  {
+   "text": "Fala, patrão! Furou, né?",
+   "src": "sounds/voz/borracheiro_0.mp3",
+   "dur": 1.85,
+   "who": "b"
+  },
+  {
+   "text": "Pronto! Tá novinho, pode ir!",
+   "src": "sounds/voz/borracheiro_1.mp3",
+   "dur": 1.91,
+   "who": "b"
+  },
+  {
+   "text": "Deixa comigo, é rapidinho!",
+   "src": "sounds/voz/borracheiro_2.mp3",
+   "dur": 2.1,
+   "who": "b"
+  }
+ ],
+ "chamar": [
+  {
+   "text": "Alô, borracheiro? Vem rápido!",
+   "src": "sounds/voz/chamar_0.mp3",
+   "dur": 1.93,
+   "who": "m"
+  }
+ ],
+ "valeu": [
+  {
+   "text": "Valeu, borracheiro!",
+   "src": "sounds/voz/valeu_0.mp3",
+   "dur": 1.5,
+   "who": "m"
+  },
+  {
+   "text": "Salvou meu dia, mestre!",
+   "src": "sounds/voz/valeu_1.mp3",
+   "dur": 1.76,
+   "who": "m"
   }
  ]
 };

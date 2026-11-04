@@ -16,6 +16,8 @@ CNB.CONFIG = {
   avenueLength: [90, 130],   // metros de avenida antes de virar
   streetLength: [55, 80],    // metros de rua até a casa
   obstacleSpacing: [11, 18], // distância entre obstáculos (menor = mais obstáculos)
+  trafficSpacing: [22, 38],  // distância entre carros/ônibus no trânsito (menor = mais trânsito)
+  busChance: 0.28,           // chance de cada veículo ser ônibus (na avenida)
 
   // ---------- Moto ----------
   cruiseSpeed: 3.2,          // anda sozinho, devagar, sem presentes (m/s)
@@ -48,7 +50,9 @@ CNB.CONFIG = {
     pneu:     { tiktok: 'Ice Cream Cone', img: 'img/presentes/ice-cream-cone.webp', label: 'Pneu furado', action: 'flat',    points: 5,  color: '#facc15', icon: 'tire',  key: '6', demo: 8 },
     gasolina: { tiktok: 'Galaxy', img: 'img/presentes/galaxy.webp', label: 'Sem gasolina', action: 'gameover', points: 50, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     // NOVO SEGUIDOR (de graça): o seguidor vira cliente da próxima entrega e a moto volta 10 m
-    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor',    action: 'follow',  back: 10, points: 1, color: '#fe2c55', icon: 'follow', key: '8', demo: 6, free: true }
+    // BUZINA: não cancela nada — o motoboy buzina, carros abrem caminho, pedestres correm e o caramelo foge
+    buzina:   { tiktok: 'Heart Me', label: 'Buzina', action: 'horn', points: 1, color: '#38bdf8', icon: 'horn', key: '8', demo: 14 },
+    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor',    action: 'follow',  back: 10, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6, free: true }
   },
 
   giftAliases: {
@@ -59,6 +63,7 @@ CNB.CONFIG = {
     'gg': 'errado', 'endereço errado': 'errado', 'errado': 'errado',
     'ice cream cone': 'pneu', 'sorvete': 'pneu', 'pneu': 'pneu', 'pneu furado': 'pneu',
     'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina',
+    'heart me': 'buzina', 'buzina': 'buzina', 'horn': 'buzina', 'bi bi': 'buzina',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 

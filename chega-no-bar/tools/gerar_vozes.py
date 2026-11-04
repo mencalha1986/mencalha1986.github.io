@@ -60,6 +60,7 @@ def tts_text(t):
     s = t.replace('...', ', ').replace('…', ', ')
     s = re.sub(r'\s+', ' ', s).strip(' ,')
     if s.upper() == s: s = s.lower()  # gritos: o efeito vem da velocidade/energia
+    s = re.sub(r'(?<!\w)[Ôô](?!\w)', 'Oh', s)   # 'Ô' sozinho era lido como 'O circunflexo'
     return s
 
 clips = {}
