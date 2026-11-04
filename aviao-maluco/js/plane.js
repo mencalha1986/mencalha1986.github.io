@@ -16,7 +16,7 @@
     constructor(cfg) { this.cfg = cfg; this.reset(); }
     reset() {
       Object.assign(this, { x: 330, y: 900, vy: 0, ang: 0, inv: 0, turbo: 0, impulse: 0, engine: 0, loop: 0, loopT: 0, wind: 0,
-        speed: this.cfg.cruiseSpeed, prop: 0, wheels: 0, t: 0, dead: false, exploded: false, landed: false, flapT: 0, blink: 0 });
+        speed: this.cfg.cruiseSpeed, shield: 0, prop: 0, wheels: 0, t: 0, dead: false, exploded: false, landed: false, flapT: 0, blink: 0 });
     }
     get busy() { return this.loop > 0; }
     get ghost() { return this.inv > 0 || this.turbo > 0 || this.loop > 0 || this.wind > 0; }
@@ -48,6 +48,12 @@
       const blink = this.inv > 0 && Math.floor(t * 14) % 2 === 0;
       ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.ang); ctx.scale(1.18, 1.18);
       if (blink) ctx.globalAlpha = 0.45;
+      if (this.shield > 0) {   // bolha do escudo
+        const a = this.shield < 3 ? (Math.floor(t * 8) % 2 ? 0.25 : 0.6) : 0.6;
+        const g = ctx.createRadialGradient(0, 0, 60, 0, 0, 175); g.addColorStop(0, 'rgba(34,211,238,0)'); g.addColorStop(0.8, `rgba(34,211,238,${a * 0.35})`); g.addColorStop(1, `rgba(180,250,255,${a})`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 175, 110, 0, 0, 7); ctx.fill();
+        ctx.strokeStyle = `rgba(200,255,255,${a})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0, 0, 175, 110, 0, -1.2 + t, 0.4 + t); ctx.stroke();
+      }
       if (this.turbo > 0) { const g = ctx.createRadialGradient(0, 0, 20, 0, 0, 200); g.addColorStop(0, 'rgba(255,220,80,0.45)'); g.addColorStop(1, 'rgba(255,220,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 200, 0, 7); ctx.fill(); }
       // asa de trás
       ctx.fillStyle = '#1f6f63'; U.poly(ctx, [-20, -6, 40, -6, 18, -46, -2, -46]); ctx.fill();

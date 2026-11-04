@@ -43,6 +43,7 @@
         return false;
       }
       const def = this.cfg.gifts[key];
+      if (def.silent) { this.onAction && this.onAction(key, def, parseInt(evt.count, 10) || 1, String(evt.user || '')); return true; }
       const count = U.clamp(parseInt(evt.count, 10) || 1, 1, 99);
       const user = String(evt.user || 'anônimo').slice(0, 32);
       const name = user.startsWith('@') ? user : '@' + user;

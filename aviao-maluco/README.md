@@ -8,18 +8,26 @@ e os heróis do voo.
 
 **Jogar:** https://mencalha1986.github.io/aviao-maluco/
 
-## Presentes (o último presente cancela a ação anterior)
-| Tecla | Presente do TikTok | Efeito |
-|---|---|---|
-| 1 | Rose | empurra +40 m |
-| 2 | TikTok | empurra +150 m |
-| 3 | Finger Heart | **um caça chega e reboca o avião** bem rápido por 6 s (com o nome de quem mandou) |
-| 4 | Doughnut | um urubu vem direto, bate no avião (PÁ!) e ele volta 50 m |
-| 5 | GG | vento contra: o avião volta 60 m |
-| 6 | Ice Cream Cone | pane no motor: fumaça e volta 40 m |
-| 7 | Galaxy | **MÍSSIL**: explode o avião (GAME OVER) |
-| 8 | Heart Me | looping radical |
-| 9 | Seguir (grátis) | cai de paraquedas um **produto do site** (foto, nome e preço) para o novo seguidor |
+## Presentes (o último presente cancela a ação anterior; escudo e curtidas não cancelam)
+Moedas aproximadas — podem variar por país/época; confira na bandeja de presentes.
+
+| Tecla | Presente | Moedas | Efeito |
+|---|---|---|---|
+| 1 | Rose | 1 | empurra +40 m |
+| 2 | TikTok | 1 | empurra +60 m |
+| 3 | Finger Heart | 5 | **caça da FAB reboca** o avião por 6 s |
+| q | Rosa | 10 | buquê: +150 m |
+| y | Hand Hearts | 100 | **ESCUDO** por 25 s: não perde caixa e **bloqueia o míssil** |
+| e | Confetti | 100 | festa: +400 m |
+| t | Money Gun | 500 | **esquadrilha de 3 caças** reboca por 15 s |
+| 5 | GG | 1 | vento contra: volta 60 m |
+| 6 | Ice Cream Cone | 1 | pane no motor: volta 40 m |
+| 4 | Doughnut | 30 | urubu bate: volta 80 m |
+| 7 | Galaxy | 1000 | **MÍSSIL**: explode o avião (só o escudo salva) |
+| 8 | Heart Me | 1 | looping |
+| 9 | Seguir (grátis) | — | produto do site cai de paraquedas para o novo seguidor |
+| 0 | Compartilhar (grátis) | — | +30 m |
+| l | Curtidas (grátis) | — | a cada 100 curtidas, +20 m |
 
 **Combo:** presentes seguidos (até 3 s entre um e outro) deixam o próximo mais forte (até 2,5×).
 **Ajuda x Sabotagem:** a barra no topo mostra quantos metros a live empurrou para frente e para trás.

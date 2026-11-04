@@ -60,6 +60,22 @@
         ctx.fillStyle = '#38bdf8'; U.poly(ctx, [12, 4, 22, -6, 4, -8]); ctx.fill(); break;
       case 'bird':
         ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-20, -6); ctx.quadraticCurveTo(-8, -2, 0, 6); ctx.quadraticCurveTo(8, -2, 20, -6); ctx.stroke(); break;
+      case 'shield':
+        ctx.fillStyle = '#22d3ee'; ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(16, -12); ctx.quadraticCurveTo(16, 10, 0, 20); ctx.quadraticCurveTo(-16, 10, -16, -12); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(9, -7); ctx.quadraticCurveTo(9, 6, 0, 12); ctx.closePath(); ctx.fill(); break;
+      case 'bouquet':
+        ctx.strokeStyle = '#3fa34d'; ctx.lineWidth = 3; [-8, 0, 8].forEach((dx) => { ctx.beginPath(); ctx.moveTo(dx * 0.4, 18); ctx.lineTo(dx, -4); ctx.stroke(); });
+        ctx.fillStyle = '#f472b6'; [[-9, -8], [0, -14], [9, -8], [-4, -2], [5, -2]].forEach(([a, b]) => { ctx.beginPath(); ctx.arc(a, b, 6, 0, 7); ctx.fill(); }); break;
+      case 'confetti':
+        ['#facc15', '#f472b6', '#38bdf8', '#4ade80', '#fb923c'].forEach((c2, i) => { ctx.fillStyle = c2; ctx.save(); ctx.rotate(i * 1.3); ctx.fillRect(4 + i * 2, -3, 9, 5); ctx.restore(); });
+        ctx.fillStyle = '#facc15'; U.poly(ctx, [-18, 18, -6, -6, 6, 6]); ctx.fill(); break;
+      case 'moneygun':
+        ctx.fillStyle = '#4ade80'; U.roundRect(ctx, -18, -10, 30, 14, 4); ctx.fill(); ctx.fillRect(-14, 2, 8, 14);
+        ctx.fillStyle = '#bbf7d0'; ctx.fillRect(12, -14, 10, 6); ctx.fillRect(14, -4, 10, 6); break;
+      case 'share':
+        ctx.fillStyle = '#60a5fa'; U.poly(ctx, [-16, 10, -16, 2, 4, -6, 4, -16, 20, 0, 4, 16, 4, 6, -8, 8]); ctx.fill(); break;
+      case 'like':
+        ctx.fillStyle = '#fb7185'; ctx.beginPath(); ctx.moveTo(0, 16); ctx.bezierCurveTo(-24, 0, -12, -20, 0, -8); ctx.bezierCurveTo(12, -20, 24, 0, 0, 16); ctx.fill(); break;
       case 'card':
         ctx.fillStyle = '#e879f9'; U.roundRect(ctx, -18, -12, 36, 24, 4); ctx.fill();
         ctx.fillStyle = '#1a0820'; ctx.fillRect(-18, -6, 36, 5);
@@ -108,7 +124,7 @@
     ctx.restore();
   }
 
-  const VERSAO = 'versão 04/11 16:07';
+  const VERSAO = 'versão 04/11 16:17';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];
@@ -133,6 +149,8 @@
         case 'loop': return 'looping radical';
         case 'gameover': return 'MÍSSIL: explode o avião';
         case 'follow': return 'caixa de paraquedas p/ você';
+        case 'shield': return `escudo ${def.duration}s (bloqueia míssil)`;
+        case 'likes': return `${def.every} curtidas = +${def.amount} m`;
       }
       return '';
     }
@@ -208,6 +226,7 @@
       };
       if (p.turbo > 0) pill('CAÇA', '#ffd23f', 'bolt', p.turbo);
       if (p.engine > 0) pill('PANE', '#fb923c', 'smoke', p.engine);
+      if (p.shield > 0) pill('ESCUDO', '#22d3ee', 'shield', p.shield);
       if (bx === 668) {
         glass(ctx, 668, sy, 376, 72, 34, 0.7);
         // cabo de guerra: quem ajudou x quem sabotou
@@ -252,15 +271,15 @@
       g.guideA = U.lerp(g.guideA === undefined ? 1 : g.guideA, g.jet || g.missile || g.vulture ? 0 : 1, 0.15);   // some quando o caça/míssil/urubu passa por ali
       const a = (rt < 18 ? 1 : U.clamp(Math.min(cyc, 12 - cyc), 0, 1) * (cyc < 12 ? 1 : 0)) * g.guideA;
       if (a <= 0.01) return;
-      const G = g.cfg.gifts, keys = Object.keys(G), rowH = 44;
+      const G = g.cfg.gifts, keys = Object.keys(G), rowH = 34;
       ctx.save(); ctx.globalAlpha = a * 0.95;
       glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.7);
       ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
       keys.forEach((k, i) => {
         const def = G[k], y = y0 + 56 + i * rowH;
-        giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 15), 790, y + 15);
-        ctx.font = `600 15px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 28), 790, y + 35);
+        giftIcon(ctx, def.icon, 760, y + 16, 14, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 16px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 16), 782, y + 12);
+        ctx.font = `600 13px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 32), 782, y + 29);
       });
       ctx.restore();
     }
@@ -376,17 +395,19 @@
       outlined(ctx, 'No pouso, o caminhão descarrega tudo.', W / 2, 934, '#fff', 'rgba(0,0,0,0.6)', 6);
       ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `60px ${FT}`;
       outlined(ctx, 'CLIQUE PARA DECOLAR', W / 2, 1030, '#82e8cc', '#0e3a4a', 8); ctx.globalAlpha = 1;
-      const keys = Object.keys(this.g.cfg.gifts), cw = 470, x0 = W / 2 - cw;
-      glass(ctx, 60, 1080, 960, 30 + Math.ceil(keys.length / 2) * 76, 26, 0.6);
+      const keys = Object.keys(this.g.cfg.gifts), cw = 470, x0 = W / 2 - cw, rh = 54, rows = Math.ceil(keys.length / 2);
+      glass(ctx, 60, 1076, 960, 24 + rows * rh, 26, 0.65);
       keys.forEach((k, i) => {
-        const def = this.g.cfg.gifts[k], x = x0 + (i % 2) * cw + 20, y = 1100 + Math.floor(i / 2) * 76;
-        giftIcon(ctx, def.icon, x + 28, y + 26, 26, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 26px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(def.tiktok || def.label, x + 68, y + 24);
-        ctx.font = `500 20px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(this.actionText(def), x + 68, y + 50);
+        const def = this.g.cfg.gifts[k], x = x0 + (i % 2) * cw + 20, y = 1090 + Math.floor(i / 2) * rh;
+        giftIcon(ctx, def.icon, x + 22, y + 20, 20, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 21px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(def.tiktok || def.label, x + 52, y + 17);
+        if (def.coins) { const tw = ctx.measureText(def.tiktok || def.label).width; ctx.font = `700 15px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(`🪙${def.coins}`, x + 60 + tw, y + 17); }
+        ctx.font = `500 17px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(this.actionText(def), x + 52, y + 39);
       });
+      const ty = 1076 + 24 + rows * rh + 34;
       ctx.textAlign = 'center'; ctx.font = `500 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.fillText('Teste: 1–9 presentes · espaço/↑ pilotar · D demo · H painel · ' + this.g.catalog.items.length + ' achados', W / 2, 1520);
-      ctx.font = `700 22px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(VERSAO, W / 2, 1560);
+      ctx.fillText('Teste: teclas dos presentes no painel · espaço/↑ pilotar · D demo · H painel · ' + this.g.catalog.items.length + ' achados', W / 2, ty);
+      ctx.font = `700 22px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(VERSAO, W / 2, ty + 36);
     }
 
     // ---------------- missão cumprida ----------------

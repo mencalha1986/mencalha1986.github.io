@@ -53,7 +53,7 @@
       this.truck = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
-      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.feathers = []; this.newRecord = false;
+      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.likeAcc = 0; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.feathers = []; this.newRecord = false;
       try { this.record = parseFloat(localStorage.getItem('am-record')) || 0; } catch (e) { this.record = 0; }
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
       this.hud.banner(`VOO ${this.roundNo}`, `${this.cargo.length} caixas de achados até o aeroporto!`, '#82e8cc', 2.4);
@@ -75,6 +75,16 @@
       const p = this.plane, head = p.headScreen || { x: 420, y: 900 };
       if (this.mode !== 'playing') { this.audio.gift(0); return; }
       if (def.action === 'follow') { this.followQueue.push(user); return; }
+      if (def.action === 'likes') {   // a cada X curtidas o avião anda um pouco
+        this.likeAcc = (this.likeAcc || 0) + n;
+        while (this.likeAcc >= def.every) { this.likeAcc -= def.every; p.impulse += def.amount; this.helpM += def.amount; this.fx.text(U.clamp(head.x, 200, 880), head.y - 80, `❤ ${def.every} curtidas +${def.amount} m`, def.color, 34, { life: 1.4, vy: -60 }); }
+        return;
+      }
+      if (def.action === 'shield') {   // escudo não cancela nada
+        p.shield = Math.max(p.shield || 0, def.duration * n); this.audio.chime(); this.fx.doFlash(0.2, '120,230,255');
+        this.hud.banner('ESCUDO!', `${user} protegeu o avião por ${Math.round(p.shield)}s (até de míssil)`, def.color, 2);
+        return;
+      }
       this.cancelCurrentAction();   // o último presente manda
       // COMBO: presentes seguidos deixam o próximo mais forte
       this.combo = this.time - this.comboT < this.cfg.combo.window ? this.combo + 1 : 1; this.comboT = this.time;
@@ -89,11 +99,11 @@
           if (Math.random() < 0.5) this.after(0.3, () => this.say('go'), 'gift');
           break;
         case 'turbo':
-          // um caça chega, engata o cabo e reboca o avião bem rápido
-          p.turbo = def.duration * n * mul; this.jet = { x: W + 260, y: p.y - 60, name: user, phase: 'in', t: 0 };
+          // um caça chega, engata o cabo e reboca o avião bem rápido (Money Gun: esquadrilha com 3 caças)
+          p.turbo = def.duration * n * mul; this.jet = { x: W + 260, y: p.y - 60, name: user, phase: 'in', t: 0, squad: def.duration >= 12 };
           this.helpM += Math.round(p.turbo * (this.cfg.turboSpeed - this.cfg.cruiseSpeed));
           this.audio.turbo(); this.fx.doFlash(0.25, '255,220,80'); this.shake = 12;
-          this.hud.banner('CAÇA NA ÁREA!', `${user} mandou rebocar o avião`, def.color, 1.9);
+          this.hud.banner(def.duration >= 12 ? 'ESQUADRILHA!' : 'CAÇA NA ÁREA!', `${user} mandou rebocar o avião`, def.color, 1.9);
           break;
         case 'birds':
           // um urubu grandão vem direto no avião e PÁ! empurra pra trás
@@ -135,6 +145,7 @@
       const p = this.plane, w = this.world;
       p.inv = 2;
       this.audio.crash(); this.shake = 20; this.fx.sparks(p.x + 60, p.y, 20, '#ffd23f');
+      if (p.shield > 0) { this.audio.pop(); this.fx.sparks(p.x + 60, p.y, 24, '#22d3ee'); this.fx.text(p.x + 40, p.y - 90, 'ESCUDO!', '#22d3ee', 56, { life: 1 }); p.inv = 1.2; return; }
       if (!this.cargo.length) { this.hud.banner(reason, 'sem carga pra perder!', '#ff6b6b', 1.4); return; }
       const item = this.cargo.pop(); this.lostItems.push(item);
       w.lost.push({ x: w.x - 40, y: p.y + 20, vx: -80, vy: -350, rot: 0, vr: U.rand(-6, 6), item });
@@ -208,6 +219,11 @@
     }
     _explode() {
       const p = this.plane, m = this.missile;
+      if (p.shield > 0) {   // o escudo segura o míssil!
+        this.missile = null; this.mode = 'playing'; p.shield = 0; this.shake = 26; this.audio.crash();
+        this.fx.doFlash(0.6, '120,230,255'); this.fx.sparks(p.x + 40, p.y, 50, '#22d3ee'); this.fx.text(p.x + 40, p.y - 120, 'BLOQUEADO!', '#22d3ee', 90, { life: 1.6, vy: -60 });
+        this.hud.banner('O ESCUDO SEGUROU O MÍSSIL!', m ? `${m.name} errou o alvo` : '', '#22d3ee', 2.4); return;
+      }
       this.missile = null; this.audio.crash(); this.audio.thud(); this.shake = 40;
       this.fx.doFlash(0.9, '255,200,120'); this.fx.sparks(p.x, p.y, 60, '#ffb020'); this.fx.sparks(p.x, p.y, 40, '#ff4d4d');
       this.fx.text(p.x + 40, p.y - 120, 'KABUM!', '#ffd23f', 110, { life: 1.6, vy: -60 });
@@ -292,7 +308,7 @@
           if (this.idleManual > cfg.autopilot.returnAfter) { this.setControl('auto'); this.hud.banner('PILOTO AUTOMÁTICO', 'espaço / ↑ / clique para pilotar', '#38bdf8', 1.4); }
         }
         // velocidade
-        p.turbo = Math.max(0, p.turbo - dt); p.engine = Math.max(0, p.engine - dt);
+        p.turbo = Math.max(0, p.turbo - dt); p.engine = Math.max(0, p.engine - dt); p.shield = Math.max(0, (p.shield || 0) - dt);
         let target = p.impulse > 0 ? cfg.boostSpeed : cfg.cruiseSpeed;
         if (p.turbo > 0) target = this.jet && this.jet.phase === 'tow' ? cfg.turboSpeed : Math.max(target, cfg.boostSpeed);
         if (p.engine > 0) target = -(p.engineBack || 8);
@@ -448,6 +464,7 @@
     ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-148, -9); ctx.quadraticCurveTo(-150 - 100 * fl, 0, -148, 9); ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(140,200,255,0.7)'; ctx.beginPath(); ctx.ellipse(-158, 0, 10 * fl, 5, 0, 0, 7); ctx.fill();
     ctx.drawImage(Game.jetSprite(), -170, -80);
+    if (j.squad) { ctx.save(); ctx.globalAlpha = 0.95; ctx.scale(0.8, 0.8); ctx.drawImage(Game.jetSprite(), -230, -260); ctx.drawImage(Game.jetSprite(), -280, 110); ctx.restore(); }
     ctx.restore();
     ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.fillStyle = '#ffd23f';
     ctx.strokeText(`✈ ${j.name}`, j.x, j.y - 80); ctx.fillText(`✈ ${j.name}`, j.x, j.y - 80);
