@@ -51,9 +51,7 @@ CNB.CONFIG = {
     gasolina: { tiktok: 'Galaxy', coins: 1000, img: 'img/presentes/galaxy.webp', label: 'Míssil', action: 'gameover', points: 1000, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     // --- DIVERSÃO / GRÁTIS ---
     looping:  { tiktok: 'Heart Me', coins: 1, label: 'Looping', action: 'loop', points: 1, color: '#38bdf8', icon: 'loop', key: '8', demo: 8 },
-    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 4, free: true },
-    compartilhar: { tiktok: 'Compartilhar (grátis)', label: 'Compartilhou', action: 'advance', amount: 30, points: 1, color: '#60a5fa', icon: 'share', key: '0', demo: 3, free: true },
-    curtida:  { tiktok: 'Curtidas (grátis)', label: 'Curtidas', action: 'likes', every: 100, amount: 20, points: 0, color: '#fb7185', icon: 'like', key: 'l', demo: 0, free: true, silent: true }
+    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 4, free: true }
   },
 
   giftAliases: {
@@ -69,8 +67,6 @@ CNB.CONFIG = {
     'hand hearts': 'escudo', 'corações nas mãos': 'escudo', 'escudo': 'escudo',
     'confetti': 'festa', 'confete': 'festa', 'festa': 'festa',
     'money gun': 'esquadrilha', 'esquadrilha': 'esquadrilha',
-    'share': 'compartilhar', 'compartilhar': 'compartilhar',
-    'like': 'curtida', 'likes': 'curtida', 'curtida': 'curtida',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 

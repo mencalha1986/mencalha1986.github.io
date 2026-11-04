@@ -8,7 +8,7 @@ e os heróis do voo.
 
 **Jogar:** https://mencalha1986.github.io/aviao-maluco/
 
-## Presentes (o último presente cancela a ação anterior; escudo e curtidas não cancelam)
+## Presentes (o último presente cancela a ação anterior; o escudo não cancela)
 Moedas aproximadas — podem variar por país/época; confira na bandeja de presentes.
 
 | Tecla | Presente | Moedas | Efeito |
@@ -26,8 +26,6 @@ Moedas aproximadas — podem variar por país/época; confira na bandeja de pres
 | 7 | Galaxy | 1000 | **MÍSSIL**: explode o avião (só o escudo salva) |
 | 8 | Heart Me | 1 | looping |
 | 9 | Seguir (grátis) | — | produto do site cai de paraquedas para o novo seguidor |
-| 0 | Compartilhar (grátis) | — | +30 m |
-| l | Curtidas (grátis) | — | a cada 100 curtidas, +20 m |
 
 **Combo:** presentes seguidos (até 3 s entre um e outro) deixam o próximo mais forte (até 2,5×).
 **Ajuda x Sabotagem:** a barra no topo mostra quantos metros a live empurrou para frente e para trás.

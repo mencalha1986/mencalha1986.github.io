@@ -124,7 +124,7 @@
     ctx.restore();
   }
 
-  const VERSAO = 'versão 04/11 16:17';
+  const VERSAO = 'versão 04/11 16:27';
   class HUD {
     constructor(game) {
       this.g = game; this.banners = []; this.card = null; this.bubbles = [];

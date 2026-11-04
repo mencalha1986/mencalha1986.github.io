@@ -76,8 +76,6 @@
       if (type.includes('follow') || type === 'seguir' || (type.includes('social') && label.includes('follow'))) {
         return { user, gift: 'follow', count: 1, source: 'live' };
       }
-      if (type.includes('like')) return { user, gift: 'like', count: parseInt(env.likeCount || env.count || 1, 10) || 1, source: 'live' };
-      if (type.includes('share') || (type.includes('social') && label.includes('share'))) return { user, gift: 'share', count: 1, source: 'live' };
       if (!type.includes('gift') && !type.includes('presente')) return null;
       const g = env.gift && typeof env.gift === 'object' ? env.gift : {};
       const gift = env.giftName || g.name || g.giftName || (typeof env.gift === 'string' ? env.gift : '') || env.name;
