@@ -43,15 +43,16 @@ CNB.CONFIG = {
   // action: advance | turbo | magnet | back | slip | sale | gameover
   // O ÚLTIMO PRESENTE MANDA: um presente novo cancela a ação em andamento.
   // tiktok: nome do presente mostrado na tela (legenda da abertura e guia lateral da partida).
+  // img: imagem oficial do presente (em img/presentes). Sem img, usa o ícone desenhado.
   gifts: {
-    rosa:      { tiktok: 'Rose', label: 'Rosa',      action: 'advance', amount: 4,  points: 1,  color: '#ff4d6d', icon: 'rose',   key: '1', demo: 30 },
-    tiktok:    { tiktok: 'TikTok', label: 'TikTok',    action: 'advance', amount: 12, points: 1,  color: '#25f4ee', icon: 'note',   key: '2', demo: 20 },
-    turbo:     { tiktok: 'Finger Heart', label: 'Turbo',     action: 'turbo',   duration: 6, points: 10, color: '#ffd23f', icon: 'bolt',  key: '3', demo: 10 },
-    ima:       { tiktok: 'Doughnut', label: 'Ímã',       action: 'magnet',  duration: 8, amount: 6, points: 5, color: '#60a5fa', icon: 'magnet', key: '4', demo: 9 },
-    voltar:    { tiktok: 'GG', label: 'Esqueci',   action: 'back',    amount: 15, points: 5,  color: '#a78bfa', icon: 'back',   key: '5', demo: 9 },
-    molhado:   { tiktok: 'Ice Cream Cone', label: 'Chão molhado', action: 'slip', points: 5,  color: '#facc15', icon: 'wet',    key: '6', demo: 8 },
-    liquidacao:{ tiktok: 'Perfume', label: 'Liquidação', action: 'sale',   count: 6,   points: 10, color: '#fb7185', icon: 'tag',    key: '7', demo: 6 },
-    recusado:  { tiktok: 'Galaxy', label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 },
+    rosa:      { tiktok: 'Rose', img: 'img/presentes/rose.webp', label: 'Rosa',      action: 'advance', amount: 4,  points: 1,  color: '#ff4d6d', icon: 'rose',   key: '1', demo: 30 },
+    tiktok:    { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'TikTok',    action: 'advance', amount: 12, points: 1,  color: '#25f4ee', icon: 'note',   key: '2', demo: 20 },
+    turbo:     { tiktok: 'Finger Heart', img: 'img/presentes/finger-heart.webp', label: 'Turbo',     action: 'turbo',   duration: 6, points: 10, color: '#ffd23f', icon: 'bolt',  key: '3', demo: 10 },
+    ima:       { tiktok: 'Doughnut', img: 'img/presentes/doughnut.webp', label: 'Ímã',       action: 'magnet',  duration: 8, amount: 6, points: 5, color: '#60a5fa', icon: 'magnet', key: '4', demo: 9 },
+    voltar:    { tiktok: 'GG', img: 'img/presentes/gg.webp', label: 'Esqueci',   action: 'back',    amount: 15, points: 5,  color: '#a78bfa', icon: 'back',   key: '5', demo: 9 },
+    molhado:   { tiktok: 'Ice Cream Cone', img: 'img/presentes/ice-cream-cone.webp', label: 'Chão molhado', action: 'slip', points: 5,  color: '#facc15', icon: 'wet',    key: '6', demo: 8 },
+    liquidacao:{ tiktok: 'Perfume', img: 'img/presentes/perfume.webp', label: 'Liquidação', action: 'sale',   count: 6,   points: 10, color: '#fb7185', icon: 'tag',    key: '7', demo: 6 },
+    recusado:  { tiktok: 'Galaxy', img: 'img/presentes/galaxy.webp', label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 },
     // NOVO SEGUIDOR (de graça): o carrinho volta e achados caem de volta no corredor para serem pegos de novo.
     // Não cancela a ação em andamento. Cada pessoa conta uma vez só.
     seguir:    { tiktok: 'Seguir', label: 'Seguidor', action: 'follow', back: 8, drop: 2, points: 1, color: '#ff4fa3', icon: 'follow', key: '9', demo: 6 }

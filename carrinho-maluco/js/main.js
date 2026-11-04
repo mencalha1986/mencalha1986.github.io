@@ -71,7 +71,10 @@
       const def = game.cfg.gifts[gk], b = document.createElement('button');
       b.className = 'gift-btn'; b.style.setProperty('--c', def.color);
       b.innerHTML = `<canvas width="56" height="56"></canvas><span><b>${def.label}</b><small>${game.hud.actionText(def)}</small></span><kbd>${def.key}</kbd>`;
-      CNB.HUD.giftIcon(b.querySelector('canvas').getContext('2d'), def.icon, 28, 28, 26, def.color);
+      const drawBtnIcon = () => { const c = b.querySelector('canvas').getContext('2d'); c.clearRect(0, 0, 56, 56); CNB.HUD.giftIcon(c, def.icon, 28, 28, 26, def.color); };
+      drawBtnIcon();
+      const im = CNB.HUD.giftImgEl(def.icon);
+      if (im && !im.complete) im.addEventListener('load', drawBtnIcon);
       b.addEventListener('click', () => { startOnce(); game.bridge.test(gk, userInput.value.trim() || undefined); });
       btns.appendChild(b);
     }

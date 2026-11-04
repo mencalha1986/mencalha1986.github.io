@@ -5,10 +5,20 @@
   const U = CNB.U, W = 1080, H = 1920;
   const FT = U.FONT_TITLE, FU = U.FONT_UI;
 
+  // imagens oficiais dos presentes (config: img), indexadas pelo ícone de cada presente
+  const GIFT_IMG = {};
+  for (const k in CNB.CONFIG.gifts) {
+    const def = CNB.CONFIG.gifts[k];
+    if (def.img) { const im = new Image(); im.src = def.img; GIFT_IMG[def.icon] = im; }
+  }
+  const giftImage = (icon) => { const im = GIFT_IMG[icon]; return im && im.complete && im.naturalWidth ? im : null; };
+
   function giftIcon(ctx, icon, x, y, r, color) {
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
     ctx.strokeStyle = color; ctx.lineWidth = r * 0.1; ctx.stroke();
+    const im = giftImage(icon);
+    if (im) { const s = r * 1.7; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); return; }
     ctx.scale(r / 30, r / 30); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     switch (icon) {
       case 'rose':
@@ -489,5 +499,6 @@
   }
 
   HUD.giftIcon = giftIcon;
+  HUD.giftImgEl = (icon) => GIFT_IMG[icon] || null;
   CNB.HUD = HUD;
 })();
