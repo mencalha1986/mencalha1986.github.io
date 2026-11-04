@@ -16,7 +16,7 @@
     constructor(cfg) { this.cfg = cfg; this.reset(); }
     reset() {
       Object.assign(this, { x: 330, y: 900, vy: 0, ang: 0, inv: 0, turbo: 0, impulse: 0, engine: 0, loop: 0, loopT: 0, wind: 0,
-        speed: this.cfg.cruiseSpeed, prop: 0, wheels: 0, t: 0, dead: false, landed: false, flapT: 0, blink: 0 });
+        speed: this.cfg.cruiseSpeed, prop: 0, wheels: 0, t: 0, dead: false, exploded: false, landed: false, flapT: 0, blink: 0 });
     }
     get busy() { return this.loop > 0; }
     get ghost() { return this.inv > 0 || this.turbo > 0 || this.loop > 0 || this.wind > 0; }

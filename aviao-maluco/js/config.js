@@ -38,7 +38,7 @@ CNB.CONFIG = {
     rosa:     { tiktok: 'Rose', img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 40, points: 1, color: '#ff4d6d', icon: 'rose', key: '1', demo: 30 },
     tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'TikTok', action: 'advance', amount: 150, points: 1, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
     turbo:    { tiktok: 'Finger Heart', img: 'img/presentes/finger-heart.webp', label: 'Caça reboca', action: 'turbo', duration: 6, points: 10, color: '#ffd23f', icon: 'bolt', key: '3', demo: 10 },
-    urubus:   { tiktok: 'Doughnut', img: 'img/presentes/doughnut.webp', label: 'Urubus', action: 'birds', points: 5, color: '#a3a3a3', icon: 'bird', key: '4', demo: 10 },
+    urubus:   { tiktok: 'Doughnut', img: 'img/presentes/doughnut.webp', label: 'Urubu', action: 'birds', amount: 50, points: 5, color: '#a3a3a3', icon: 'bird', key: '4', demo: 10 },
     vento:    { tiktok: 'GG', img: 'img/presentes/gg.webp', label: 'Vento contra', action: 'wind', amount: 60, points: 5, color: '#a78bfa', icon: 'wind', key: '5', demo: 8 },
     pane:     { tiktok: 'Ice Cream Cone', img: 'img/presentes/ice-cream-cone.webp', label: 'Pane no motor', action: 'engine', duration: 5, amount: 40, points: 5, color: '#fb923c', icon: 'smoke', key: '6', demo: 8 },
     gasolina: { tiktok: 'Galaxy', img: 'img/presentes/galaxy.webp', label: 'Míssil', action: 'gameover', points: 50, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },

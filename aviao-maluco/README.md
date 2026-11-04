@@ -13,7 +13,7 @@ e os heróis do voo.
 | 1 | Rose | empurra +40 m |
 | 2 | TikTok | empurra +150 m |
 | 3 | Finger Heart | **um caça chega e reboca o avião** bem rápido por 6 s (com o nome de quem mandou) |
-| 4 | Doughnut | revoada de urubus (bater derruba uma caixa) |
+| 4 | Doughnut | um urubu vem direto, bate no avião (PÁ!) e ele volta 50 m |
 | 5 | GG | vento contra: o avião volta 60 m |
 | 6 | Ice Cream Cone | pane no motor: fumaça e volta 40 m |
 | 7 | Galaxy | **MÍSSIL**: explode o avião (GAME OVER) |

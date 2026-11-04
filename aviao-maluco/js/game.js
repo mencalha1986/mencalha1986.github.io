@@ -53,7 +53,7 @@
       this.truck = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
-      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.missile = null; this.newRecord = false;
+      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.newRecord = false;
       try { this.record = parseFloat(localStorage.getItem('am-record')) || 0; } catch (e) { this.record = 0; }
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
       this.hud.banner(`VOO ${this.roundNo}`, `${this.cargo.length} caixas de achados até o aeroporto!`, '#82e8cc', 2.4);
@@ -65,6 +65,7 @@
       const p = this.plane;
       p.turbo = 0; p.impulse = 0; p.engine = 0; p.wind = 0;
       if (this.jet && this.jet.phase !== 'out') this.jet.phase = 'out';
+      if (this.vulture && !this.vulture.hitDone) this.vulture.flee = true;
       if (p.loop > 0) { p.loop = 0; p.ang = 0; p.vy = 0; }
       for (const b of this.world.birds) { b.v = -500; b.ty = b.y - 600; b.flee = true; }   // urubus vão embora
       this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
@@ -95,8 +96,10 @@
           this.hud.banner('CAÇA NA ÁREA!', `${user} mandou rebocar o avião`, def.color, 1.9);
           break;
         case 'birds':
-          this.world.addBirds(p.y); this.sabM += 10; this.audio.growl && this.audio.growl();
-          this.hud.banner('URUBUS!', `${user} soltou a revoada`, def.color, 1.9);
+          // um urubu grandão vem direto no avião e PÁ! empurra pra trás
+          this.vulture = { x: W + 160, y: p.y - 80, ph: 0, name: user, back: Math.round((def.amount || 50) * mul), color: def.color };
+          this.audio.growl && this.audio.growl();
+          this.hud.banner('URUBU!', `${user} mandou um urubu`, def.color, 1.5);
           this.after(0.5, () => this.say('urubu', { force: true }), 'gift');
           break;
         case 'wind':
@@ -316,6 +319,23 @@
         if (this.mode === 'playing' && !this.retaFinal && w.left < 150) { this.retaFinal = true; this.hud.banner('RETA FINAL', `${w.left} metros pro pouso`, '#82e8cc', 1.8); }
         if (this.mode === 'playing' && w.left <= 62 && p.loop <= 0) { this.cancelCurrentAction(); this._startLanding(); }
         w.spawn();
+        const vu = this.vulture;
+        if (vu) {
+          vu.ph += dt * 10;
+          if (vu.hitDone || vu.flee) { vu.x += (vu.flee ? 900 : -300) * dt; vu.y -= 420 * dt; vu.spin = (vu.spin || 0) + dt * 8; if (vu.y < -200 || vu.x > W + 300) this.vulture = null; }
+          else {
+            const tx = p.x + 90, ty = p.y, dx = tx - vu.x, dy = ty - vu.y, d = Math.hypot(dx, dy);
+            vu.x += dx / d * 820 * dt; vu.y += dy / d * 820 * dt;
+            if (d < 70) {
+              vu.hitDone = true; p.wind = vu.back / 20; this.sabM += vu.back; p.vy = -200;
+              this.audio.crash(); this.audio.thud(); this.shake = 22;
+              this.fx.text(p.x + 90, p.y - 90, 'PÁ!', '#fff', 90, { life: 1.1, vy: -80, rot: -0.1 });
+              this.fx.text(p.x + 40, p.y - 170, `−${vu.back} m`, '#ff8a8a', 56, { life: 1.4, vy: -60 });
+              this.fx.sparks(p.x + 90, p.y, 26, '#2b2b2f'); this.fx.sparks(p.x + 90, p.y, 12, '#e8b4a0');
+              this.hud.banner('BATEU NO URUBU!', `o avião voltou ${vu.back} m`, vu.color, 1.8);
+            }
+          }
+        }
         const jt = this.jet;
         if (jt) {
           jt.t += dt;
@@ -388,6 +408,8 @@
       // caminhão e caixa voando
       if (this.truck) CNB.drawTruck(ctx, this.truck.x, GY + 4, this.truck.open, t, this.truck.wheel);
       if (this.jet) this._drawJet(ctx, t);
+      if (this.vulture) { const v = this.vulture; ctx.save(); ctx.translate(v.x, v.y); ctx.rotate(v.spin || 0); ctx.scale(1.9, 1.9); w._bird(ctx, 0, 0, v.ph); ctx.restore();
+        if (!v.hitDone) { ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.fillStyle = '#e5e7eb'; ctx.strokeText(v.name, v.x, v.y - 70); ctx.fillText(v.name, v.x, v.y - 70); } }
       if (!p.exploded && (this.mode !== 'win' || this.sumTime < 0.4)) p.draw(ctx, t);
       if (p.exploded) for (const d of this.debris || []) { ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot); ctx.fillStyle = ['#f8fafc', '#82e8cc', '#2a9d8f', '#cfd8dc', '#475569'][d.k % 5]; U.poly(ctx, [-26, -10, 22, -14, 28, 8, -18, 14]); ctx.fill(); ctx.restore(); }
       if (this.missile) { const m = this.missile; ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.ang || Math.PI); ctx.fillStyle = '#e5e7eb'; U.roundRect(ctx, -46, -9, 80, 18, 9); ctx.fill(); ctx.fillStyle = '#ef4444'; U.poly(ctx, [34, -9, 52, 0, 34, 9]); ctx.fill(); ctx.fillStyle = '#6b7280'; U.poly(ctx, [-46, -9, -58, -22, -36, -9]); ctx.fill(); U.poly(ctx, [-46, 9, -58, 22, -36, 9]); ctx.fill(); ctx.fillStyle = `rgba(255,${150 + Math.random() * 80},40,0.9)`; ctx.beginPath(); ctx.ellipse(-60, 0, 18 + Math.random() * 8, 7, 0, 0, 7); ctx.fill(); ctx.restore();

@@ -126,7 +126,7 @@
       switch (def.action) {
         case 'advance': return `acelera +${def.amount} m`;
         case 'turbo': return `caça reboca ${def.duration}s (voa rápido)`;
-        case 'birds': return 'revoada de urubus!';
+        case 'birds': return `urubu bate: volta ${def.amount} m`;
         case 'wind': return `vento contra −${def.amount} m`;
         case 'engine': return `pane: volta ${def.amount} m`;
         case 'loop': return 'looping radical';
