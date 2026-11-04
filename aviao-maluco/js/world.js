@@ -144,6 +144,7 @@
     // PONTOS TURÍSTICOS DO BRASIL passando ao fundo (ilustrações em js/landmarks.js)
     _landmarks(ctx, camX, t) {
       const LM = CNB.Landmarks; if (!LM) return;
+      if (this.stageAt(camX + 600) === 'aeroporto' || this.stageAt(camX) === 'aeroporto') { this._labels = []; return; }   // no aeroporto não tem ponto turístico
       const par = 0.18, gapX = 1250, base = GY - 70, sc = LM.scale; this._labels = [];
       const first = Math.floor((camX * par - 800) / gapX), last = Math.floor((camX * par + W + 800) / gapX);
       for (let i = Math.max(0, first); i <= last; i++) {

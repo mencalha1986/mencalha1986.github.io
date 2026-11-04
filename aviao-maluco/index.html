@@ -6,7 +6,7 @@
   <title>Avião Maluco</title>
   <script>
     /* se o navegador guardou uma versão antiga da página, recarrega sozinho a nova */
-    window.VERSAO_PAGINA = '202611041642';
+    window.VERSAO_PAGINA = '202611041651';
     fetch('versao.txt?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.text()).then((v) => {
       v = v.trim();
       if (v && v !== window.VERSAO_PAGINA && !sessionStorage.getItem('am-reload-' + v)) {
@@ -15,7 +15,7 @@
       }
     }).catch(() => {});
   </script>
-  <link rel="stylesheet" href="css/style.css?v=202611041642">
+  <link rel="stylesheet" href="css/style.css?v=202611041651">
 </head>
 <body>
   <div id="stage"><canvas id="game" width="1080" height="1920"></canvas></div>
@@ -47,21 +47,21 @@
     <div id="voice-info"></div>
   </aside>
 
-  <script src="js/config.js?v=202611041642"></script>
-  <script src="js/utils.js?v=202611041642"></script>
-  <script src="js/produtos-reserva.js?v=202611041642"></script>
-  <script src="js/audio.js?v=202611041642"></script>
-  <script src="js/catalog.js?v=202611041642"></script>
-  <script src="js/landmarks.js?v=202611041642"></script>
-  <script src="js/obstacles.js?v=202611041642"></script>
-  <script src="js/world.js?v=202611041642"></script>
-  <script src="js/plane.js?v=202611041642"></script>
-  <script src="js/effects.js?v=202611041642"></script>
-  <script src="js/hud.js?v=202611041642"></script>
-  <script src="js/gifts.js?v=202611041642"></script>
-  <script src="js/bridge.js?v=202611041642"></script>
-  <script src="js/game.js?v=202611041642"></script>
-  <script src="js/main.js?v=202611041642"></script>
-  <script src="js/remote.js?v=202611041642"></script>
+  <script src="js/config.js?v=202611041651"></script>
+  <script src="js/utils.js?v=202611041651"></script>
+  <script src="js/produtos-reserva.js?v=202611041651"></script>
+  <script src="js/audio.js?v=202611041651"></script>
+  <script src="js/catalog.js?v=202611041651"></script>
+  <script src="js/landmarks.js?v=202611041651"></script>
+  <script src="js/obstacles.js?v=202611041651"></script>
+  <script src="js/world.js?v=202611041651"></script>
+  <script src="js/plane.js?v=202611041651"></script>
+  <script src="js/effects.js?v=202611041651"></script>
+  <script src="js/hud.js?v=202611041651"></script>
+  <script src="js/gifts.js?v=202611041651"></script>
+  <script src="js/bridge.js?v=202611041651"></script>
+  <script src="js/game.js?v=202611041651"></script>
+  <script src="js/main.js?v=202611041651"></script>
+  <script src="js/remote.js?v=202611041651"></script>
 </body>
 </html>

@@ -50,7 +50,7 @@
       this.world.reset(); this.plane.reset();
       this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = [];
       this.mode = 'playing'; this.roundTime = 0; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
-      this.truck = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
+      this.truck = null; this.worker = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
       this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.likeAcc = 0; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.feathers = []; this.newRecord = false;
@@ -254,26 +254,39 @@
       this.mode = 'unload'; this.unloaded = [];
       this.audio.fanfare(); this.fx.confetti(540, 700, 90, 0.8);
       this.hud.banner('POUSOU!', 'missão cumprida — chegou o caminhão', '#82e8cc', 2.4);
-      this.say('pousou', { force: true });
-      // caminhão vem de ré até a porta do avião
-      this.truck = { x: W + 330, tx: 790, open: 0, wheel: 0, phase: 'in' };
+      this.plane.doorOpen = 0;
+      // caminhão vem de ré até perto do avião; o ajudante desce e leva caixa por caixa
+      this.truck = { x: W + 360, tx: 800, open: 0, wheel: 0, phase: 'in', cabDoor: 0 };
+      this.worker = null;
       const T = (t, fn) => this.after(t, fn, 'unload');
       for (let i = 0; i < 6; i++) T(1.2 + i * 0.45, () => this.audio.beep());
-      T(3.6, () => { this.truck.phase = 'open'; this.say(this.cargo.length ? 'caminhao' : 'vazio', { force: true }); });
-      const n = this.cargo.length;
-      for (let i = 0; i < n; i++) T(4.4 + i * 0.85, () => this._unloadOne());
-      const end = 4.4 + n * 0.85 + 0.6;
-      T(end, () => { this.truck.phase = 'close'; });
-      T(end + 0.8, () => { this.audio.honk(); this.after(0.4, () => this.audio.honk(), 'unload'); this.truck.phase = 'out'; });
-      T(end + 2.6, () => this._summary());
+      T(3.4, () => { this.truck.phase = 'open'; this.plane.doorTarget = 1; this.audio.cardboard(); });
+      T(3.9, () => { this.truck.cabDoorT = 1; this.audio.thud(); });
+      T(4.3, () => { this.worker = { x: this.truck.x + 150, dir: -1, state: this.cargo.length ? 'toPlane' : 'toCab', carry: null, t: 0, walk: 0 }; this.truck.cabDoorT = 0; });
     }
-    _unloadOne() {
-      const item = this.cargo.shift(); if (!item) return;
-      const p = this.plane;
-      this.flyCrate = { item, t: 0, from: { x: p.x - 50, y: p.y - 6 }, to: { x: this.truck.x - 175, y: GY - 120 } };
-      this.audio.cardboard(); this.audio.pop();
-      this.unloaded.push(item);
-      this.hud.showCard({ item, n: this.unloaded.length, total: this.unloaded.length + this.cargo.length });
+    // ajudante: vai até a porta do avião, pega a caixa, leva até o baú do caminhão
+    _updateWorker(dt) {
+      const w = this.worker, tr = this.truck, p = this.plane; if (!w || !tr) return;
+      const doorX = p.x - 112, rearX = tr.x - 196, cabX = tr.x + 150, sp = 360;
+      const go = (tx) => { const d = tx - w.x; w.dir = Math.sign(d) || w.dir; w.x += Math.sign(d) * Math.min(Math.abs(d), sp * dt); w.walk += dt * 9; return Math.abs(d) < 2; };
+      w.t += dt;
+      if (w.state === 'toPlane' && go(doorX)) { w.state = 'pick'; w.t = 0; }
+      else if (w.state === 'pick' && w.t > 0.25) {
+        w.carry = this.cargo.shift(); this.audio.cardboard(); w.state = 'toTruck';
+        if (w.carry) this.hud.showCard({ item: w.carry, n: this.unloaded.length + 1, total: this.unloaded.length + 1 + this.cargo.length });
+      }
+      else if (w.state === 'toTruck' && go(rearX)) { w.state = 'drop'; w.t = 0; }
+      else if (w.state === 'drop' && w.t > 0.22) {
+        if (w.carry) { this.unloaded.push(w.carry); this.audio.pop(); }
+        w.carry = null; w.state = this.cargo.length ? 'toPlane' : 'toCab';
+      }
+      else if (w.state === 'toCab' && go(cabX)) {
+        this.worker = null; tr.cabDoorT = 1; this.audio.thud(); tr.phase = 'close'; this.plane.doorTarget = 0;
+        const T = (t, fn) => this.after(t, fn, 'unload');
+        T(0.5, () => { tr.cabDoorT = 0; });
+        T(1.0, () => { this.audio.honk(); this.after(0.4, () => this.audio.honk(), 'unload'); tr.phase = 'out'; });
+        T(2.8, () => this._summary());
+      }
     }
     _summary() {
       this.mode = 'win'; this.finalTime = this.roundTime; this.sumTime = 0;
@@ -380,7 +393,9 @@
           if (tr.phase === 'close') tr.open = U.damp(tr.open, 0, 6, dt);
           if (tr.phase === 'out') { tr.v = (tr.v || 0) + 600 * dt; tr.x += tr.v * dt; tr.wheel += dt * 8; }
         }
-        if (this.flyCrate) { this.flyCrate.t += dt / 0.6; if (this.flyCrate.t >= 1) this.flyCrate = null; }
+        tr && (tr.cabDoor = U.damp(tr.cabDoor || 0, tr.cabDoorT || 0, 10, dt));
+        p.doorOpen = U.damp(p.doorOpen || 0, p.doorTarget || 0, 5, dt);
+        this._updateWorker(dt);
         this.audio.setEngine(0, false);
       } else if (this.mode === 'win') {
         this.sumTime += dt; this.audio.setEngine(0, false);
@@ -425,7 +440,8 @@
       const camX = w.x - p.x;
       w.draw(ctx, t, camX, { catalog: this.catalog });
       // caminhão e caixa voando
-      if (this.truck) CNB.drawTruck(ctx, this.truck.x, GY + 4, this.truck.open, t, this.truck.wheel);
+      if (this.truck) CNB.drawTruck(ctx, this.truck.x, GY + 4, this.truck.open, t, this.truck.wheel, this.truck.cabDoor || 0);
+      if (this.worker) CNB.drawWorker(ctx, this.worker, GY + 4, t, this.catalog);
       if (this.jet) this._drawJet(ctx, t);
       for (const f of this.feathers) {
         ctx.save(); ctx.globalAlpha = U.clamp((f.life - f.age) / 0.6, 0, 1); ctx.translate(f.x, f.y); ctx.rotate(f.rot + Math.sin(f.age * 5) * 0.5); ctx.scale(f.s, f.s);

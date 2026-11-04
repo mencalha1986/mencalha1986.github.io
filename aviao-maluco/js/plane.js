@@ -79,6 +79,15 @@
       ctx.fillStyle = '#5a3a1a'; ctx.beginPath(); ctx.arc(91, -20, 10, Math.PI, 0); ctx.fill();          // touca de aviador
       ctx.fillStyle = '#facc15'; ctx.fillRect(90, -20, 12, 5);                                              // óculos
       ctx.restore();
+      // porta de carga aberta (no pouso)
+      if (this.doorOpen > 0.02) {
+        const o = this.doorOpen;
+        ctx.fillStyle = '#1d232a'; U.roundRect(ctx, -114, -26, 36, 44, 4); ctx.fill();
+        ctx.fillStyle = 'rgba(255,220,150,0.25)'; ctx.fillRect(-110, -22, 28, 36);
+        ctx.fillStyle = '#c69c6d'; ctx.fillRect(-108, -4, 14, 14); ctx.fillRect(-96, 0, 12, 10);   // caixas lá dentro
+        ctx.fillStyle = '#e8eef1'; ctx.save(); ctx.translate(-78, -26); ctx.scale(1 - o * 0.85, 1); ctx.fillRect(0, 0, 36, 44); ctx.restore();
+        ctx.strokeStyle = 'rgba(30,41,59,0.6)'; ctx.lineWidth = 1.5; U.roundRect(ctx, -114, -26, 36, 44, 4); ctx.stroke();
+      }
       // asa da frente
       ctx.fillStyle = '#2a9d8f'; U.poly(ctx, [-24, 6, 46, 6, 20, 52, -6, 52]); ctx.fill();
       ctx.fillStyle = '#fe2c55'; ctx.fillRect(-4, 46, 22, 6);
@@ -101,35 +110,95 @@
     }
   }
 
-  // caminhão baú da marca (de lado, cabine para a direita)
-  function truck(ctx, x, y, open, t, wheelRot) {
+  // caminhão baú (VUC) da marca, de lado, cabine à direita — desenhado uma vez e reaproveitado
+  let truckImg = null;
+  function truckSprite() {
+    if (truckImg) return truckImg;
+    const c = document.createElement('canvas'); c.width = 480; c.height = 260; const x = c.getContext('2d');
+    const L = (x0, y0, x1, y1, st) => { const g = x.createLinearGradient(x0, y0, x1, y1); st.forEach(([o, cc]) => g.addColorStop(o, cc)); return g; };
+    x.translate(200, 250);   // (0,0) = chão no meio do baú
+    // chassi e para-choque
+    x.fillStyle = '#2b3036'; x.fillRect(-196, -52, 420, 14);
+    x.fillStyle = '#41474e'; x.fillRect(-200, -44, 16, 16);
+    // baú com painéis
+    x.fillStyle = L(0, -222, 0, -52, [[0, '#ffffff'], [0.7, '#eef2f4'], [1, '#d5dde2']]); x.fillRect(-196, -222, 300, 170);
+    x.fillStyle = 'rgba(0,0,0,0.05)'; for (let px = -196; px < 104; px += 30) x.fillRect(px, -222, 2, 170);
+    x.fillStyle = '#c9d2d8'; x.fillRect(-196, -222, 300, 6); x.fillRect(-196, -58, 300, 6);
+    // faixa e marca
+    x.fillStyle = L(-196, 0, 104, 0, [[0, '#0e3a4a'], [1, '#1c6a6a']]); x.fillRect(-196, -110, 300, 40);
+    x.fillStyle = '#82e8cc'; x.fillRect(-196, -70, 300, 5);
+    x.fillStyle = '#0e3a4a'; x.font = `44px ${U.FONT_TITLE}`; x.textAlign = 'left'; x.fillText('ACHADOS ÚTEIS', -138, -140);
+    x.font = `800 17px ${U.FONT_UI}`; x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.fillText('achadosuteisporai.com.br', -36, -84); x.textAlign = 'left';
+    logo(x, 72, -190, 1.6);
+    // cabine
+    x.fillStyle = L(104, -170, 104, -40, [[0, '#ff4d6d'], [1, '#c8163f']]);
+    x.beginPath(); x.moveTo(108, -52); x.lineTo(108, -168); x.lineTo(176, -168); x.quadraticCurveTo(198, -166, 206, -130); x.lineTo(222, -96); x.lineTo(226, -52); x.closePath(); x.fill();
+    x.fillStyle = L(170, -160, 214, -100, [[0, '#cfeaff'], [1, '#4e7fa8']]);  // para-brisa inclinado
+    x.beginPath(); x.moveTo(180, -160); x.quadraticCurveTo(196, -158, 202, -132); x.lineTo(214, -102); x.lineTo(182, -102); x.closePath(); x.fill();
+    x.fillStyle = L(120, -156, 172, -104, [[0, '#d7ecff'], [1, '#5c84a8']]); U.roundRect(x, 122, -156, 50, 52, 6); x.fill();   // janela da porta
+    x.strokeStyle = 'rgba(80,10,25,0.45)'; x.lineWidth = 2; x.strokeRect(116, -160, 62, 104);              // contorno da porta
+    x.fillStyle = '#2b3036'; x.fillRect(160, -96, 12, 4);                                                    // maçaneta
+    x.fillStyle = '#1f2328'; x.fillRect(112, -150, 6, 30); x.fillRect(102, -150, 12, 4);                    // retrovisor
+    x.fillStyle = '#e5e7eb'; U.roundRect(x, 206, -86, 22, 34, 4); x.fill(); x.fillStyle = '#fff6c8'; x.fillRect(212, -80, 12, 10);   // farol
+    x.fillStyle = '#41474e'; x.fillRect(196, -54, 34, 12);                                                   // para-choque
+    // caixas de roda
+    x.fillStyle = '#1f2328'; [-140, -84, 170].forEach((wx) => { x.beginPath(); x.arc(wx, -40, 34, Math.PI, 0); x.fill(); });
+    truckImg = c; return c;
+  }
+  function wheelDraw(ctx, x, y, rot) {
+    ctx.fillStyle = '#16181b'; ctx.beginPath(); ctx.arc(x, y, 27, 0, 7); ctx.fill();
+    ctx.fillStyle = '#9aa1a8'; ctx.beginPath(); ctx.arc(x, y, 14, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = '#5b6168';
+    for (let i = 0; i < 5; i++) { ctx.rotate(Math.PI * 2 / 5); ctx.beginPath(); ctx.arc(8, 0, 2.6, 0, 7); ctx.fill(); }
+    ctx.restore();
+  }
+  function truck(ctx, x, y, open, t, wheelRot, cabDoor = 0) {
     ctx.save(); ctx.translate(x, y);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(40, 4, 230, 14, 0, 0, 7); ctx.fill();
-    // baú
-    ctx.fillStyle = '#f8fafc'; U.roundRect(ctx, -170, -210, 300, 170, 10); ctx.fill();
-    ctx.fillStyle = '#82e8cc'; ctx.fillRect(-170, -78, 300, 18);
-    ctx.fillStyle = '#0e3a4a'; ctx.font = `46px ${U.FONT_TITLE}`; ctx.textAlign = 'center'; ctx.fillText('ACHADOS ÚTEIS', -20, -128);
-    ctx.font = `800 20px ${U.FONT_UI}`; ctx.fillText('por aí · entregas', -20, -98);
-    logo(ctx, 100, -175, 2);
-    // porta traseira (lado esquerdo) abrindo
-    ctx.fillStyle = '#e2e8f0'; ctx.save(); ctx.translate(-170, -210); ctx.scale(1 - open * 0.85, 1); ctx.fillRect(-0, 0, 26, 170); ctx.restore();
-    if (open > 0.1) { ctx.fillStyle = '#334155'; ctx.fillRect(-168, -206, 22 * open, 162); }
-    // chassi e cabine
-    ctx.fillStyle = '#334155'; ctx.fillRect(-170, -42, 380, 16);
-    ctx.fillStyle = '#fe2c55'; U.roundRect(ctx, 136, -150, 96, 112, 14); ctx.fill();
-    ctx.fillStyle = '#7dd3fc'; U.roundRect(ctx, 176, -138, 46, 46, 8); ctx.fill();
-    ctx.fillStyle = '#c98c64'; ctx.beginPath(); ctx.arc(196, -112, 11, 0, 7); ctx.fill();
-    ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(196, -118, 11, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = '#fde68a'; ctx.fillRect(226, -64, 8, 14);
-    // rodas
-    [-120, -60, 170].forEach((wx) => {
-      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(wx, -18, 26, 0, 7); ctx.fill();
-      ctx.save(); ctx.translate(wx, -18); ctx.rotate(wheelRot); ctx.fillStyle = '#9ca3af'; ctx.fillRect(-12, -3, 24, 6); ctx.fillRect(-3, -12, 6, 24); ctx.restore();
-    });
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(10, 2, 240, 12, 0, 0, 7); ctx.fill();
+    ctx.drawImage(truckSprite(), -200, -250);
+    [-140, -84, 170].forEach((wx) => wheelDraw(ctx, wx, -18, wheelRot));
+    // portas traseiras abrindo (lado esquerdo) com o interior escuro
+    if (open > 0.02) {
+      ctx.fillStyle = '#20262c'; ctx.fillRect(-196, -216, 10 + 30 * open, 160);
+      ctx.fillStyle = '#c69c6d'; for (let i = 0; i < 3; i++) ctx.fillRect(-192, -96 - i * 26, 22 * open, 24);
+    }
+    ctx.fillStyle = '#e6ebee'; ctx.save(); ctx.translate(-196, -222); ctx.scale(Math.max(0.12, 1 - open), 1); ctx.fillRect(-40, 0, 40, 170); ctx.restore();
+    // porta da cabine abrindo
+    if (cabDoor > 0.02) { ctx.fillStyle = '#b3123a'; ctx.save(); ctx.translate(178, -160); ctx.scale(1 - cabDoor * 0.8, 1); ctx.fillRect(-62, 0, 62, 104); ctx.restore(); ctx.fillStyle = '#20262c'; ctx.fillRect(116, -160, 62 * cabDoor * 0.8, 104); }
+    ctx.restore();
+  }
+
+  // ajudante uniformizado (de lado), andando; leva a caixa nos braços
+  function worker(ctx, w, gy, t, catalog) {
+    const s = 1, wk = Math.sin(w.walk) * 0.5, carrying = !!w.carry;
+    ctx.save(); ctx.translate(w.x, gy); ctx.scale(w.dir, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(0, -2, 26, 6, 0, 0, 7); ctx.fill();
+    const leg = (a, col) => { ctx.save(); ctx.translate(0, -52); ctx.rotate(a); ctx.fillStyle = col; U.roundRect(ctx, -6, 0, 12, 48, 5); ctx.fill(); ctx.fillStyle = '#1b1d20'; U.roundRect(ctx, -6, 44, 20, 9, 3); ctx.fill(); ctx.restore(); };
+    leg(-wk, '#3b4652'); leg(wk, '#4a5663');                      // pernas (calça de trabalho)
+    ctx.fillStyle = '#1f6f63'; U.roundRect(ctx, -13, -100, 26, 52, 8); ctx.fill();   // camisa polo
+    ctx.fillStyle = '#82e8cc'; ctx.fillRect(-13, -72, 26, 4);
+    ctx.fillStyle = '#c4935f'; ctx.fillRect(-4, -108, 8, 8);                         // pescoço
+    ctx.beginPath(); ctx.ellipse(1, -117, 10, 11, 0, 0, 7); ctx.fill();               // cabeça
+    ctx.fillStyle = '#0e3a4a'; ctx.beginPath(); ctx.arc(0, -121, 10.5, Math.PI, 0); ctx.fill(); ctx.fillRect(4, -123, 12, 4);   // boné
+    ctx.fillStyle = '#2b1d14'; ctx.beginPath(); ctx.arc(6, -117, 1.4, 0, 7); ctx.fill();
+    if (carrying) {
+      // braços esticados segurando a caixa com o produto
+      ctx.strokeStyle = '#1f6f63'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(2, -94); ctx.lineTo(20, -80); ctx.stroke();
+      ctx.save(); ctx.translate(30, -84);
+      ctx.fillStyle = '#c69c6d'; ctx.fillRect(-16, -20, 40, 36); ctx.fillStyle = '#a77d50'; ctx.fillRect(-16, -20, 40, 5); ctx.fillStyle = '#82e8cc'; ctx.fillRect(0, -20, 6, 36);
+      if (catalog) { ctx.scale(w.dir, 1); catalog.drawPhoto(ctx, w.carry, -12, -12, 24, 3); }
+      ctx.restore();
+      ctx.fillStyle = '#e8e8e2'; ctx.beginPath(); ctx.arc(22, -70, 5, 0, 7); ctx.fill();   // luva
+    } else {
+      ctx.strokeStyle = '#1f6f63'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(0, -94); ctx.lineTo(Math.sin(w.walk + Math.PI) * 14, -62); ctx.stroke();
+      ctx.fillStyle = '#e8e8e2'; ctx.beginPath(); ctx.arc(Math.sin(w.walk + Math.PI) * 14, -60, 5, 0, 7); ctx.fill();
+    }
     ctx.restore();
   }
 
   Plane.logo = logo;
   CNB.Plane = Plane;
   CNB.drawTruck = truck;
+  CNB.drawWorker = worker;
 })();
