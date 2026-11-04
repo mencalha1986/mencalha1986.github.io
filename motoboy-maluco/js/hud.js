@@ -429,7 +429,7 @@
         if (this.qr.complete && this.qr.naturalWidth) ctx.drawImage(this.qr, 98, ly + 22, 132, 132);
         ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `800 24px ${FU}`; ctx.fillText('QUER RECEBER ESSES ACHADOS? TÁ NO SITE:', 262, ly + 48);
         ctx.font = `58px ${FT}`; ctx.fillText(g.cfg.siteUrl, 262, ly + 108);
-        const tip = `📌 link na bio do ${g.cfg.profile}  ·  ou escaneie o QR`; let fs = 24; ctx.font = `700 ${fs}px ${FU}`;
+        const tip = `📌 link na bio  ·  ou escaneie o QR`; let fs = 24; ctx.font = `700 ${fs}px ${FU}`;
         while (ctx.measureText(tip).width > 725 && fs > 16) { fs--; ctx.font = `700 ${fs}px ${FU}`; }
         ctx.fillStyle = '#d6fff2'; ctx.fillText(tip, 262, ly + 146);
         ctx.restore();
