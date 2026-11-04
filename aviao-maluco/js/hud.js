@@ -285,8 +285,7 @@
           const def = G[k];
           giftIcon(ctx, def.icon, 756, y + 17, 16, def.color);
           ctx.textAlign = 'left'; ctx.font = `800 17px ${FU}`; ctx.fillStyle = '#fff';
-          const nm = U.truncate(def.tiktok || def.label, 17); ctx.fillText(nm, 780, y + 14);
-          if (def.coins) { const nw = ctx.measureText(nm).width; ctx.font = `800 13px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(`🪙${def.coins}`, 786 + nw, y + 14); }
+          ctx.fillText(U.truncate(def.tiktok || def.label, 24), 780, y + 14);
           ctx.font = `700 14px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 32), 780, y + 32);
           y += rowH;
         }
@@ -411,7 +410,6 @@
         const def = this.g.cfg.gifts[k], x = x0 + (i % 2) * cw + 20, y = 1090 + Math.floor(i / 2) * rh;
         giftIcon(ctx, def.icon, x + 22, y + 20, 20, def.color);
         ctx.textAlign = 'left'; ctx.font = `800 21px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(def.tiktok || def.label, x + 52, y + 17);
-        if (def.coins) { const tw = ctx.measureText(def.tiktok || def.label).width; ctx.font = `700 15px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(`🪙${def.coins}`, x + 60 + tw, y + 17); }
         ctx.font = `500 17px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(this.actionText(def), x + 52, y + 39);
       });
       const ty = 1076 + 24 + rows * rh + 34;
