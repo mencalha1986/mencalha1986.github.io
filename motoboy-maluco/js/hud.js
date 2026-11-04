@@ -309,14 +309,14 @@
 
     drawBubbles(ctx, t) {
       for (const b of this.bubbles) {
-        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : g.rider.headScreen;
+        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : b.who === 'policia' ? (g.city && g.city.policeHead) : g.rider.headScreen;
         if (!anchor) continue;
         const pop = U.easeOutBack(U.clamp(b.age * 5, 0, 1)), fade = U.clamp((b.dur - b.age) / 0.3, 0, 1);
         ctx.font = `800 30px ${FU}`;
         const lines = wrap(ctx, b.text, 520), lh = 36, bw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 44, bh = lines.length * lh + 26;
         const bx = U.clamp(anchor.x - bw / 2, 30, W - bw - 30), by = U.clamp(anchor.y - bh - 30, 420, 1600);
         ctx.save(); ctx.globalAlpha = fade; ctx.translate(anchor.x, by + bh); ctx.scale(pop, pop); ctx.translate(-anchor.x, -(by + bh));
-        ctx.fillStyle = b.who === 'cliente' ? '#e6fff7' : b.who === 'borr' ? '#fff4d6' : '#ffffff';
+        ctx.fillStyle = b.who === 'cliente' ? '#e6fff7' : b.who === 'borr' ? '#fff4d6' : b.who === 'policia' ? '#e3ecff' : '#ffffff';
         U.roundRect(ctx, bx, by, bw, bh, 22); ctx.fill();
         ctx.beginPath(); ctx.moveTo(U.clamp(anchor.x - 14, bx + 24, bx + bw - 44), by + bh - 2); ctx.lineTo(U.clamp(anchor.x + 16, bx + 44, bx + bw - 24), by + bh - 2); ctx.lineTo(anchor.x, anchor.y - 6); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#1b1410'; ctx.lineWidth = 3; U.roundRect(ctx, bx, by, bw, bh, 22); ctx.stroke();

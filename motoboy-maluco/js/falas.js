@@ -327,5 +327,67 @@ CNB.FALAS = {
    "dur": 1.76,
    "who": "m"
   }
+ ],
+ "sinal": [
+  {
+   "text": "Ih, sinal fechado!",
+   "src": "sounds/voz/sinal_0.mp3",
+   "dur": 1.46,
+   "who": "m"
+  },
+  {
+   "text": "Vermelho... vou esperar.",
+   "src": "sounds/voz/sinal_1.mp3",
+   "dur": 1.63,
+   "who": "m"
+  },
+  {
+   "text": "Fechou! Bora esperar.",
+   "src": "sounds/voz/sinal_2.mp3",
+   "dur": 1.57,
+   "who": "m"
+  }
+ ],
+ "abriu": [
+  {
+   "text": "Abriu! Bora!",
+   "src": "sounds/voz/abriu_0.mp3",
+   "dur": 1.14,
+   "who": "m"
+  },
+  {
+   "text": "Sinal verde, partiu!",
+   "src": "sounds/voz/abriu_1.mp3",
+   "dur": 1.57,
+   "who": "m"
+  }
+ ],
+ "furou": [
+  {
+   "text": "Eita, furei o sinal!",
+   "src": "sounds/voz/furou_0.mp3",
+   "dur": 1.48,
+   "who": "m"
+  }
+ ],
+ "policia": [
+  {
+   "text": "Pode passar, motoboy!",
+   "src": "sounds/voz/policia_0.mp3",
+   "dur": 1.85,
+   "who": "p"
+  },
+  {
+   "text": "Pare! Espera aí!",
+   "src": "sounds/voz/policia_1.mp3",
+   "dur": 1.35,
+   "who": "p"
+  },
+  {
+   "text": "Ei, motoboy! Sinal fechado!",
+   "src": "sounds/voz/policia_2.mp3",
+   "dur": 1.87,
+   "who": "p"
+  }
  ]
 };

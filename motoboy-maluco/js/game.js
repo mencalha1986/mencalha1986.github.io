@@ -33,7 +33,7 @@
       this.voice = { cfg: this.cfg.voice, stop: () => this._stopVoice(), setMuted: (m) => { this.voiceMuted = m; if (m) this._stopVoice(); } };
       this.setControl(new URLSearchParams(location.search).get('controle') || this.cfg.control);
       this._bind();
-      this.catalog.ready.then(() => { this.city = new CNB.City(this.cfg, this.catalog); this.mode = 'title'; });
+      this.catalog.ready.then(() => { this.city = new CNB.City(this.cfg, this.catalog); this.city.onSignal = (k) => this._onSignal(k); this.mode = 'title'; });
       this.last = performance.now();
       requestAnimationFrame((t) => this.loop(t));
     }
@@ -67,7 +67,7 @@
       let pick = opts.index !== undefined ? list[opts.index] : list[Math.floor(Math.random() * list.length)];
       if (opts.index === undefined && list.length > 1 && pick === this.lastLine[cat]) pick = list[(list.indexOf(pick) + 1) % list.length];
       this.lastLine[cat] = pick; this.lastSay = this.time;
-      if (pick.who !== 'g') this.hud.bubble(cat === 'cliente' ? 'cliente' : pick.who === 'b' ? 'borr' : 'motoboy', pick.text, pick.dur + 0.6);
+      if (pick.who !== 'g') this.hud.bubble(cat === 'cliente' ? 'cliente' : pick.who === 'b' ? 'borr' : pick.who === 'p' ? 'policia' : 'motoboy', pick.text, pick.dur + 0.6);
       if (!this.cfg.voice.enabled || this.voiceMuted || this.audio.muted) return;
       const el = this.voiceEls[pick.src] || new Audio(pick.src);
       if (this.voiceNow && pick.who !== 'g' && cat !== 'cliente') this.voiceNow.pause();
@@ -188,7 +188,7 @@
       this.say('buzina', { force: true });
       let moved = 0;
       for (const o of c.obstacles) {
-        const dz = o.z - d.z; if (o.hit || o.ghost || dz < 1 || dz > 40) continue;
+        const dz = o.z - d.z; if (o.hit || o.ghost || o.gone || dz < 1 || dz > 40) continue;
         const R = c.road(o.z);
         if (o.vehicle && o.type !== 'oncoming') {
           // muda para a faixa mais longe do motoboy
@@ -309,7 +309,7 @@
       const d = this.rider; if (d.finished || d.busy || d.state === S.BACK) return;
       const f0 = prevZ + 0.9, f1 = d.z + 0.9;
       for (const o of this.city.obstacles) {
-        if (o.hit || o.ghost) continue;
+        if (o.hit || o.ghost || o.gone) continue;
         const z0 = o.zPrev !== undefined ? o.zPrev : o.z;
         if (!(f0 - z0 < 0 && f1 - o.z >= 0)) continue;
         const def = OB[o.type];
@@ -344,14 +344,15 @@
       if (this.apT > 0 && this.apLane !== undefined) { d.targetX = this.apLane; return; }
       this.apT = U.rand(0.22, 0.5);
       const fast = d.speed > 9, R = this.city.road(d.z + 8) - 0.6, look = fast ? 26 : 16;
-      const obs = this.city.obstacles.filter((o) => !o.hit && !o.ghost && OB[o.type].w < 50 && o.z - d.z > 1.4 && o.z - d.z < look);
+      const Kq = this.city.nextCorner, queue = (o) => o.vehicle && Kq && o.zone && o.zone.corner === Kq && Kq.zc - d.z < 70 && o.v > 0;
+      const obs = this.city.obstacles.filter((o) => !o.hit && !o.ghost && !o.gone && !queue(o) && OB[o.type].w < 50 && o.z - d.z > 1.4 && o.z - d.z < look);
       for (const o of obs) if (o.seen === undefined) o.seen = Math.random() < (fast ? ap.dodgeFast : ap.dodge);
       let pref = this.city.zoneAt(d.z + 8).type === 'rua' ? R * 0.45 : 1.8;
       const K = this.city.nextCorner;
-      if (K && K.zc - d.z < 30) pref = K.dir > 0 ? R - 0.6 : -R * 0.35;   // encosta do lado da conversão
+      if (K && K.zc - d.z < 50) pref = K.dir > 0 ? R - 0.6 : ZONE.rua.road * 0.33;   // fica na faixa (atrás dos carros) para virar   // encosta do lado da conversão
       let best = d.targetX, bestS = -1e9;
       for (let x = -R; x <= R + 1e-6; x += 0.4) {
-        let sc = -Math.abs(x - d.x) * 0.9 - Math.abs(x - pref) * 0.35;
+        let sc = -Math.abs(x - d.x) * 0.9 - Math.abs(x - pref) * (K && K.zc - d.z < 50 ? 1.6 : 0.35);
         for (const o of obs) {
           if (!o.seen) continue;
           const tReach = (o.z - d.z) / Math.max(1, d.speed - o.v);
@@ -365,7 +366,7 @@
     }
 
     // ------------------------------------------------------------ esquinas: seta, freia, vira
-    _corners(dt) {
+    _corners(dt, prevZ) {
       const d = this.rider, c = this.city, cam = this.cam, K = c.nextCorner, L = c.lastCorner;
       // não dá ré para antes da esquina que já virou
       if (L && d.z < L.zc + L.cw + 0.3) { d.z = L.zc + L.cw + 0.3; d.retreat = 0; }
@@ -374,6 +375,7 @@
       this.guideAlpha = U.damp(this.guideAlpha === undefined ? 1 : this.guideAlpha, near ? 0 : 1, 5, dt);
       d.blink = tn ? tn.k.dir : K && K.zc - d.z < 38 && !d.finished ? K.dir : 0;
       d.speedCap = tn ? 5.5 : K ? 5.5 + Math.max(0, K.zc - d.z) * 0.5 : 99;
+      if (!tn && K && !d.finished && this.mode === 'playing') this._signal(K, prevZ);
       if (d.blink) { this.blinkT = (this.blinkT || 0) + dt; if (this.blinkT > 0.38) { this.blinkT = 0; this.audio.blinker(); } }
       if (!tn && K) {
         // curva de verdade: arco de círculo da faixa atual até a faixa certa da rua nova
@@ -385,6 +387,50 @@
           this.turning = { k: K, th: 0, r, x0: d.x, z0, E, pc, laneB, zs: K.zc + K.cw, lag: Math.max(0, (d.z - CAM.ride.dist) - cam.z) };
           d.z = z0; this.audio.skid();
         }
+      }
+    }
+
+    // semáforo / guarda: espera no vermelho, faz fila atrás dos carros, e se furar o sinal leva bronca
+    _signal(K, prevZ) {
+      const d = this.rider, c = this.city, sl = c.stopLine(K), wild = d.state === S.RUN || d.state === S.CHASE;
+      if (K.zc - d.z > 70) return;
+      let capZ = Infinity;
+      if (K.sig !== 'g' && d.z < sl + 0.4 && !wild && !K.ran) {
+        const room = sl - (d.z + 0.9);
+        if (K.sig === 'r' || room > d.speed * 0.9 || K.holding) { capZ = sl - 1.0; K.holding = true; }
+      }
+      if (K.sig === 'g') K.holding = false;
+      for (const o of c.obstacles) {
+        if (!o.vehicle || o.hit || o.gone || o.ghost || o.v <= 0 || o.zone.corner !== K) continue;
+        if (Math.abs(o.x - d.x) < 1.5 && o.z > d.z + 0.5) capZ = Math.min(capZ, o.z - (o.type === 'bus' ? 7 : 4.2));
+      }
+      if (capZ < Infinity) { const room = capZ - d.z; d.speedCap = Math.min(d.speedCap, room <= 0.05 ? 0 : Math.sqrt(2 * 2.2 * room)); }
+      // esperando no sinal
+      if (K.sig !== 'g' && d.speed < 0.3 && sl - d.z < 16 && !K.saidWait) {
+        K.saidWait = true;
+        if (K.ctl === 'police') { this.audio.whistle(); this.say('policia', { index: 1, force: true }); } else if (Math.random() < 0.7) this.say('sinal', { force: true });
+      }
+      // furou o sinal vermelho
+      if (prevZ !== undefined && prevZ + 0.9 < sl && d.z + 0.9 >= sl && K.sig === 'r' && !K.ran) {
+        K.ran = true; this._penalty(0.5);
+        if (K.ctl === 'police') {
+          this.audio.whistle(); this.after(0.35, () => this.audio.whistle());
+          this.hud.banner('O GUARDA APITOU!', 'furou o sinal: −½ estrela', '#ff6b6b', 1.8);
+          this.after(0.4, () => this.say('policia', { index: 2, force: true }));
+        } else {
+          this.hud.banner('FUROU O SINAL!', '−½ estrela', '#ff6b6b', 1.6);
+          this.after(0.3, () => this.say('furou', { force: true }));
+        }
+      }
+    }
+    _onSignal(k) {
+      const d = this.rider, near = k.zc - d.z < 70 && k.zc - d.z > -5;
+      if (!near || this.mode !== 'playing') return;
+      if (k.ctl === 'police' && k.zc - d.z < 50) this.audio.whistle();
+      const waiting = d.speed < 0.6 && this.city.stopLine(k) - d.z < 25;
+      if (k.sig === 'g' && waiting) {
+        if (k.ctl === 'police') this.say('policia', { index: 0, force: true });
+        else this.after(0.3, () => this.say('abriu', { force: true }));
       }
     }
 
@@ -445,7 +491,7 @@
         if (this.turning) this._turnStep(prevZ);
         else { this._collide(prevZ); this._checkArrive(); }
         this._updateDog(dt);
-        this._corners(dt);
+        this._corners(dt, prevZ);
         // GPS fala as curvas
         for (const m of c.maneuvers) {
           const key = m.type + m.z;
@@ -509,7 +555,7 @@
       c.sy = (Math.random() - 0.5) * this.shake + (d.speed > 0.5 && !d.busy ? Math.sin(this.time * 30) * Math.min(1.5, d.speed * 0.1) : 0);
       const K = this.city.nextCorner;
       if (this.turning && this.mode === 'playing') this._turnCam();
-      else if (K && K.zc - d.z < 48 && K.zc - d.z > -12 && this.mode !== 'win') {
+      else if (K && K.zc - d.z < 260 && K.zc - d.z > -12 && this.mode !== 'win') {
         // perto da esquina: mesmo desenho da curva (com a câmera reta) para nada "pular" quando começar a virar
         c.turn = this._turnGeom(K); c.tx = c.x; c.tz = c.z; c.tyaw = 0;
       } else c.turn = null;

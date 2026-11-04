@@ -91,7 +91,7 @@
         case S.STOP: target = 0; lerp = 20; break;
         case S.NOGAS: target = 0; lerp = 1.2; break;
       }
-      if (target > 0 && this.speedCap) target = Math.min(target, this.speedCap);   // freia para virar a esquina
+      if (target > 0 && this.speedCap !== undefined && this.speedCap < target) { target = this.speedCap; lerp = Math.max(lerp, 7); if (this.speed > target + 1) this.brake = 1; }   // freia para virar a esquina
       this.speed = U.damp(this.speed, target, lerp, dt);
       if (this.state === S.STOP) this.speed = 0;
       if (this.slide > 0) { const r = Math.min(this.slide, dt * 4); this.slide -= r; this.z += r; }
@@ -189,8 +189,19 @@
       if (this.speed > 0.3 && Math.random() < 0.3) { ctx.fillStyle = 'rgba(200,200,200,0.25)'; ctx.beginPath(); ctx.arc(34 + Math.random() * 6, -36 + Math.random() * 6, 5, 0, 7); ctx.fill(); }
       // pneu traseiro
       const flat = this.state === S.FLAT && !this.tireOk ? 1 : 0;
-      ctx.fillStyle = '#121214'; U.roundRect(ctx, -9 - flat * 4, -64 + flat * 8, 18 + flat * 8, 64 - flat * 8, 9); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.12)'; for (let i = 0; i < 6; i++) ctx.fillRect(-7, -60 + ((i * 11 + this.phase * 30) % 60), 14, 2);
+      if (flat) {
+        // PNEU MURCHO: achatado no chão, borracha esparramada e enrugada
+        ctx.fillStyle = '#121214'; U.roundRect(ctx, -10, -50, 20, 40, 8); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, -6, 22, 8, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, -14, 17, 9, 0, 0, 7); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.5;
+        for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 9, -22); ctx.quadraticCurveTo(sd * 18, -12, sd * 12, -4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(sd * 6, -30); ctx.quadraticCurveTo(sd * 13, -24, sd * 10, -16); ctx.stroke(); }
+        ctx.fillStyle = '#9aa0a6'; ctx.fillRect(-2, -30, 4, 5);   // prego
+        ctx.fillStyle = '#c9ccd2'; ctx.fillRect(-4, -33, 8, 3);
+      } else {
+        ctx.fillStyle = '#121214'; U.roundRect(ctx, -9, -64, 18, 64, 9); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.12)'; for (let i = 0; i < 6; i++) ctx.fillRect(-7, -60 + ((i * 11 + this.phase * 30) % 60), 14, 2);
+      }
       // para-lama, placa e lanterna
       ctx.fillStyle = '#1a1b1f'; U.roundRect(ctx, -14, -76, 28, 14, 5); ctx.fill();
       ctx.fillStyle = '#e9ecef'; U.roundRect(ctx, -13, -74, 26, 12, 2); ctx.fill();

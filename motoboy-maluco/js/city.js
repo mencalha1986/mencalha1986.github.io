@@ -50,7 +50,7 @@
       for (let k = 0; k < cfg.deliveries; k++) {
         const A = rr(cfg.avenueLength), zc = z + A;
         const streetName = STREETS[Math.floor(r() * STREETS.length)];
-        const cR = { zc, cw: CWR, dir: 1, turned: false, name: streetName };
+        const cR = { zc, cw: CWR, dir: 1, turned: false, name: streetName, ctl: r() < 0.35 ? 'police' : 'light', sig: r() < 0.5 ? 'g' : 'r', sigT: r() * 6, cross: [], crossT: 0 };
         this.corners.push(cR);
         this.zones.push({ type: 'av', z0: z, z1: zc + CWR, corner: cR, stopAt: Infinity });
         this.curves.push({ z0: zc, z1: zc + CWR, dir: 1 });
@@ -62,9 +62,10 @@
         this.maneuvers.push({ z: hz, type: 'dest', num, name: streetName });
         const last = k === cfg.deliveries - 1;
         const ze = last ? hz + 40 : hz + 22;
-        this.zones.push({ type: 'rua', z0: zs, z1: last ? ze : ze + CWA, stopAt: last ? ze - 8 : ze - 3 });
+        const cL = last ? null : { zc: ze, cw: CWA, dir: -1, turned: false, name: 'AVENIDA', ctl: r() < 0.4 ? 'police' : 'light', sig: r() < 0.5 ? 'g' : 'r', sigT: r() * 6, cross: [], crossT: 0 };
+        this.zones.push({ type: 'rua', z0: zs, z1: last ? ze : ze + CWA, stopAt: last ? ze - 8 : Infinity, corner: cL });
         if (!last) {
-          this.corners.push({ zc: ze, cw: CWA, dir: -1, turned: false, name: 'AVENIDA' });
+          this.corners.push(cL);
           this.curves.push({ z0: ze, z1: ze + CWA, dir: -1 });
           this.maneuvers.push({ z: ze, type: 'left', name: 'AVENIDA' });
         }
@@ -183,32 +184,84 @@
     }
 
     // obstáculos que andam
+    // semáforo / guarda: verde 8 s, amarelo 1,6 s, vermelho 7 s (para quem vem pela via da moto)
+    static SIG = { g: 8, y: 1.6, r: 7 };
+    stopLine(K) { return K.zc - 7; }
     update(dt, t) {
-      // trânsito: carro não atravessa o da frente na mesma faixa (acompanha a velocidade dele)
-      const veh = this.obstacles.filter((o) => o.vehicle && !o.hit);
+      const K0 = this.nextCorner;
+      for (const k of this.corners) {
+        if (k.turned) continue;
+        k.sigT += dt;
+        if (k.sigT > City.SIG[k.sig]) {
+          k.sigT = 0; k.sig = k.sig === 'g' ? 'y' : k.sig === 'y' ? 'r' : 'g';
+          this.onSignal && k === K0 && this.onSignal(k);
+          if (k.sig === 'r') this._crossPeds(k);
+        }
+        // no vermelho passa carro na avenida (no "T") de um lado para o outro
+        if (k.dir < 0) {
+          k.crossT -= dt;
+          if (k.sig === 'r' && k.sigT > 1 && k.sigT < City.SIG.r - 1.5 && k.crossT <= 0) {
+            const d = Math.random() < 0.5 ? 1 : -1, pc = k.zc + k.cw / 2;
+            k.cross.push({ x: -d * 70, z: pc + d * 1.8 + (Math.random() < 0.5 ? 0 : d * 1.8), v: d * U.rand(7, 11), color: CARS[Math.floor(Math.random() * CARS.length)], bus: Math.random() < 0.2 });
+            k.crossT = U.rand(0.9, 1.8);
+          }
+          for (const c of k.cross) c.x += c.v * dt;
+          k.cross = k.cross.filter((c) => Math.abs(c.x) < 75);
+        }
+      }
+      // trânsito: fila, semáforo e motoboy virando
+      const veh = this.obstacles.filter((o) => o.vehicle && !o.hit && !o.gone).sort((a, b) => b.z - a.z);
       for (const a of veh) {
         a.vNow = a.v;
-        if (a.v <= 0) continue;
-        for (const b of veh) if (b !== a && b.v > 0 && Math.abs(b.x - a.x) < 1.6 && b.z > a.z && b.z - a.z < (b.type === 'bus' || a.type === 'bus' ? 11 : 8)) a.vNow = Math.min(a.vNow, b.v * 0.95);
+        if (a.v <= 0 || a.tl) continue;
+        const K = a.zone.corner;
+        if (K && !a.ghost && K.sig !== 'g') {
+          const len = a.type === 'bus' ? 5.5 : 2.2, stopZ = this.stopLine(K) - len;
+          if (a.z < stopZ + 0.5 && (K.sig === 'r' || stopZ - a.z > 3)) a.vNow = Math.min(a.vNow, Math.max(0, (stopZ - a.z) * 1.3));
+        }
+        for (const b of veh) {
+          if (b === a || b.v <= 0 || b.ghost !== a.ghost && !b.tl || Math.abs(b.x - a.x) > 1.6 || b.z <= a.z) continue;
+          const gap = b.type === 'bus' || a.type === 'bus' ? 8 : 5.5, dz = b.z - a.z;
+          if (dz < gap + 10) a.vNow = Math.min(a.vNow, Math.max(0, (b.vNow || 0) + (dz - gap) * 1.2));
+        }
         // motoboy vai virar logo à frente: o carro de trás espera
-        const K = this.nextCorner, rz = this.riderZ;
-        if (K && rz !== undefined && a.zone.corner === K && K.zc - rz < 40 && rz - a.z > -4 && rz - a.z < (a.type === 'bus' ? 16 : 12)) a.vNow = Math.min(a.vNow, Math.max(0, (this.riderV || 0) * 0.85 - 0.5));
+        const rz = this.riderZ;
+        if (K0 && rz !== undefined && K === K0 && K0.zc - rz < 40 && rz - a.z > -4 && rz - a.z < (a.type === 'bus' ? 16 : 12)) a.vNow = Math.min(a.vNow, Math.max(0, (this.riderV || 0) * 0.85 - 0.5));
       }
       for (const o of this.obstacles) {
+        if (o.gone) continue;
         if (o.vehicle && !o.hit) {
-          // anda; não sai da avenida/rua onde nasceu (espera no fim, como num cruzamento)
+          const K = o.zone.corner;
+          if (o.tl) {
+            // virando à esquerda na avenida (sai do "T")
+            const lz = K.zc + K.cw / 2 + 1.8;
+            if (o.z < lz) { o.z = Math.min(lz, o.z + o.v * dt); o.x -= o.v * 0.35 * dt; o.side = 0; }
+            else { o.x -= Math.max(4, o.v * 1.4) * dt; o.side = -1; }
+            if (o.x < -70) o.gone = true;
+            continue;
+          }
           const nz = o.z + (o.vNow !== undefined ? o.vNow : o.v) * dt;
           if (nz > o.zone.z0 + 2 && nz < o.zone.stopAt && nz < o.zone.z1 + 260) o.z = nz;
-          if (o.zone.corner && o.z > o.zone.corner.zc - 2) o.ghost = true;   // seguiu reto pela avenida
-          if (o.tx !== undefined) o.x = U.damp(o.x, o.tx, 2.5, dt);   // abrindo caminho (buzina)
+          if (K && o.v > 0 && o.z > K.zc - 2) { o.ghost = true; if (K.dir < 0) o.tl = true; }   // avenida: segue reto; rua: vira à esquerda
+          if (o.tx !== undefined && !o.tl) o.x = U.damp(o.x, o.tx, 2.5, dt);   // abrindo caminho (buzina)
         }
         if (o.cross) {
           const R = this.road(o.z) + 0.5;
           o.x += o.cross * (o.type === 'dogx' ? 2.2 : 1.2) * (o.flee ? 3 : 1) * dt;
-          if (o.flee) { if (Math.abs(o.x) > R + 1.2) { o.cross = 0; o.x = Math.sign(o.x) * (R + 1.2); } }
+          if (o.once) { if (Math.abs(o.x) > R + 0.6 && Math.sign(o.x) === o.cross) { o.gone = true; o.hit = true; o.passed = true; } }
+          else if (o.flee) { if (Math.abs(o.x) > R + 1.2) { o.cross = 0; o.x = Math.sign(o.x) * (R + 1.2); } }
           else if (Math.abs(o.x) > R) { o.x = U.clamp(o.x, -R, R); o.cross *= -1; }
         }
       }
+    }
+    // pedestres atravessando na faixa quando fecha para a moto
+    _crossPeds(k) {
+      const R = this.road(k.zc - 3), n = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        const d = Math.random() < 0.5 ? 1 : -1;
+        this.obstacles.push({ type: Math.random() < 0.12 ? 'dogx' : 'ped', z: k.zc - 4 + U.rand(-1, 1), x: -d * (R + 0.4 + i * 0.9), x0: 0, w: 0.8, hit: false, knock: 0, seed: Math.random(), cross: d, once: true });
+      }
+      this.obstacles.sort((a, b) => a.z - b.z);
     }
 
     // ---------------- céu e cenário de fundo ----------------
@@ -258,7 +311,7 @@
       const items = [], dist = (f, x, z) => { this.frame = f; const p = this.proj(cam, x, 0, z); this.frame = null; return p ? p.dz : -1; };
       const span = (f, z0, z1, czRef) => { const out = []; let z = z0; while (z < z1) { const st = Math.abs(z - czRef) < 40 ? 1 : Math.abs(z - czRef) < 100 ? 2 : 4; out.push([f, z, Math.min(z1, z + st)]); z += st; } return out; };
       const zB = (xa) => T.zs + T.dir * (xa - T.E);       // posição da câmera medida na rua nova
-      const segs = span('A', K.zc - 34, K.zc + K.cw + 170, cam.tz).concat(span('B', K.dir < 0 ? K.zc - 70 : K.zc, K.zc + K.cw + 170, zB(cam.tx)));
+      const segs = span('A', Math.min(cam.tz + 0.4, K.zc - 34), Math.min(K.zc + K.cw + 170, cam.tz + 240), cam.tz).concat(K.zc - cam.tz < 230 ? span('B', K.dir < 0 ? K.zc - 70 : K.zc, K.zc + K.cw + 170, zB(cam.tx)) : []);
       const setF = (f) => { this.frame = f; cam.z = f === 'A' ? cam.tz : zB(cam.tx); cam.x = f === 'A' ? cam.tx : 0; };
       const sorted = (arr) => arr.filter((i) => i.d > -30).sort((a, b) => b.d - a.d);
       // chão
@@ -289,7 +342,7 @@
       let skipSide = 0, forceAv = false;
       if (turnMode && this.frame === 'B' && this.turnK && zm < this.turnK.zc + this.turnK.cw) {
         if (this.turnK.dir > 0) return;
-        forceAv = true; if (zm >= this.turnK.zc) skipSide = -1;
+        forceAv = true; skipSide = -1;   // o lado de cá da avenida fica escondido atrás das casas da rua
       }
       if (!forceAv && K && zm >= K.zc && zm < K.zc + K.cw) return this._junction(ctx, cam, zn, zf, zm, K, F, true, G, Wl);
       if (!forceAv && L && zm >= L.zc && zm < L.zc + L.cw) return this._junction(ctx, cam, zn, zf, zm, L, F, false, G, Wl);
@@ -303,6 +356,8 @@
           if (Math.floor(zm / 3) % 2 === 0) [-1.8, 1.8].forEach((lx) => this._quad(ctx, P(lx - 0.07, 0, zn), P(lx + 0.07, 0, zn), P(lx + 0.07, 0, zf), P(lx - 0.07, 0, zf), F('#f1f1f1')));
           [-R + 0.25, R - 0.25].forEach((lx) => this._quad(ctx, P(lx - 0.06, 0, zn), P(lx + 0.06, 0, zn), P(lx + 0.06, 0, zf), P(lx - 0.06, 0, zf), F('#e9e9e9')));
         } else if (Math.floor(zm / 2.5) % 2 === 0) this._quad(ctx, P(-0.06, 0, zn), P(0.06, 0, zn), P(0.06, 0, zf), P(-0.06, 0, zf), F('#f2c94c'));
+        const Kc = this.corners.find((c) => zm > c.zc - 7.4 && zm < c.zc - 6.6);
+        if (Kc) { const x0 = zone.type === 'av' ? -R : 0; this._quad(ctx, P(x0, 0.005, zm - 0.2), P(R, 0.005, zm - 0.2), P(R, 0.005, zm + 0.2), P(x0, 0.005, zm + 0.2), F('#f4f4f4')); }
         for (const cv of this.curves) if (zm > cv.z0 - 6 && zm < cv.z0 - 2) for (let x = -R + 0.4; x < R - 0.4; x += 0.9) this._quad(ctx, P(x, 0, zn), P(x + 0.5, 0, zn), P(x + 0.5, 0, zf), P(x, 0, zf), F('#f4f4f4'));
       }
       for (const side of [-1, 1]) {
@@ -420,7 +475,19 @@
       const L = [], vis = (z, o) => (cam.turn ? z - cam.z > -40 : z - cam.z > 0.6) && z - cam.z < 230 && this.visibleZ(z, o);
       for (const p of this.props) if (vis(p.z)) L.push({ z: p.z, x: p.side * (this.road(p.z) + 0.7), draw: (c) => this._prop(c, cam, p, t) });
       for (const s of this.signs) if (vis(s.z)) L.push({ z: s.z, x: 6, draw: (c) => this._streetSign(c, cam, s) });
-      for (const o of this.obstacles) if (vis(o.z, o)) L.push({ z: o.z, x: o.x, draw: (c) => this._ob(c, cam, o, t) });
+      for (const o of this.obstacles) if (!o.gone && vis(o.z, o)) L.push({ z: o.z, x: o.x, draw: (c) => this._ob(c, cam, o, t) });
+      const KC = this.nextCorner;
+      if (KC && KC.zc - cam.z < 200 && KC.zc - cam.z > -60) {
+        const sl = this.stopLine(KC), R = this.road(sl);
+        if (KC.ctl === 'light') {
+          L.push({ z: sl, x: R + 0.4, draw: (c) => this._light(c, cam, KC, R + 0.4, sl, t) });
+          if (KC.dir > 0) L.push({ z: KC.zc + KC.cw + 0.4, x: -R - 0.4, draw: (c) => this._light(c, cam, KC, -ZONE.av.road - 0.4, KC.zc + KC.cw + 0.6, t, true) });
+        } else {
+          const px = KC.dir > 0 ? -1.6 : 3.3, pz = KC.zc + KC.cw / 2;
+          L.push({ z: pz, x: px, draw: (c) => this._police(c, cam, KC, px, pz, t) });
+        }
+        for (const cc of KC.cross) L.push({ z: cc.z, x: cc.x, draw: (c) => { const p = this.proj(cam, cc.x, 0, cc.z); if (p) City.carSide(c, p.x, p.y, p.s, cc.color, (q) => this._fog(q, p.dz), Math.sign(cc.v), t, cc.bus); } });
+      }
       this.stops.forEach((s, i) => { if (vis(s.z) && !s.done) L.push({ z: s.z + 0.5, x: 7, draw: (c) => this._pin(c, cam, s, t) }); });
       // placas das lojas (perpendiculares, de frente para a câmera)
       for (let z = Math.floor(cam.z / 12) * 12 + 12; z < cam.z + 160; z += 12) {
@@ -547,6 +614,73 @@
       ctx.restore();
     }
 
+    // semáforo: poste na calçada com braço sobre a pista
+    _light(ctx, cam, K, x, z, t, small) {
+      const b = this.proj(cam, x, 0.15, z), top = this.proj(cam, x, small ? 3.2 : 5.4, z), arm = this.proj(cam, small ? x : x - Math.sign(x) * 3.2, small ? 3.2 : 5.4, z);
+      if (!b || !top || !arm) return;
+      const s = b.s, F = (c) => this._fog(c, b.dz);
+      ctx.strokeStyle = F('#2f3338'); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, s * 0.14);
+      ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(top.x, top.y); ctx.lineTo(arm.x, arm.y); ctx.stroke();
+      const bw = s * 0.42, bh = s * 1.15, bx = arm.x - bw / 2, by = arm.y;
+      ctx.fillStyle = F('#1c1f23'); U.roundRect(ctx, bx, by, bw, bh, bw * 0.2); ctx.fill();
+      [['r', '#ff3030', 0], ['y', '#ffc107', 1], ['g', '#22e06b', 2]].forEach(([k, col, i]) => {
+        const on = K.sig === k || (k === 'y' && K.sig === 'y'), cy = by + bh * (0.2 + i * 0.3), r = bw * 0.32;
+        ctx.fillStyle = on ? col : F('#3a3f45');
+        if (on) { ctx.shadowColor = col; ctx.shadowBlur = Math.max(6, s * 0.5); }
+        ctx.beginPath(); ctx.arc(arm.x, cy, r, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      });
+    }
+    // guarda de trânsito no meio do cruzamento (de frente): mão levantada = pare; braço girando = pode passar
+    _police(ctx, cam, K, x, z, t) {
+      const p = this.proj(cam, x, 0, z); if (!p) return;
+      const k = p.s / 100, go = K.sig === 'g', F = (c) => this._fog(c, p.dz);
+      ctx.save(); ctx.translate(p.x, p.y); ctx.scale(k, k);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, 0, 44, 10, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = F('#e9e9e9'); ctx.beginPath(); ctx.ellipse(0, -6, 42, 10, 0, 0, 7); ctx.fill(); ctx.fillRect(-42, -12, 84, 8);   // tablado
+      ctx.strokeStyle = F('#1e2a44'); ctx.lineWidth = 12; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-8, -96); ctx.lineTo(-9, -16); ctx.moveTo(8, -96); ctx.lineTo(9, -16); ctx.stroke();
+      ctx.fillStyle = '#111'; U.roundRect(ctx, -18, -20, 16, 9, 3); ctx.fill(); U.roundRect(ctx, 2, -20, 16, 9, 3); ctx.fill();
+      ctx.fillStyle = F('#25406e'); U.roundRect(ctx, -21, -160, 42, 70, 14); ctx.fill();
+      ctx.fillStyle = F('#c6ff3d'); U.roundRect(ctx, -21, -152, 42, 46, 10); ctx.fill();            // colete refletivo
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(-21, -134, 42, 4); ctx.fillRect(-21, -118, 42, 4);
+      ctx.fillStyle = '#1e2a44'; ctx.font = `900 9px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('TRÂNSITO', 0, -140);
+      // braços com luva branca
+      const wave = Math.sin(t * 7) * 0.6;
+      ctx.strokeStyle = F('#25406e'); ctx.lineWidth = 9;
+      const hand = (sx, ex, ey) => { ctx.beginPath(); ctx.moveTo(sx, -150); ctx.lineTo(ex, ey); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, ey, 7, 0, 7); ctx.fill(); };
+      if (go) { hand(-18, -40 + Math.cos(wave) * 8, -150 + Math.sin(wave * 2) * 20); hand(18, 46, -146 + Math.sin(t * 7 + 1) * 10); }
+      else { hand(-18, -26, -100); hand(18, 26, -206); ctx.fillStyle = '#fff'; U.roundRect(ctx, 18, -224, 16, 20, 5); ctx.fill(); }   // mão espalmada: PARE
+      // cabeça, quepe e apito
+      ctx.fillStyle = F('#b98258'); ctx.beginPath(); ctx.arc(0, -176, 15, 0, 7); ctx.fill();
+      ctx.fillStyle = F('#1e2a44'); ctx.beginPath(); ctx.ellipse(0, -188, 18, 8, 0, 0, 7); ctx.fill(); ctx.fillRect(-14, -200, 28, 12);
+      ctx.fillStyle = '#ffd23f'; ctx.fillRect(-4, -198, 8, 7);
+      ctx.fillStyle = '#1b1410'; ctx.beginPath(); ctx.arc(-5, -177, 1.8, 0, 7); ctx.arc(5, -177, 1.8, 0, 7); ctx.fill();
+      ctx.fillStyle = '#d9d9d9'; ctx.fillRect(-2, -168, 10, 5);
+      const m = ctx.getTransform(), hp = m.transformPoint(new DOMPoint(0, -210));
+      ctx.restore();
+      this.policeHead = { x: hp.x, y: hp.y };
+    }
+
+    // carro de lado (passando no cruzamento)
+    static carSide(ctx, x, y, s, color, F, dir, t, bus) {
+      const L = (bus ? 10 : 4.2) * s, h = (bus ? 2.9 : 1.35) * s;
+      ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, 0, L * 0.55, s * 0.18, 0, 0, 7); ctx.fill();
+      if (bus) {
+        ctx.fillStyle = F('#f1f1ee'); U.roundRect(ctx, -L / 2, -h, L, h - s * 0.3, s * 0.2); ctx.fill();
+        ctx.fillStyle = F(color); ctx.fillRect(-L / 2, -h * 0.45, L, h * 0.14);
+        ctx.fillStyle = F('#22303a'); for (let i = 0; i < 6; i++) ctx.fillRect(-L / 2 + s * 0.4 + i * L * 0.155, -h * 0.9, L * 0.12, h * 0.33);
+      } else {
+        ctx.fillStyle = F(color); U.roundRect(ctx, -L / 2, -h * 0.75, L, h * 0.5, s * 0.15); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-L * 0.28, -h * 0.74); ctx.lineTo(-L * 0.16, -h); ctx.lineTo(L * 0.2, -h); ctx.lineTo(L * 0.34, -h * 0.74); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = F('#2c3e4c'); ctx.beginPath(); ctx.moveTo(-L * 0.22, -h * 0.76); ctx.lineTo(-L * 0.14, -h * 0.95); ctx.lineTo(L * 0.18, -h * 0.95); ctx.lineTo(L * 0.28, -h * 0.76); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fffbe0'; ctx.fillRect(L * 0.46, -h * 0.62, s * 0.12, s * 0.12);
+      }
+      const spin = t * 30;
+      [-0.3, 0.3].forEach((u) => { ctx.fillStyle = '#16171a'; ctx.beginPath(); ctx.arc(u * L, -s * 0.3, s * 0.32, 0, 7); ctx.fill(); ctx.fillStyle = '#9aa0a6'; ctx.beginPath(); ctx.arc(u * L, -s * 0.3, s * 0.14 + Math.sin(spin) * 0.001, 0, 7); ctx.fill(); });
+      ctx.restore();
+    }
+
     _person(ctx, x, y, s, t, o, F) {
       const sw = Math.sin(t * 9 + o.seed * 7) * 0.35;
       ctx.save(); ctx.translate(x, y); ctx.scale(o.cross < 0 ? -1 : 1, 1);
@@ -606,9 +740,10 @@
           break;
         }
         case 'parked': case 'traffic':
+          if (o.side) { City.carSide(ctx, p.x, p.y, s, o.color, F, -1, t, false); break; }
           City.carRear(ctx, p.x, p.y, s, o.color, F, o.type === 'traffic' && Math.sin(t * 2 + o.seed * 9) > 0.6);
           break;
-        case 'bus': City.busRear(ctx, p.x, p.y, s, o.bus, o.line, F, Math.sin(t * 1.5 + o.seed * 9) > 0.5); break;
+        case 'bus': if (o.side) { City.carSide(ctx, p.x, p.y, s, o.bus, F, -1, t, true); break; } City.busRear(ctx, p.x, p.y, s, o.bus, o.line, F, Math.sin(t * 1.5 + o.seed * 9) > 0.5); break;
         case 'oncoming': City.carFront(ctx, p.x, p.y, s, o.color, F, t); break;
         case 'dumpster': {
           const w = 1.6 * s, h = 1.0 * s;

@@ -382,6 +382,14 @@
       this.eng.f.frequency.setTargetAtTime(380 + v * 90, t, 0.1);
       this.eng.g.gain.setTargetAtTime(on && !this.muted ? 0.045 + Math.min(v, 16) * 0.004 : 0.0001, t, 0.15);
     }
+    whistle() { // apito do guarda "priiii"
+      if (!this.ok) return;
+      const t = this.now, o = this.ctx.createOscillator(), g = this.ctx.createGain(), lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = 2900; lfo.frequency.value = 38; lg.gain.value = 220;
+      lfo.connect(lg); lg.connect(o.frequency); o.connect(g); g.connect(this.sfx || this.master);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.03); g.gain.setValueAtTime(0.12, t + 0.42); g.gain.linearRampToValueAtTime(0, t + 0.5);
+      o.start(t); lfo.start(t); o.stop(t + 0.52); lfo.stop(t + 0.52);
+    }
     blinker() { // "tic" da seta
       if (!this.ok) return;
       this._osc('square', 2400, this.now, 0.015, 0.035, null, { filter: 'bandpass', ff: 2400, q: 8 });
