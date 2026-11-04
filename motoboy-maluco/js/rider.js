@@ -210,12 +210,13 @@
       // SETA piscando (atrás, nas laterais da lanterna, e na frente, no guidão)
       if (this.blink && Math.floor(t * 2.6) % 2 === 0) {
         const sd = this.blink;
+        ctx.fillStyle = '#4a4d55'; U.roundRect(ctx, -sd * 34 - 6, -93, 12, 7, 3); ctx.fill();
         ctx.fillStyle = '#ffb000'; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 24;
         U.roundRect(ctx, sd * 34 - 7, -94, 14, 9, 3); ctx.fill();
         ctx.beginPath(); ctx.arc(sd * 50, -176, 6, 0, 7); ctx.fill();
         ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,176,0,0.25)'; ctx.beginPath(); ctx.arc(sd * 34, -90, 26, 0, 7); ctx.fill();
       } else if (this.blink !== undefined) {
-        ctx.fillStyle = '#8a5a00'; [-1, 1].forEach((sd) => { U.roundRect(ctx, sd * 34 - 6, -93, 12, 7, 3); ctx.fill(); });
+        ctx.fillStyle = '#4a4d55'; [-1, 1].forEach((sd) => { U.roundRect(ctx, sd * 34 - 6, -93, 12, 7, 3); ctx.fill(); });   // apagadas
       }
       const m = ctx.getTransform();
       const hp = m.transformPoint(new DOMPoint(0, -240)), bp = m.transformPoint(new DOMPoint(0, -168));

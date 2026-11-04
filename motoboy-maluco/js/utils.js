@@ -50,7 +50,8 @@
 
   // ---- desenho ----
   U.roundRect = (ctx, x, y, w, h, r) => {
-    r = Math.min(r, w / 2, h / 2);
+    if (w < 0) { x += w; w = -w; } if (h < 0) { y += h; h = -h; }
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r);

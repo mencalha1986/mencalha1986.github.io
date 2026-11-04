@@ -122,8 +122,9 @@
     }
 
     // o que a câmera enxerga: antes de virar, depois da esquina aparece a avenida seguindo reto (ou o "T")
-    get nextCorner() { return this.corners.find((c) => !c.turned); }
-    get lastCorner() { let l = null; for (const c of this.corners) if (c.turned) l = c; return l; }
+    _done(c) { return c.turned || (this.frame === 'B' && c === this.turnK); }
+    get nextCorner() { return this.corners.find((c) => !this._done(c)); }
+    get lastCorner() { let l = null; for (const c of this.corners) if (this._done(c)) l = c; return l; }
     viewType(z) {
       const K = this.nextCorner;
       if (K && z >= K.zc + K.cw) return K.dir > 0 ? 'av' : null;
@@ -160,9 +161,18 @@
 
     proj(cam, x, y, z) {
       const dz = z - cam.z;
+      if (cam.turn) {
+        // VIRANDO: câmera girando de verdade; pontos da rua nova (frame B) são levados para o mundo da rua antiga (A)
+        const T = cam.turn; let xa = x, za = z;
+        if (this.frame === 'B') { xa = T.E + T.dir * (z - T.zs); za = T.pc - T.dir * x; }
+        const ex = xa - cam.tx, ez = za - cam.tz, co = Math.cos(cam.tyaw), si = Math.sin(cam.tyaw);
+        const fw = ez * co + ex * si; if (fw < 0.05) return null;
+        const sc = cam.F / fw;
+        return { x: W / 2 + (ex * co - ez * si) * sc + cam.sx, y: cam.horizon + (cam.y - y) * sc + cam.sy, s: sc, dz: fw };
+      }
       if (dz < 0.05) return null;
       const s = cam.F / dz;
-      const off = this.offset(cam.z, z) - (cam.yaw || 0) * dz;
+      const off = this.offset(cam.z, z);
       return { x: W / 2 + (x + off - cam.x) * s + cam.sx, y: cam.horizon + (cam.y - y) * s + cam.sy, s, dz };
     }
     fogT(dz) { return Math.pow(U.clamp((dz - 25) / 230, 0, 1), 0.85) * 0.75; }
@@ -180,6 +190,9 @@
         a.vNow = a.v;
         if (a.v <= 0) continue;
         for (const b of veh) if (b !== a && b.v > 0 && Math.abs(b.x - a.x) < 1.6 && b.z > a.z && b.z - a.z < (b.type === 'bus' || a.type === 'bus' ? 11 : 8)) a.vNow = Math.min(a.vNow, b.v * 0.95);
+        // motoboy vai virar logo à frente: o carro de trás espera
+        const K = this.nextCorner, rz = this.riderZ;
+        if (K && rz !== undefined && a.zone.corner === K && K.zc - rz < 40 && rz - a.z > -4 && rz - a.z < (a.type === 'bus' ? 16 : 12)) a.vNow = Math.min(a.vNow, Math.max(0, (this.riderV || 0) * 0.85 - 0.5));
       }
       for (const o of this.obstacles) {
         if (o.vehicle && !o.hit) {
@@ -200,7 +213,7 @@
 
     // ---------------- céu e cenário de fundo ----------------
     drawSky(ctx, cam, t) {
-      const hz = cam.horizon + cam.sy, hd = this.heading(cam.z) + (cam.hd || 0) + (cam.yaw || 0) * 1.25;
+      const hz = cam.horizon + cam.sy, hd = this.heading(cam.z) + (cam.hd || 0) + (cam.turn ? cam.tyaw * 1.25 : 0);
       const g = ctx.createLinearGradient(0, 0, 0, hz);
       g.addColorStop(0, SKY_TOP); g.addColorStop(1, SKY_BOT);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, hz + 2);
@@ -236,51 +249,94 @@
       for (let i = zs.length - 1; i > 0; i--) this._segment(ctx, cam, zs[i - 1], zs[i], t);
     }
 
-    _segment(ctx, cam, zn, zf, t) {
-      const P = (x, y, z) => this.proj(cam, x, y, z);
+    // part: 'all' (normal) | 'ground' | 'walls' (na virada o chão é desenhado antes de tudo e as paredes por lado)
+    // desenho durante a curva: as duas vias (a de onde vem e a nova), chão primeiro, depois prédios e objetos por distância
+    drawTurn(ctx, cam, t, extras) {
+      const T = cam.turn, K = T.k; this.turnK = K;
+      const hz = cam.horizon + cam.sy;
+      ctx.fillStyle = '#4a4d55'; ctx.fillRect(0, hz, W, H - hz);
+      const items = [], dist = (f, x, z) => { this.frame = f; const p = this.proj(cam, x, 0, z); this.frame = null; return p ? p.dz : -1; };
+      const span = (f, z0, z1, czRef) => { const out = []; let z = z0; while (z < z1) { const st = Math.abs(z - czRef) < 40 ? 1 : Math.abs(z - czRef) < 100 ? 2 : 4; out.push([f, z, Math.min(z1, z + st)]); z += st; } return out; };
+      const zB = (xa) => T.zs + T.dir * (xa - T.E);       // posição da câmera medida na rua nova
+      const segs = span('A', K.zc - 34, K.zc + K.cw + 170, cam.tz).concat(span('B', K.dir < 0 ? K.zc - 70 : K.zc, K.zc + K.cw + 170, zB(cam.tx)));
+      const setF = (f) => { this.frame = f; cam.z = f === 'A' ? cam.tz : zB(cam.tx); cam.x = f === 'A' ? cam.tx : 0; };
+      const sorted = (arr) => arr.filter((i) => i.d > -30).sort((a, b) => b.d - a.d);
+      // chão
+      const ground = segs.map(([f, zn, zf]) => { setF(f); const pp = this.proj(cam, 0, 0, (zn + zf) / 2); const ex = pp ? pp.dz : -1; return { f, zn, zf, d: ex }; });
+      for (const g of ground.filter((g) => g.d > -5).sort((a, b) => b.d - a.d)) { setF(g.f); this._segment(ctx, cam, g.zn, g.zf, t, 'ground'); }
+      // prédios (cada lado é um item) + objetos
+      for (const [f, zn, zf] of segs) for (const side of [-1, 1]) {
+        setF(f); const zm = (zn + zf) / 2, vt = f === 'B' && zm < K.zc + K.cw ? 'av' : this.viewType(zm) || 'av', FX = ZONE[vt].road + ZONE[vt].side;
+        const ex = this._eu(cam, side * FX, zm);
+        items.push({ d: ex, draw: () => { setF(f); this._segment(ctx, cam, zn, zf, t, 'walls', side); } });
+      }
+      for (const f of ['A', 'B']) { setF(f); for (const sp of this.collect(cam, t)) { const pp = this.proj(cam, sp.x || 0, 0, sp.z); if (!pp || pp.dz < 1.4) continue; const ex = this._eu(cam, sp.x || 0, sp.z); items.push({ d: ex, draw: () => { setF(f); sp.draw(ctx); } }); } }
+      for (const e of extras || []) items.push({ d: e.d, draw: () => { this.frame = null; cam.z = cam.tz; cam.x = cam.tx; e.draw(); } });
+      for (const it of items.sort((a, b) => b.d - a.d)) it.draw();
+      this.frame = null; cam.z = cam.tz; cam.x = cam.tx;
+    }
+    // distância (no chão) da câmera até um ponto do frame atual
+    _eu(cam, x, z) {
+      const T = cam.turn; let xa = x, za = z;
+      if (this.frame === 'B') { xa = T.E + T.dir * (z - T.zs); za = T.pc - T.dir * x; }
+      return Math.hypot(xa - cam.tx, za - cam.tz);
+    }
+
+    _segment(ctx, cam, zn, zf, t, part = 'all', only = 0) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), G = part !== 'walls', Wl = part !== 'ground', turnMode = !!cam.turn;
       const zm = (zn + zf) / 2, dz = zm - cam.z, K = this.nextCorner, L = this.lastCorner, F = (c) => this._fog(c, dz);
-      if (K && zm >= K.zc && zm < K.zc + K.cw) return this._junction(ctx, cam, zn, zf, zm, K, F, true);
-      if (L && zm >= L.zc && zm < L.zc + L.cw) return this._junction(ctx, cam, zn, zf, zm, L, F, false);
-      if (K && K.dir < 0 && zm >= K.zc + K.cw) { this._tFar(ctx, cam, zn, zf, zm, K, F); return; }
-      const vt = this.viewType(zm), zone = { type: vt || this.zoneAt(zm).type }, Z = ZONE[zone.type], R = Z.road, SW = Z.side, FX = R + SW;
-      if (K && K.dir > 0 && zf > K.zc + K.cw + 2.3 && zn <= K.zc + K.cw + 2.3) this._afterSeg = () => this._crossFacade(ctx, cam, K, F);
+      // na curva, a via nova (frame B) antes do seu começo: no "T" é o outro braço da avenida; na direita não existe
+      let skipSide = 0, forceAv = false;
+      if (turnMode && this.frame === 'B' && this.turnK && zm < this.turnK.zc + this.turnK.cw) {
+        if (this.turnK.dir > 0) return;
+        forceAv = true; if (zm >= this.turnK.zc) skipSide = -1;
+      }
+      if (!forceAv && K && zm >= K.zc && zm < K.zc + K.cw) return this._junction(ctx, cam, zn, zf, zm, K, F, true, G, Wl);
+      if (!forceAv && L && zm >= L.zc && zm < L.zc + L.cw) return this._junction(ctx, cam, zn, zf, zm, L, F, false, G, Wl);
+      if (K && K.dir < 0 && zm >= K.zc + K.cw) { if (!turnMode) this._tFar(ctx, cam, zn, zf, zm, K, F); return; }
+      const vt = forceAv ? 'av' : this.viewType(zm), zone = { type: vt || this.zoneAt(zm).type }, Z = ZONE[zone.type], R = Z.road, SW = Z.side, FX = R + SW;
+      if (!turnMode && K && K.dir > 0 && zf > K.zc + K.cw + 2.3 && zn <= K.zc + K.cw + 2.3) this._afterSeg = () => this._crossFacade(ctx, cam, K, F);
       const idx = Math.floor(zm);
-      // asfalto
-      this._quad(ctx, P(-R, 0, zn), P(R, 0, zn), P(R, 0, zf), P(-R, 0, zf), F(idx % 2 ? '#4a4d55' : '#474a52'));
-      // faixas
-      if (zone.type === 'av') {
-        if (Math.floor(zm / 3) % 2 === 0) [-1.8, 1.8].forEach((lx) => this._quad(ctx, P(lx - 0.07, 0, zn), P(lx + 0.07, 0, zn), P(lx + 0.07, 0, zf), P(lx - 0.07, 0, zf), F('#f1f1f1')));
-        [-R + 0.25, R - 0.25].forEach((lx) => this._quad(ctx, P(lx - 0.06, 0, zn), P(lx + 0.06, 0, zn), P(lx + 0.06, 0, zf), P(lx - 0.06, 0, zf), F('#e9e9e9')));
-      } else if (Math.floor(zm / 2.5) % 2 === 0) this._quad(ctx, P(-0.06, 0, zn), P(0.06, 0, zn), P(0.06, 0, zf), P(-0.06, 0, zf), F('#f2c94c'));
-      // faixa de pedestre perto das curvas
-      for (const cv of this.curves) if (zm > cv.z0 - 6 && zm < cv.z0 - 2) for (let x = -R + 0.4; x < R - 0.4; x += 0.9) this._quad(ctx, P(x, 0, zn), P(x + 0.5, 0, zn), P(x + 0.5, 0, zf), P(x, 0, zf), F('#f4f4f4'));
+      if (G) {
+        this._quad(ctx, P(-R, 0, zn), P(R, 0, zn), P(R, 0, zf), P(-R, 0, zf), F(idx % 2 ? '#4a4d55' : '#474a52'));
+        if (zone.type === 'av') {
+          if (Math.floor(zm / 3) % 2 === 0) [-1.8, 1.8].forEach((lx) => this._quad(ctx, P(lx - 0.07, 0, zn), P(lx + 0.07, 0, zn), P(lx + 0.07, 0, zf), P(lx - 0.07, 0, zf), F('#f1f1f1')));
+          [-R + 0.25, R - 0.25].forEach((lx) => this._quad(ctx, P(lx - 0.06, 0, zn), P(lx + 0.06, 0, zn), P(lx + 0.06, 0, zf), P(lx - 0.06, 0, zf), F('#e9e9e9')));
+        } else if (Math.floor(zm / 2.5) % 2 === 0) this._quad(ctx, P(-0.06, 0, zn), P(0.06, 0, zn), P(0.06, 0, zf), P(-0.06, 0, zf), F('#f2c94c'));
+        for (const cv of this.curves) if (zm > cv.z0 - 6 && zm < cv.z0 - 2) for (let x = -R + 0.4; x < R - 0.4; x += 0.9) this._quad(ctx, P(x, 0, zn), P(x + 0.5, 0, zn), P(x + 0.5, 0, zf), P(x, 0, zf), F('#f4f4f4'));
+      }
       for (const side of [-1, 1]) {
-        // meio-fio e calçada
-        this._quad(ctx, P(side * R, 0, zn), P(side * R, 0.15, zn), P(side * R, 0.15, zf), P(side * R, 0, zf), F('#b8bcc2'));
-        this._quad(ctx, P(side * R, 0.15, zn), P(side * FX, 0.15, zn), P(side * FX, 0.15, zf), P(side * R, 0.15, zf), F(idx % 2 ? '#c9c2b5' : '#d3ccbf'));
-        const chunk = Math.floor(zm / (zone.type === 'av' ? 12 : 13)) + (side > 0 ? 700 : 0);
-        if (zone.type === 'av') this._shop(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
-        else this._house(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
-        // esquina à direita: a rua lateral corta a calçada
+        if ((only && side !== only) || side === skipSide) continue;
+        // na virada, a esquina do outro lado da rua lateral fica por conta da própria rua
+        const corner = turnMode && K && K.dir > 0 && side > 0 && zm >= K.zc + K.cw && zm < K.zc + K.cw + ZONE.rua.side + 0.2;
+        if (G) {
+          this._quad(ctx, P(side * R, 0, zn), P(side * R, 0.15, zn), P(side * R, 0.15, zf), P(side * R, 0, zf), F('#b8bcc2'));
+          this._quad(ctx, P(side * R, 0.15, zn), P(side * FX, 0.15, zn), P(side * FX, 0.15, zf), P(side * R, 0.15, zf), F(idx % 2 ? '#c9c2b5' : '#d3ccbf'));
+        }
+        if (Wl && !corner) {
+          const chunk = Math.floor(zm / (zone.type === 'av' ? 12 : 13)) + (side > 0 ? 700 : 0);
+          if (zone.type === 'av') this._shop(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
+          else this._house(ctx, P, cam, zn, zf, zm, dz, side, FX, chunk, F);
+        }
       }
       if (this._afterSeg) { const f = this._afterSeg; this._afterSeg = null; f(); }
     }
 
     // cruzamento: antes de virar (pre) a rua lateral se abre do lado da seta; depois, é a via que ficou para trás
-    _junction(ctx, cam, zn, zf, zm, C, F, pre) {
+    _junction(ctx, cam, zn, zf, zm, C, F, pre, G = true, Wl = true) {
       const P = (x, y, z) => this.proj(cam, x, y, z), BIG = 90;
       const from = C.dir > 0 ? ZONE.av : ZONE.rua, R = from.road, FX = R + from.side;
       const both = !pre || C.dir < 0;          // "T" com a avenida, ou a via de onde viemos: asfalto dos dois lados
       const xl = both || C.dir < 0 ? -BIG : -R, xr = both || C.dir > 0 ? BIG : R;
-      this._quad(ctx, P(xl, 0, zn), P(xr, 0, zn), P(xr, 0, zf), P(xl, 0, zf), F('#4a4d55'));
+      if (G) this._quad(ctx, P(xl, 0, zn), P(xr, 0, zn), P(xr, 0, zf), P(xl, 0, zf), F('#4a4d55'));
       // faixas pintadas da via que cruza (no sentido do x)
       const mid = C.zc + C.cw / 2, lines = C.dir > 0 ? [[mid, '#f2c94c']] : [[mid - 1.8, '#f1f1f1'], [mid + 1.8, '#f1f1f1']];
-      for (const [lz, col] of lines) if (lz >= zn && lz < zf + 0.2) for (let x = (C.dir > 0 && pre ? R + 1 : -BIG); x < BIG; x += 3) this._quad(ctx, P(x, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz + 0.07), P(x, 0.01, lz + 0.07), F(col));
+      if (G) for (const [lz, col] of lines) if (lz >= zn && lz < zf + 0.2) for (let x = (C.dir > 0 && pre ? R + 1 : -BIG); x < BIG; x += 3) this._quad(ctx, P(x, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz - 0.07), P(x + 1.5, 0.01, lz + 0.07), P(x, 0.01, lz + 0.07), F(col));
       if (pre && C.dir > 0) {
         // lado esquerdo continua com calçada e lojas da avenida
-        this._quad(ctx, P(-R, 0, zn), P(-R, 0.15, zn), P(-R, 0.15, zf), P(-R, 0, zf), F('#b8bcc2'));
-        this._quad(ctx, P(-R, 0.15, zn), P(-FX, 0.15, zn), P(-FX, 0.15, zf), P(-R, 0.15, zf), F('#d3ccbf'));
-        this._shop(ctx, P, cam, zn, zf, zm, zm - cam.z, -1, FX, Math.floor(zm / 12), F);
+        if (G) { this._quad(ctx, P(-R, 0, zn), P(-R, 0.15, zn), P(-R, 0.15, zf), P(-R, 0, zf), F('#b8bcc2'));
+          this._quad(ctx, P(-R, 0.15, zn), P(-FX, 0.15, zn), P(-FX, 0.15, zf), P(-R, 0.15, zf), F('#d3ccbf')); }
+        if (Wl) this._shop(ctx, P, cam, zn, zf, zm, zm - cam.z, -1, FX, Math.floor(zm / 12), F);
       }
     }
     // fachada das casas do outro lado da rua lateral (de frente para a câmera)
@@ -361,11 +417,11 @@
 
     // ---------------- sprites ----------------
     collect(cam, t) {
-      const L = [], vis = (z, o) => z - cam.z > 0.6 && z - cam.z < 230 && this.visibleZ(z, o);
-      for (const p of this.props) if (vis(p.z)) L.push({ z: p.z, draw: (c) => this._prop(c, cam, p, t) });
-      for (const s of this.signs) if (vis(s.z)) L.push({ z: s.z, draw: (c) => this._streetSign(c, cam, s) });
-      for (const o of this.obstacles) if (vis(o.z, o)) L.push({ z: o.z, draw: (c) => this._ob(c, cam, o, t) });
-      this.stops.forEach((s, i) => { if (vis(s.z) && !s.done) L.push({ z: s.z + 0.5, draw: (c) => this._pin(c, cam, s, t) }); });
+      const L = [], vis = (z, o) => (cam.turn ? z - cam.z > -40 : z - cam.z > 0.6) && z - cam.z < 230 && this.visibleZ(z, o);
+      for (const p of this.props) if (vis(p.z)) L.push({ z: p.z, x: p.side * (this.road(p.z) + 0.7), draw: (c) => this._prop(c, cam, p, t) });
+      for (const s of this.signs) if (vis(s.z)) L.push({ z: s.z, x: 6, draw: (c) => this._streetSign(c, cam, s) });
+      for (const o of this.obstacles) if (vis(o.z, o)) L.push({ z: o.z, x: o.x, draw: (c) => this._ob(c, cam, o, t) });
+      this.stops.forEach((s, i) => { if (vis(s.z) && !s.done) L.push({ z: s.z + 0.5, x: 7, draw: (c) => this._pin(c, cam, s, t) }); });
       // placas das lojas (perpendiculares, de frente para a câmera)
       for (let z = Math.floor(cam.z / 12) * 12 + 12; z < cam.z + 160; z += 12) {
         if (this.viewType(z) !== 'av' || this.curves.some((c) => z > c.z0 - 4 && z < c.z1 + 4)) continue;
@@ -373,7 +429,7 @@
           const chunk = Math.floor(z / 12) + (side > 0 ? 700 : 0);
           if (U.hash(chunk * 1.9) < 0.35) continue;
           const zz = z + 2;
-          L.push({ z: zz, draw: (c) => this._blade(c, cam, zz, side, SHOPS[Math.floor(U.hash(Math.floor(zz / 12) + (side > 0 ? 700 : 0) + 0.3) * SHOPS.length)]) });
+          L.push({ z: zz, x: side * 7, draw: (c) => this._blade(c, cam, zz, side, SHOPS[Math.floor(U.hash(Math.floor(zz / 12) + (side > 0 ? 700 : 0) + 0.3) * SHOPS.length)]) });
         }
       }
       return L;

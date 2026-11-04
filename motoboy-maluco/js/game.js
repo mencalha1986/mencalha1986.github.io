@@ -373,32 +373,48 @@
       const near = !!(tn || this.borr || (K && K.dir > 0 && K.zc - d.z < 34));
       this.guideAlpha = U.damp(this.guideAlpha === undefined ? 1 : this.guideAlpha, near ? 0 : 1, 5, dt);
       d.blink = tn ? tn.k.dir : K && K.zc - d.z < 38 && !d.finished ? K.dir : 0;
-      d.speedCap = tn ? 6 : K ? 6.5 + Math.max(0, K.zc - d.z) * 0.55 : 99;
+      d.speedCap = tn ? 5.5 : K ? 5.5 + Math.max(0, K.zc - d.z) * 0.5 : 99;
       if (d.blink) { this.blinkT = (this.blinkT || 0) + dt; if (this.blinkT > 0.38) { this.blinkT = 0; this.audio.blinker(); } }
-      if (!tn && K && d.z >= K.zc + K.cw * 0.42) {
-        if (d.z > K.zc + K.cw + 3) { K.turned = true; cam.hd += K.dir * 1.1; return; }   // pulou (tecla W)
-        this.turning = { k: K, t: 0, swapped: false }; this.audio.skid(); this.audio.whoosh(true);
-        this.fx.text(W / 2 + K.dir * 200, 900, K.dir > 0 ? 'VIROU À DIREITA ➜' : '⬅ VIROU À ESQUERDA', '#ffffff', 46, { life: 1.1, vy: -40, rot: 0 });
-      }
-      if (this.turning) {
-        const T = this.turning, k = T.k, A = 0.65, T1 = 0.45, T2 = 0.55;
-        T.t += dt;
-        d.turnLean = k.dir * 0.42 * Math.sin(Math.PI * U.clamp(T.t / (T1 + T2), 0, 1));
-        if (T.t < T1) cam.yaw = k.dir * A * U.easeInCubic(T.t / T1);
-        else {
-          if (!T.swapped) {
-            T.swapped = true; k.turned = true; cam.hd += k.dir * A * 2 * 1.25;
-            d.z = Math.max(d.z, k.zc + k.cw + 0.4);
-            const R = c.road(d.z), nx = k.dir > 0 ? R * 0.45 : 1.8;
-            d.x = d.baseX = d.targetX = nx; this.apLane = nx;
-            const P = CAM.ride; cam.z = d.z - P.dist; cam.x = nx * 0.88;
-            if (k.dir > 0) this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
-          }
-          const u = U.clamp((T.t - T1) / T2, 0, 1);
-          cam.yaw = -k.dir * A * (1 - (1 - Math.pow(1 - u, 3)));
-          if (u >= 1) { cam.yaw = 0; d.turnLean = 0; this.turning = null; }
+      if (!tn && K) {
+        // curva de verdade: arco de círculo da faixa atual até a faixa certa da rua nova
+        const from = K.dir > 0 ? ZONE.av : ZONE.rua, E = K.dir * from.road, pc = K.zc + K.cw / 2;
+        const laneB = K.dir > 0 ? ZONE.rua.road * 0.45 : 1.8, zEnd = pc - K.dir * laneB;
+        const r = Math.max(K.dir > 0 ? 4 : 6, K.dir * (E - d.x) + 0.6), z0 = zEnd - r;
+        if (d.z > K.zc + K.cw + 3) { K.turned = true; cam.hd += K.dir * Math.PI / 2 * 1.25; return; }   // pulou (tecla W)
+        if (d.z >= z0) {
+          this.turning = { k: K, th: 0, r, x0: d.x, z0, E, pc, laneB, zs: K.zc + K.cw, lag: Math.max(0, (d.z - CAM.ride.dist) - cam.z) };
+          d.z = z0; this.audio.skid();
         }
       }
+    }
+
+    // anda pelo arco; no fim a moto já está na rua nova
+    _turnStep(prevZ) {
+      const T = this.turning, d = this.rider, c = this.city, k = T.k;
+      const ds = Math.max(d.z - prevZ, 2.5 / 60);
+      d.z = prevZ; d.retreat = 0;
+      T.th = Math.min(Math.PI / 2, T.th + ds / T.r);
+      const u = T.th / (Math.PI / 2);
+      d.turnLean = k.dir * 0.4 * Math.sin(Math.PI * u);
+      if (T.th >= Math.PI / 2) {
+        k.turned = true; this.turning = null; d.turnLean = 0;
+        const xa = T.x0 + k.dir * T.r, za = T.z0 + T.r;              // ponto final (mundo antigo)
+        d.z = T.zs + k.dir * (xa - T.E); d.x = d.baseX = d.targetX = this.apLane = k.dir * (T.pc - za);
+        const cam = this.cam; cam.turn = null; cam.z = d.z - CAM.ride.dist; cam.x = d.x * 0.88; cam.hd += k.dir * Math.PI / 2 * 1.25;
+        if (k.dir > 0) this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
+      }
+    }
+    _turnGeom(K) { const from = K.dir > 0 ? ZONE.av : ZONE.rua; return { k: K, dir: K.dir, E: K.dir * from.road, zs: K.zc + K.cw, pc: K.zc + K.cw / 2 }; }
+    // câmera atrás da moto, girando junto
+    _turnCam() {
+      const T = this.turning, cam = this.cam, k = T.k, d = this.rider;
+      const ys = k.dir * T.th, u = T.th / (Math.PI / 2);
+      const cx = T.x0 + k.dir * T.r, px = cx - k.dir * T.r * Math.cos(T.th), pz = T.z0 + T.r * Math.sin(T.th);
+      const hx = Math.sin(ys), hz = Math.cos(ys), dist = CAM.ride.dist + T.lag * (1 - u);
+      const side = U.lerp(-0.12 * T.x0, -0.12 * T.laneB * k.dir, u);   // mesmo enquadramento de antes e depois
+      cam.turn = this._turnGeom(k);
+      cam.tx = px - dist * hx + side * hz; cam.tz = pz - dist * hz - side * hx; cam.tyaw = ys;
+      T.side = side; T.dist = dist;
     }
 
     // ------------------------------------------------------------ loop
@@ -416,6 +432,7 @@
       if (!this.city) return;
       const d = this.rider, c = this.city;
       for (const o of c.obstacles) o.zPrev = o.z;
+      c.riderZ = this.turning ? this.turning.k.zc : d.z; c.riderV = d.speed;
       c.update(dt, this.time);
       this.bridge.update(dt, this.mode === 'playing');
 
@@ -425,8 +442,8 @@
         this._autoSteer(dt); this._autoReturn(dt);
         const prevZ = d.z;
         d.update(dt, c);
-        this._collide(prevZ);
-        this._checkArrive();
+        if (this.turning) this._turnStep(prevZ);
+        else { this._collide(prevZ); this._checkArrive(); }
         this._updateDog(dt);
         this._corners(dt);
         // GPS fala as curvas
@@ -490,6 +507,12 @@
       this.shake = Math.max(0, this.shake - dt * 45);
       c.sx = (Math.random() - 0.5) * this.shake;
       c.sy = (Math.random() - 0.5) * this.shake + (d.speed > 0.5 && !d.busy ? Math.sin(this.time * 30) * Math.min(1.5, d.speed * 0.1) : 0);
+      const K = this.city.nextCorner;
+      if (this.turning && this.mode === 'playing') this._turnCam();
+      else if (K && K.zc - d.z < 48 && K.zc - d.z > -12 && this.mode !== 'win') {
+        // perto da esquina: mesmo desenho da curva (com a câmera reta) para nada "pular" quando começar a virar
+        c.turn = this._turnGeom(K); c.tx = c.x; c.tz = c.z; c.tyaw = 0;
+      } else c.turn = null;
     }
 
     render() {
@@ -497,12 +520,29 @@
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       if (!this.city) { this.hud.draw(ctx, t); return; }
       const city = this.city, d = this.rider;
-      const tb = this.turning ? Math.sin(Math.PI * U.clamp(this.turning.t / 1, 0, 1)) : 0;
       city.drawSky(ctx, c, t);
+      if (c.turn) {
+        // perto da esquina / virando: as duas vias desenhadas juntas; a moto fica no centro
+        const T = this.turning, fc = T ? Object.assign({}, c, { turn: null, x: d.x + T.side, z: d.z - T.dist }) : null;
+        const ex = [{ d: T ? T.dist : d.z - c.z, draw: () => d.draw(ctx, city, fc || c) }];
+        if (!T) for (const s of this._extraSprites(c, t)) ex.push({ d: s.z - c.z, draw: () => s.draw(ctx) });
+        city.drawTurn(ctx, c, t, ex);
+      } else this._renderWorld(ctx, c, t);
+      this._renderTop(ctx, c, t);
+    }
+
+    _renderWorld(ctx, c, t) {
+      const city = this.city, d = this.rider;
       city.drawGround(ctx, c, t);
-      const sprites = city.collect(c, t);
-      const cr = c.yaw ? Object.assign({}, c, { yaw: 0 }) : c;   // a moto vira junto com a câmera
-      sprites.push({ z: d.z, draw: (cx) => d.draw(cx, city, cr) });
+      const sprites = city.collect(c, t).concat(this._extraSprites(c, t));
+      sprites.push({ z: d.z, draw: (cx) => d.draw(cx, city, c) });
+      sprites.sort((a, b) => b.z - a.z);
+      for (const s of sprites) s.draw(ctx);
+    }
+
+    // cliente, borracheiro e cachorro
+    _extraSprites(c, t) {
+      const city = this.city, cr = c, sprites = [];
       const cu = this.cust;
       if (cu && cu.alpha > 0.02) sprites.push({ z: cu.z, draw: (cx) => {
         const p = city.proj(c, cu.x, 0.15, cu.z); if (!p) return;
@@ -516,10 +556,11 @@
       } });
       const dog = this.chaseDog;
       if (dog && dog.z - c.z > 0.8) sprites.push({ z: dog.z, draw: (cx) => { const p = city.proj(cr, dog.x, 0, dog.z); if (p) CNB.Rider.dogChaser(cx, p.x, p.y, p.s, dog.giveUp ? 0 : t, !dog.giveUp); } });
-      sprites.sort((a, b) => b.z - a.z);
-      for (const s of sprites) { if (tb > 0.2 && s.z !== d.z && s.z - c.z < 7) continue; s.draw(ctx); }   // na virada, some com o que está colado na câmera
-      if (tb > 0) { ctx.fillStyle = `rgba(230,240,248,${(tb * 0.28).toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
-      if (this.turning) { ctx.save(); ctx.globalAlpha = 0.25 * Math.sin(Math.PI * U.clamp(this.turning.t / 1, 0, 1)); ctx.fillStyle = '#fff'; for (let i = 0; i < 26; i++) { const y = 200 + ((i * 137) % 1500); ctx.fillRect(((i * 311 + t * 4000 * -this.turning.k.dir) % 1300 + 1300) % 1300 - 110, y, 220, 3); } ctx.restore(); }
+      return sprites;
+    }
+
+    _renderTop(ctx, c, t) {
+      const city = this.city, d = this.rider;
       if (d.state === S.RUN || d.state === S.CHASE) CNB.Effects.speedLines(ctx, W / 2, c.horizon, d.state === S.RUN ? 1 : 0.6, t);
       // caixa voando do baú para o cliente
       if (this.flyBox && this.customerHead) {
