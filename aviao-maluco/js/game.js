@@ -1,0 +1,426 @@
+/* =========================================================================
+   AVIÃO MALUCO — voo, piloto automático, colisões, presentes, vozes,
+   pouso no aeroporto e o caminhão que descarrega os achados
+   ========================================================================= */
+(function () {
+  const U = CNB.U, W = 1080, H = 1920;
+  const PXM = CNB.World.PXM, GY = CNB.World.GY, TOP = CNB.World.TOP;
+  const TD = GY - 58;   // altura do avião com as rodas no chão
+
+  class Game {
+    constructor(canvas) {
+      this.canvas = canvas; this.ctx = canvas.getContext('2d');
+      this.cfg = CNB.CONFIG;
+      this.catalog = new CNB.Catalog(this.cfg);
+      this.plane = new CNB.Plane(this.cfg);
+      this.world = new CNB.World(this.cfg);
+      this.audio = new CNB.AudioEngine(this.cfg.audio);
+      this.fx = new CNB.Effects();
+      this.hud = new CNB.HUD(this);
+      this.gifts = new CNB.GiftSystem(this.cfg, (k, def, n, user) => this.applyGift(k, def, n, user));
+      this.bridge = new CNB.Bridge(this.gifts, this.cfg);
+      this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
+      this.timers = []; this.followQueue = []; this.cargo = []; this.lostItems = []; this.unloaded = [];
+      this.voiceEls = {}; this.lastLine = {};
+      this.voice = { cfg: this.cfg.voice, stop: () => this._stopVoice(), setMuted: (m) => { this.voiceMuted = m; if (m) this._stopVoice(); } };
+      this.setControl(new URLSearchParams(location.search).get('controle') || this.cfg.control);
+      this.catalog.ready.then(() => { this.mode = 'title'; });
+      this.last = performance.now();
+      requestAnimationFrame((t) => this.loop(t));
+    }
+
+    setControl(mode) { this.control = mode === 'manual' ? 'manual' : 'auto'; this.idleManual = 0; if (this.onControl) this.onControl(this.control); }
+    // jogador apertou ↑ / espaço / clicou
+    playerFlap() {
+      if (this.mode !== 'playing') return;
+      if (this.control !== 'manual') { this.setControl('manual'); this.hud.banner('MODO MANUAL', 'espaço / ↑ / clique para subir', '#38bdf8', 1.4); }
+      this.idleManual = 0;
+      if (!this.plane.turbo) { this.plane.flap(); this.audio.whoosh(true); }
+    }
+    after(sec, fn, tag) { this.timers.push({ t: sec, fn, tag }); }
+
+    // ------------------------------------------------------------ vozes
+    _stopVoice() { if (this.voiceNow) this.voiceNow.pause(); }
+    say() {}   // este jogo não tem vozes
+
+    // ------------------------------------------------------------ rodada
+    start() { if (this.mode !== 'title') return; this.audio.start(); this.startRound(); }
+    startRound() {
+      this.roundNo++;
+      this.world.reset(); this.plane.reset();
+      this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = [];
+      this.mode = 'playing'; this.roundTime = 0; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
+      this.truck = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
+      const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
+      this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
+      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.missile = null; this.newRecord = false;
+      try { this.record = parseFloat(localStorage.getItem('am-record')) || 0; } catch (e) { this.record = 0; }
+      this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
+      this.hud.banner(`VOO ${this.roundNo}`, `${this.cargo.length} caixas de achados até o aeroporto!`, '#82e8cc', 2.4);
+      this.after(1.0, () => this.say('partida', { force: true }));
+    }
+
+    // ------------------------------------------------------------ presentes
+    cancelCurrentAction() {
+      const p = this.plane;
+      p.turbo = 0; p.impulse = 0; p.engine = 0; p.wind = 0;
+      if (this.jet && this.jet.phase !== 'out') this.jet.phase = 'out';
+      if (p.loop > 0) { p.loop = 0; p.ang = 0; p.vy = 0; }
+      for (const b of this.world.birds) { b.v = -500; b.ty = b.y - 600; b.flee = true; }   // urubus vão embora
+      this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
+      this.fx.clearTag('gift'); this.hud.clearBanners();
+    }
+    applyGift(key, def, n, user) {
+      const p = this.plane, head = p.headScreen || { x: 420, y: 900 };
+      if (this.mode !== 'playing') { this.audio.gift(0); return; }
+      if (def.action === 'follow') { this.followQueue.push(user); return; }
+      this.cancelCurrentAction();   // o último presente manda
+      // COMBO: presentes seguidos deixam o próximo mais forte
+      this.combo = this.time - this.comboT < this.cfg.combo.window ? this.combo + 1 : 1; this.comboT = this.time;
+      const mul = this.comboMul();
+      if (this.combo >= 3 && this.combo % 2 === 1) this.audio.chime();
+      this.fx.text(U.clamp(head.x, 200, 880), head.y - 120, user, def.color, 30, { life: 1.6, vy: -70, rot: 0, tag: 'gift' });
+      switch (def.action) {
+        case 'advance':
+          p.impulse = Math.round(def.amount * n * mul); this.helpM += p.impulse; this.audio.gift(def.amount >= 100 ? 1 : 0);
+          this.fx.text(head.x + 60, head.y - 40, `+${p.impulse} m`, '#7CFC9A', 52, { tag: 'gift' });
+          if (def.amount >= 100) this.hud.banner('ACELERA!', `${user} encheu o tanque`, def.color, 1.5);
+          if (Math.random() < 0.5) this.after(0.3, () => this.say('go'), 'gift');
+          break;
+        case 'turbo':
+          // um caça chega, engata o cabo e reboca o avião bem rápido
+          p.turbo = def.duration * n * mul; this.jet = { x: W + 260, y: p.y - 60, name: user, phase: 'in', t: 0 };
+          this.helpM += Math.round(p.turbo * (this.cfg.turboSpeed - this.cfg.cruiseSpeed));
+          this.audio.turbo(); this.fx.doFlash(0.25, '255,220,80'); this.shake = 12;
+          this.hud.banner('CAÇA NA ÁREA!', `${user} mandou rebocar o avião`, def.color, 1.9);
+          break;
+        case 'birds':
+          this.world.addBirds(p.y); this.sabM += 10; this.audio.growl && this.audio.growl();
+          this.hud.banner('URUBUS!', `${user} soltou a revoada`, def.color, 1.9);
+          this.after(0.5, () => this.say('urubu', { force: true }), 'gift');
+          break;
+        case 'wind':
+          p.wind = def.amount * mul / 20; this.sabM += def.amount * mul; this.audio.whoosh(false); this.shake = 14;
+          this.hud.banner('VENTO CONTRA!', `${user} empurrou o avião ${def.amount} m pra trás`, def.color, 1.9);
+          this.after(0.5, () => this.say('vento', { force: true }), 'gift');
+          break;
+        case 'engine':
+          p.engine = def.duration * n; p.engineBack = def.amount * mul / p.engine; this.sabM += def.amount * mul; this.audio.crash(); this.shake = 10;
+          this.hud.banner('PANE NO MOTOR!', `${user} fez o avião voltar ${Math.round(def.amount * mul)} m`, def.color, 1.9);
+          this.after(0.4, () => this.say('pane', { force: true }), 'gift');
+          break;
+        case 'loop':
+          p.loop = 1.6; p.loopT = 0; this.audio.whoosh(true);
+          this.hud.banner('LOOPING!', `${user} pediu manobra radical`, def.color, 1.6);
+          this.say('looping', { force: true });
+          break;
+        case 'gameover': this._missile(user); break;
+      }
+    }
+    comboMul() { const c = this.cfg.combo; return Math.min(c.max, 1 + Math.max(0, this.combo - 1) * c.step); }
+
+    _follow(user) {
+      const w = this.world, p = this.plane, items = this.catalog.items;
+      w.chutes.push({ x: w.x - 30, y: p.y + 40, name: user, item: items.length ? U.choice(items) : null, catalog: this.catalog, seed: Math.random() });
+      this.audio.chime(); this.fx.confetti(p.x, p.y, 40, 0.6);
+      this.hud.banner('NOVO SEGUIDOR!', `caixa de paraquedas para ${user}`, '#fe2c55', 2.4);
+      this.after(0.6, () => this.say('seguidor', { force: true }));
+    }
+
+    // ------------------------------------------------------------ perdeu carga
+    _loseCrate(reason) {
+      const p = this.plane, w = this.world;
+      p.inv = 2;
+      this.audio.crash(); this.shake = 20; this.fx.sparks(p.x + 60, p.y, 20, '#ffd23f');
+      if (!this.cargo.length) { this.hud.banner(reason, 'sem carga pra perder!', '#ff6b6b', 1.4); return; }
+      const item = this.cargo.pop(); this.lostItems.push(item);
+      w.lost.push({ x: w.x - 40, y: p.y + 20, vx: -80, vy: -350, rot: 0, vr: U.rand(-6, 6), item });
+      this.hud.banner(reason, `caiu: ${U.truncate(item.short, 26)}`, '#ff6b6b', 1.8);
+      this.after(0.5, () => this.say('bateu', { force: true }));
+    }
+
+    _collide() {
+      const p = this.plane, w = this.world;
+      if (p.y > GY - 46 && !p.landed && !p.dead) {
+        p.y = GY - 46; p.vy = -720;
+        if (!p.ghost) { this._loseCrate('BATEU NO CHÃO!'); this.after(0.9, () => this.say('chao')); }
+        this.fx.dust(p.x, GY, 16, 1.4);
+      }
+      if (p.y < TOP - 60) { p.y = TOP - 60; p.vy = Math.max(p.vy, 0); }
+      if (p.ghost) return;
+      const ca = Math.cos(p.ang), sa = Math.sin(p.ang);
+      const pts = [[105, 0, 20], [40, -4, 32], [-30, 0, 30], [-100, -30, 18]].map(([dx, dy, r]) => ({ x: w.x + dx * ca - dy * sa, y: p.y + dx * sa + dy * ca, r }));
+      for (const o of w.obstacles) {
+        if (Math.abs(o.x - w.x) > 420) continue;
+        for (const R of w.rects(o)) for (const c of pts) {
+          const nx = U.clamp(c.x, R.x0, R.x1), ny = U.clamp(c.y, R.y0, R.y1);
+          if ((nx - c.x) ** 2 + (ny - c.y) ** 2 < c.r * c.r) {
+            o.hit = true; p.vy = c.y < o.gy ? 380 : -560;
+            this._loseCrate(o.top === 'balao' && c.y < o.gy ? 'BATEU NO BALÃO!' : c.y < o.gy ? 'BATEU LÁ EM CIMA!' : 'BATEU NO PRÉDIO!');
+            return;
+          }
+        }
+      }
+      for (const b of w.birds) {
+        if (b.hit || b.flee) continue;
+        if (Math.abs(b.x - w.x) < 90 && Math.abs(b.y - p.y) < 50) { b.hit = true; b.v = -300; this.fx.text(p.x + 40, p.y - 60, 'QUAAA!', '#fff', 44, { life: 1 }); this._loseCrate('ATROPELOU UM URUBU!'); return; }
+      }
+    }
+
+    // ------------------------------------------------------------ piloto automático
+    _autopilot(dt) {
+      const p = this.plane, w = this.world, cfg = this.cfg;
+      if (p.loop > 0 || p.landed || p.dead) return;
+      const manual = this.control === 'manual' && !p.turbo && this.mode === 'playing';
+      if (manual) return;
+      let ty = 1000;
+      // mira o vão do PRÓXIMO obstáculo, mas sem sair do vão do que está passando agora
+      const next = w.obstacles.find((o) => o.x - o.w / 2 >= w.x + 170);
+      const cur = w.obstacles.filter((o) => o.x + o.w / 2 > w.x - 150 && o.x - o.w / 2 < w.x + 170);
+      if (this.mode === 'landing') ty = this.glideY;
+      else if (next) {
+        if (next.err === undefined) next.err = p.turbo ? 0 : Math.random() > cfg.autopilot.skill ? U.rand(-0.42, 0.42) * next.gap : U.rand(-0.08, 0.08) * next.gap;
+        const dx = next.x - w.x;
+        ty = next.gy + (p.turbo ? 0 : next.err);
+        if (dx > 900) ty = U.lerp(ty, 1000, U.clamp((dx - 900) / 600, 0, 0.6));
+      }
+      for (const o of cur) if (o !== next) ty = U.clamp(ty, o.gy - o.gap / 2 + 110, o.gy + o.gap / 2 - 100);
+      // desvia dos urubus
+      for (const b of w.birds) if (!b.flee && !b.hit && b.x - w.x < 520 && b.x - w.x > -60 && Math.abs(b.y - ty) < 130) ty = b.y > ty ? b.y - 170 : b.y + 170;
+      ty = U.clamp(ty, TOP + 30, GY - 90); this._ty = ty;
+      this.apT = (this.apT || 0) - dt;
+      if (this.apT > 0) return;
+      this.apT = 0.05;
+      const g = p.engine > 0 ? 1900 : 1450, look = 0.08, yP = p.y + p.vy * look + 0.5 * g * look * look;
+      if (yP > ty + 40 && p.vy > -120) p.flap();
+    }
+
+    // ------------------------------------------------------------ fim de jogo / pouso
+    // GALÁXIA: um míssil vem e explode o avião
+    _missile(user) {
+      const p = this.plane;
+      this.missile = { x: W + 120, y: Math.max(TOP, p.y - 420), t: 0, name: user };
+      this.audio.whoosh(false); this.hud.banner('MÍSSIL!', `${user} mandou um míssil`, '#ef4444', 1.6);
+      this.mode = 'missile';
+    }
+    _explode() {
+      const p = this.plane, m = this.missile;
+      this.missile = null; this.audio.crash(); this.audio.thud(); this.shake = 40;
+      this.fx.doFlash(0.9, '255,200,120'); this.fx.sparks(p.x, p.y, 60, '#ffb020'); this.fx.sparks(p.x, p.y, 40, '#ff4d4d');
+      this.fx.text(p.x + 40, p.y - 120, 'KABUM!', '#ffd23f', 110, { life: 1.6, vy: -60 });
+      for (let i = 0; i < 26; i++) this.world.puffs.push({ x: this.world.x + U.rand(-90, 90), y: p.y + U.rand(-50, 50), vx: U.rand(-160, 160), vy: U.rand(-200, 40), r: U.rand(20, 46), age: 0, life: U.rand(1.2, 2.6), a: 0.85, c: i % 3 ? '70,70,70' : '255,150,40' });
+      this.debris = Array.from({ length: 9 }, (_, i) => ({ x: p.x, y: p.y, vx: U.rand(-380, 380), vy: U.rand(-700, -150), rot: 0, vr: U.rand(-9, 9), k: i }));
+      this.gameOver(m ? m.name : '');
+    }
+    gameOver(user) {
+      const p = this.plane;
+      this.cancelCurrentAction(); this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
+      p.dead = true; p.exploded = true; p.turbo = 0; this.overBy = user; this.jet = null;
+      this.mode = 'gameover'; this.overTime = 0; this.countdown = 0; this._goCount = false; this.crashed = false;
+      this.audio.setMusicLevel(this.cfg.audio.music * 0.3, 1); this.audio.sadTrombone();
+      this.after(0.6, () => this.say('gasolina', { force: true }));
+    }
+    _startLanding() {
+      this.mode = 'landing'; this.glideY = this.plane.y;
+      this.hud.banner('RETA FINAL', 'preparar para o pouso!', '#82e8cc', 2);
+      this.say('torre', { index: 0, force: true });
+      this.after(2.6, () => this.say('retafinal', { force: true }));
+    }
+    _touchdown() {
+      const p = this.plane;
+      p.landed = true; p.y = TD; p.vy = 0;
+      this.audio.thud(); this.shake = 12; this.fx.dust(p.x - 20, GY, 22, 1.6); this.fx.dust(p.x + 60, GY, 12, 1);
+    }
+    _arrived() {
+      this.mode = 'unload'; this.unloaded = [];
+      this.audio.fanfare(); this.fx.confetti(540, 700, 90, 0.8);
+      this.hud.banner('POUSOU!', 'missão cumprida — chegou o caminhão', '#82e8cc', 2.4);
+      this.say('pousou', { force: true });
+      // caminhão vem de ré até a porta do avião
+      this.truck = { x: W + 330, tx: 790, open: 0, wheel: 0, phase: 'in' };
+      const T = (t, fn) => this.after(t, fn, 'unload');
+      for (let i = 0; i < 6; i++) T(1.2 + i * 0.45, () => this.audio.beep());
+      T(3.6, () => { this.truck.phase = 'open'; this.say(this.cargo.length ? 'caminhao' : 'vazio', { force: true }); });
+      const n = this.cargo.length;
+      for (let i = 0; i < n; i++) T(4.4 + i * 0.85, () => this._unloadOne());
+      const end = 4.4 + n * 0.85 + 0.6;
+      T(end, () => { this.truck.phase = 'close'; });
+      T(end + 0.8, () => { this.audio.honk(); this.after(0.4, () => this.audio.honk(), 'unload'); this.truck.phase = 'out'; });
+      T(end + 2.6, () => this._summary());
+    }
+    _unloadOne() {
+      const item = this.cargo.shift(); if (!item) return;
+      const p = this.plane;
+      this.flyCrate = { item, t: 0, from: { x: p.x - 50, y: p.y - 6 }, to: { x: this.truck.x - 175, y: GY - 120 } };
+      this.audio.cardboard(); this.audio.pop();
+      this.unloaded.push(item);
+      this.hud.showCard({ item, n: this.unloaded.length, total: this.unloaded.length + this.cargo.length });
+    }
+    _summary() {
+      this.mode = 'win'; this.finalTime = this.roundTime; this.sumTime = 0;
+      if (!this.record || this.finalTime < this.record) { this.newRecord = true; this.record = this.finalTime; try { localStorage.setItem('am-record', String(this.finalTime)); } catch (e) {} }
+      this.audio.cheer(); this.audio.setMusicLevel(this.cfg.audio.music * 1.4, 1);
+      const burst = () => { this.fx.confetti(80, 1500, 80, 0.7); this.fx.confetti(1000, 1500, 80, 0.7); this.audio.pop(); };
+      burst(); this.after(0.8, burst); this.after(1.8, burst);
+      this.after(this.cfg.summaryTime, () => { this.countdown = this.cfg.restartCountdown; });
+    }
+
+    // ------------------------------------------------------------ loop
+    loop(now) {
+      let dt = Math.min(0.2, (now - this.last) / 1000); this.last = now;
+      while (dt > 0.05) { this.update(0.05); dt -= 0.05; }
+      this.update(dt); this.render();
+      requestAnimationFrame((t) => this.loop(t));
+    }
+
+    update(dt) {
+      this.time += dt;
+      for (const tm of this.timers) tm.t -= dt;
+      const due = this.timers.filter((tm) => tm.t <= 0); this.timers = this.timers.filter((tm) => tm.t > 0); due.forEach((tm) => tm.fn());
+      const p = this.plane, w = this.world, cfg = this.cfg;
+      this.bridge.update(dt, this.mode === 'playing');
+      if (this.mode === 'title') {
+        p.update(dt); this._titleFly(dt);
+      } else if (this.mode === 'playing' || this.mode === 'landing') {
+        this.roundTime += dt;
+        if (this.followQueue.length && (this.followT = (this.followT || 0) - dt) <= 0) { this._follow(this.followQueue.shift()); this.followT = 1.3; }
+        if (this.mode === 'playing' && this.control === 'manual' && cfg.autopilot.returnAfter) {
+          this.idleManual = (this.idleManual || 0) + dt;
+          if (this.idleManual > cfg.autopilot.returnAfter) { this.setControl('auto'); this.hud.banner('PILOTO AUTOMÁTICO', 'espaço / ↑ / clique para pilotar', '#38bdf8', 1.4); }
+        }
+        // velocidade
+        p.turbo = Math.max(0, p.turbo - dt); p.engine = Math.max(0, p.engine - dt);
+        let target = p.impulse > 0 ? cfg.boostSpeed : cfg.cruiseSpeed;
+        if (p.turbo > 0) target = this.jet && this.jet.phase === 'tow' ? cfg.turboSpeed : Math.max(target, cfg.boostSpeed);
+        if (p.engine > 0) target = -(p.engineBack || 8);
+        if (p.wind > 0) { p.wind -= dt; target = -20; }
+        if (this.mode === 'landing') {
+          const left = Math.max(0, (w.goalX - w.x) / PXM);
+          target = Math.min(cfg.cruiseSpeed * 1.3, Math.max(p.landed ? 0 : 3, Math.sqrt(2 * 1.6 * left)));
+          if (left < 0.05 && p.landed) { p.speed = 0; w.x = w.goalX; this._arrived(); }
+        }
+        p.speed = U.damp(p.speed, target, p.wind > 0 ? 6 : 2.5, dt);
+        const dx = p.speed * PXM * dt;
+        if (this.mode === 'landing') w.x = Math.min(w.goalX, w.x + dx); else w.x = Math.max(0, w.x + dx);
+        if (p.impulse > 0 && p.speed > 0) p.impulse = Math.max(0, p.impulse - p.speed * dt);
+        // planando para a pista
+        if (this.mode === 'landing' && !p.landed) {
+          const left = (w.goalX - w.x) / PXM;
+          this.glideY = U.clamp(TD - Math.max(0, left - 30) * 9, TOP + 60, TD);
+          p.wheels = U.damp(p.wheels, 1, 3, dt);
+          p.vy = (this.glideY + 8 - p.y) * 2.2; p.y += p.vy * dt; p.ang = U.damp(p.ang, U.clamp(p.vy * 0.0008, -0.15, 0.2), 5, dt);
+          if (p.y >= TD - 1 && left < 32) this._touchdown();
+        } else if (this.mode === 'playing') {
+          this._autopilot(dt); p.update(dt); this._collide();
+        } else p.update(dt);
+        if (this.mode === 'playing' && !this.retaFinal && w.left < 150) { this.retaFinal = true; this.hud.banner('RETA FINAL', `${w.left} metros pro pouso`, '#82e8cc', 1.8); }
+        if (this.mode === 'playing' && w.left <= 62 && p.loop <= 0) { this.cancelCurrentAction(); this._startLanding(); }
+        w.spawn();
+        const jt = this.jet;
+        if (jt) {
+          jt.t += dt;
+          const tx = p.x + 380, ty = p.y - 50;
+          if (jt.phase === 'in') { jt.x = U.damp(jt.x, tx, 4, dt); jt.y = U.damp(jt.y, ty, 5, dt); if (Math.abs(jt.x - tx) < 12) { jt.phase = 'tow'; this.audio.pop(); } }
+          else if (jt.phase === 'tow') { jt.x = tx + Math.sin(this.time * 3) * 6; jt.y = U.damp(jt.y, ty, 8, dt); if (p.turbo <= 0) jt.phase = 'out'; }
+          else { jt.x += 1600 * dt; jt.y -= 500 * dt; if (jt.x > W + 400) this.jet = null; }
+        }
+        if (p.engine > 0 && Math.random() < dt * 30) w.puffs.push({ x: w.x + 100, y: p.y - 10, vx: -60, vy: -40, r: 14, age: 0, life: 1.4, a: 0.7, c: '60,60,60' });
+        if (p.turbo > 0 && Math.random() < dt * 40) w.puffs.push({ x: w.x - 120, y: p.y + U.rand(-8, 8), vx: -200, vy: 0, r: 10, age: 0, life: 0.5, a: 0.8, c: '255,190,60' });
+        this.audio.setEngine(this.mode === 'landing' && p.landed ? 0.5 : 3 + p.speed * 0.5, true);
+        this.audio.intensity = p.turbo > 0 ? 1 : 0; this.audio.tempoMul = U.damp(this.audio.tempoMul, p.turbo > 0 ? 1.22 : 1, 3, dt);
+      } else if (this.mode === 'missile') {
+        const m = this.missile; p.update(dt); this._autopilot(dt);
+        if (m) { m.t += dt; const dx = p.x - m.x, dy = p.y - m.y, d = Math.hypot(dx, dy), v = 1500; m.x += dx / d * v * dt; m.y += dy / d * v * dt; m.ang = Math.atan2(dy, dx);
+          if (Math.random() < 0.9) w.puffs.push({ x: w.x + m.x - p.x, y: m.y, vx: 0, vy: -20, r: 12, age: 0, life: 0.9, a: 0.6, c: '220,220,220' });
+          if (d < 60) this._explode(); }
+        w.x += p.speed * PXM * dt;
+      } else if (this.mode === 'unload') {
+        p.update(dt);
+        const tr = this.truck;
+        if (tr) {
+          if (tr.phase === 'in') { const d = tr.tx - tr.x; tr.x += Math.sign(d) * Math.min(Math.abs(d), Math.max(60, Math.abs(d) * 1.6) * dt); tr.wheel -= dt * 4; }
+          if (tr.phase === 'open') tr.open = U.damp(tr.open, 1, 6, dt);
+          if (tr.phase === 'close') tr.open = U.damp(tr.open, 0, 6, dt);
+          if (tr.phase === 'out') { tr.v = (tr.v || 0) + 600 * dt; tr.x += tr.v * dt; tr.wheel += dt * 8; }
+        }
+        if (this.flyCrate) { this.flyCrate.t += dt / 0.6; if (this.flyCrate.t >= 1) this.flyCrate = null; }
+        this.audio.setEngine(0, false);
+      } else if (this.mode === 'win') {
+        this.sumTime += dt; this.audio.setEngine(0, false);
+        if (this.countdown > 0) {
+          const b = Math.ceil(this.countdown); this.countdown -= dt;
+          if (Math.ceil(this.countdown) !== b && this.countdown > 0) this.audio.tick(this.countdown < 3.5);
+          if (this.countdown <= 0) this.startRound();
+        }
+      } else if (this.mode === 'gameover') {
+        this.overTime += dt;
+        p.speed = U.damp(p.speed, p.y >= GY - 50 ? 0 : 3, 1.5, dt); w.x += p.speed * PXM * dt;
+        p.speed = 0;
+        for (const d of this.debris || []) { if (d.y < GY - 14) { d.vy += 1300 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.vr * dt; } else { d.y = GY - 14; if (!d.down) { d.down = true; this.fx.dust(d.x, GY, 6, 0.8); } } }
+        if (Math.random() < dt * 6) { const d = U.choice(this.debris || [{ x: p.x, y: GY }]); w.puffs.push({ x: w.x + d.x - p.x, y: d.y - 10, vx: -10, vy: -70, r: 14, age: 0, life: 2, a: 0.45, c: '60,60,60' }); }
+        this.audio.setEngine(0, false);
+        if (this.overTime > this.cfg.gameOverTime) {
+          if (!this._goCount) { this.countdown = this.cfg.restartCountdown * 0.6; this._goCount = true; }
+          const b = Math.ceil(this.countdown); this.countdown -= dt;
+          if (Math.ceil(this.countdown) !== b && this.countdown > 0) this.audio.tick(this.countdown < 3.5);
+          if (this.countdown <= 0) { this._goCount = false; this.startRound(); }
+        }
+      }
+      w.update(dt, this.time, p.y);
+      this.shake = Math.max(0, this.shake - dt * 45);
+      this.fx.update(dt); this.hud.update(dt);
+    }
+    // na tela inicial o avião voa sozinho em ondas
+    _titleFly(dt) {
+      const p = this.plane, w = this.world;
+      w.x += 6 * PXM * dt;
+      if (p.y > 980 + Math.sin(this.time) * 120) p.flap(0.8);
+    }
+
+    render() {
+      const ctx = this.ctx, t = this.time, p = this.plane, w = this.world;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (this.mode === 'loading') { this.hud.draw(ctx, t); return; }
+      const sx = (Math.random() - 0.5) * this.shake, sy = (Math.random() - 0.5) * this.shake;
+      ctx.save(); ctx.translate(sx, sy);
+      const camX = w.x - p.x;
+      w.draw(ctx, t, camX, { catalog: this.catalog });
+      // caminhão e caixa voando
+      if (this.truck) CNB.drawTruck(ctx, this.truck.x, GY + 4, this.truck.open, t, this.truck.wheel);
+      if (this.jet) this._drawJet(ctx, t);
+      if (!p.exploded && (this.mode !== 'win' || this.sumTime < 0.4)) p.draw(ctx, t);
+      if (p.exploded) for (const d of this.debris || []) { ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot); ctx.fillStyle = ['#f8fafc', '#82e8cc', '#2a9d8f', '#cfd8dc', '#475569'][d.k % 5]; U.poly(ctx, [-26, -10, 22, -14, 28, 8, -18, 14]); ctx.fill(); ctx.restore(); }
+      if (this.missile) { const m = this.missile; ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.ang || Math.PI); ctx.fillStyle = '#e5e7eb'; U.roundRect(ctx, -46, -9, 80, 18, 9); ctx.fill(); ctx.fillStyle = '#ef4444'; U.poly(ctx, [34, -9, 52, 0, 34, 9]); ctx.fill(); ctx.fillStyle = '#6b7280'; U.poly(ctx, [-46, -9, -58, -22, -36, -9]); ctx.fill(); U.poly(ctx, [-46, 9, -58, 22, -36, 9]); ctx.fill(); ctx.fillStyle = `rgba(255,${150 + Math.random() * 80},40,0.9)`; ctx.beginPath(); ctx.ellipse(-60, 0, 18 + Math.random() * 8, 7, 0, 0, 7); ctx.fill(); ctx.restore();
+        ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 6; ctx.strokeText(m.name, m.x, m.y - 30); ctx.fillText(m.name, m.x, m.y - 30); }
+      if (this.flyCrate) {
+        const f = this.flyCrate, u = U.clamp(f.t, 0, 1);
+        const x = U.lerp(f.from.x, f.to.x, u), y = U.lerp(f.from.y, f.to.y, u) - Math.sin(u * Math.PI) * 170;
+        w._crate(ctx, x, y, 60, u * 5, f.item, this.catalog);
+      }
+      // vento: riscos voando para trás
+      if (p.wind > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 4; for (let i = 0; i < 24; i++) { const y = 420 + ((i * 263) % 1250), x = ((i * 377 + t * 2600) % 1400) - 200; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 140, y); ctx.stroke(); } }
+      if (p.turbo > 0) CNB.Effects.speedLines && CNB.Effects.speedLines(ctx, W * 0.7, p.y, 1, t);
+      ctx.restore();
+      this.fx.draw(ctx);
+      this.hud.draw(ctx, t);
+    }
+  }
+
+  // caça puxando o avião por um cabo
+  Game.prototype._drawJet = function (ctx, t) {
+    const j = this.jet, p = this.plane;
+    if (j.phase !== 'out') { ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x + 128 * Math.cos(p.ang), p.y + 128 * Math.sin(p.ang)); ctx.quadraticCurveTo((p.x + j.x) / 2, Math.max(p.y, j.y) + 30 + Math.sin(t * 6) * 6, j.x - 120, j.y + 10); ctx.stroke(); }
+    ctx.save(); ctx.translate(j.x, j.y); ctx.rotate(j.phase === 'out' ? -0.3 : Math.sin(t * 2) * 0.03);
+    ctx.fillStyle = `rgba(255,${140 + Math.random() * 90},40,0.9)`; ctx.beginPath(); ctx.ellipse(-150, 4, 40 + Math.random() * 20, 12, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#64748b'; U.poly(ctx, [-130, -8, -96, -66, -70, -66, -80, -8]); ctx.fill();
+    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(-130, -10); ctx.lineTo(60, -16); ctx.quadraticCurveTo(120, -10, 150, 4); ctx.quadraticCurveTo(120, 18, 60, 20); ctx.lineTo(-130, 18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#475569'; U.poly(ctx, [-60, 4, 30, 4, -30, 56, -70, 56]); ctx.fill();
+    ctx.fillStyle = '#7dd3fc'; ctx.beginPath(); ctx.ellipse(70, -16, 34, 13, -0.1, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(-40, 6, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(-40, 6, 5, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.fillStyle = '#ffd23f';
+    ctx.strokeText(`✈ ${j.name}`, j.x, j.y - 80); ctx.fillText(`✈ ${j.name}`, j.x, j.y - 80);
+  };
+
+  CNB.Game = Game;
+})();
