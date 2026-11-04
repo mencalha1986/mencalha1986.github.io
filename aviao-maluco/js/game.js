@@ -20,7 +20,7 @@
       this.gifts = new CNB.GiftSystem(this.cfg, (k, def, n, user) => this.applyGift(k, def, n, user));
       this.bridge = new CNB.Bridge(this.gifts, this.cfg);
       this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
-      this.timers = []; this.followQueue = []; this.cargo = []; this.lostItems = []; this.unloaded = [];
+      this.timers = []; this.followQueue = []; this.feathers = []; this.cargo = []; this.lostItems = []; this.unloaded = [];
       this.voiceEls = {}; this.lastLine = {};
       this.voice = { cfg: this.cfg.voice, stop: () => this._stopVoice(), setMuted: (m) => { this.voiceMuted = m; if (m) this._stopVoice(); } };
       this.setControl(new URLSearchParams(location.search).get('controle') || this.cfg.control);
@@ -53,7 +53,7 @@
       this.truck = null; this.flyCrate = null; this.unloaded = []; this.lostItems = []; this.retaFinal = false; this.landingSaid = false;
       const items = this.catalog.items.slice().sort(() => Math.random() - 0.5);
       this.cargo = Array.from({ length: this.cfg.crates }, (_, i) => items[i % Math.max(1, items.length)]).filter(Boolean);
-      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.newRecord = false;
+      this.apTarget = null; this.passed = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9; this.jet = null; this.vulture = null; this.missile = null; this.debris = null; this.crashed = false; this.feathers = []; this.newRecord = false;
       try { this.record = parseFloat(localStorage.getItem('am-record')) || 0; } catch (e) { this.record = 0; }
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
       this.hud.banner(`VOO ${this.roundNo}`, `${this.cargo.length} caixas de achados até o aeroporto!`, '#82e8cc', 2.4);
@@ -331,7 +331,8 @@
               this.audio.crash(); this.audio.thud(); this.shake = 22;
               this.fx.text(p.x + 90, p.y - 90, 'PÁ!', '#fff', 90, { life: 1.1, vy: -80, rot: -0.1 });
               this.fx.text(p.x + 40, p.y - 170, `−${vu.back} m`, '#ff8a8a', 56, { life: 1.4, vy: -60 });
-              this.fx.sparks(p.x + 90, p.y, 26, '#2b2b2f'); this.fx.sparks(p.x + 90, p.y, 12, '#e8b4a0');
+              this.fx.sparks(p.x + 90, p.y, 10, '#2b2b2f');
+              for (let i = 0; i < 34; i++) { const a = Math.random() * Math.PI * 2, v = U.rand(120, 520); this.feathers.push({ x: p.x + 90, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, rot: Math.random() * 6, vr: U.rand(-5, 5), age: 0, life: U.rand(2.2, 3.8), s: U.rand(0.7, 1.5), c: Math.random() < 0.8 ? '#26262b' : '#4b4b52' }); }
               this.hud.banner('BATEU NO URUBU!', `o avião voltou ${vu.back} m`, vu.color, 1.8);
             }
           }
@@ -386,6 +387,8 @@
           if (this.countdown <= 0) { this._goCount = false; this.startRound(); }
         }
       }
+      for (const f of this.feathers) { f.age += dt; f.vx *= Math.pow(0.12, dt); f.vy = f.vy * Math.pow(0.15, dt) + 60 * dt; f.x += (f.vx - 30) * dt + Math.sin(f.age * 4 + f.rot) * 40 * dt; f.y += f.vy * dt + 25 * dt; f.rot += f.vr * dt * Math.max(0.2, 1 - f.age / 2); }
+      this.feathers = this.feathers.filter((f) => f.age < f.life);
       w.update(dt, this.time, p.y);
       this.shake = Math.max(0, this.shake - dt * 45);
       this.fx.update(dt); this.hud.update(dt);
@@ -408,6 +411,12 @@
       // caminhão e caixa voando
       if (this.truck) CNB.drawTruck(ctx, this.truck.x, GY + 4, this.truck.open, t, this.truck.wheel);
       if (this.jet) this._drawJet(ctx, t);
+      for (const f of this.feathers) {
+        ctx.save(); ctx.globalAlpha = U.clamp((f.life - f.age) / 0.6, 0, 1); ctx.translate(f.x, f.y); ctx.rotate(f.rot + Math.sin(f.age * 5) * 0.5); ctx.scale(f.s, f.s);
+        ctx.fillStyle = f.c; ctx.beginPath(); ctx.moveTo(0, -18); ctx.quadraticCurveTo(9, -4, 0, 18); ctx.quadraticCurveTo(-9, -4, 0, -18); ctx.fill();
+        ctx.strokeStyle = 'rgba(200,200,200,0.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, 22); ctx.stroke();
+        ctx.restore();
+      }
       if (this.vulture) { const v = this.vulture; ctx.save(); ctx.translate(v.x, v.y); ctx.rotate(v.spin || 0); ctx.scale(1.9, 1.9); w._bird(ctx, 0, 0, v.ph); ctx.restore();
         if (!v.hitDone) { ctx.font = `800 24px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.fillStyle = '#e5e7eb'; ctx.strokeText(v.name, v.x, v.y - 70); ctx.fillText(v.name, v.x, v.y - 70); } }
       if (!p.exploded && (this.mode !== 'win' || this.sumTime < 0.4)) p.draw(ctx, t);
