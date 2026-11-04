@@ -455,6 +455,7 @@
         k.turned = true; this.turning = null; d.turnLean = 0;
         const xa = T.x0 + k.dir * T.r, za = T.z0 + T.r;              // ponto final (mundo antigo)
         d.z = T.zs + k.dir * (xa - T.E); d.x = d.baseX = d.targetX = this.apLane = k.dir * (T.pc - za);
+        c.adoptTurnTraffic(T, d.z);   // carros da avenida seguem na rua nova, vistos por trás
         const cam = this.cam; cam.turn = null; cam.z = d.z - CAM.ride.dist; cam.x = d.x * 0.88; cam.hd += k.dir * Math.PI / 2 * 1.25;
         if (k.kind === 'side') this.hud.banner(k.name, 'entrou na rua', '#22c55e', 1.4);
       }

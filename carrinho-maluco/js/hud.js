@@ -103,7 +103,6 @@
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 240);
         this.drawRanking(ctx, top + 240);
-        if (g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 240 + 214 + 16);
         this.drawShowcase(ctx, t);
         this.drawAnnouncer(ctx, t);
         this.drawBanners(ctx, t);
@@ -111,6 +110,8 @@
       }
       if (g.mode === 'win') { this.drawAnnouncer(ctx, t); this.drawReceipt(ctx, t); }
       if (g.mode === 'gameover') { this.drawGameOver(ctx, t); this.drawAnnouncer(ctx, t); }
+      // lista de presentes fixa na tela o tempo todo (por cima de tudo)
+      if (g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 240 + 214 + 16);
     }
 
     drawLoading(ctx, t) {
@@ -207,7 +208,7 @@
       keys.forEach((k, i) => {
         const def = G[k], y = y0 + 56 + i * rowH;
         giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 15), 790, y + 15);
+        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 22), 790, y + 15);
         ctx.font = `600 16px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 28), 790, y + 36);
       });
     }

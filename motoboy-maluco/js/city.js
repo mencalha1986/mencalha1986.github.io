@@ -202,6 +202,23 @@
       ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
     }
 
+    // carro que anda no sentido da câmera depois que ela girou na curva: aparece por trás, não de lado
+    static rearNow(cam, dir) { return !!cam.turn && Math.abs(cam.tyaw) > Math.PI / 4 && Math.sign(cam.tyaw) === Math.sign(dir); }
+    // fim da curva: os carros que estavam passando/virando na avenida viram trânsito normal da rua nova (vistos por trás)
+    adoptTurnTraffic(T, riderZ) {
+      const k = T.k, dir = T.dir, map = (x, z) => ({ z: T.zs + dir * (x - T.E), x: dir * (T.pc - z) });
+      const add = (x, z, bus, color, v) => {
+        const p = map(x, z); if (p.z < riderZ + 8) return;   // colado na moto: some
+        const type = bus ? 'bus' : 'traffic';
+        this.obstacles.push({ type, z: p.z, x: p.x, x0: p.x, tx: p.x, w: OB[type].w, hit: false, knock: 0, seed: Math.random(), color, v: Math.min(Math.abs(v), bus ? 4 : 6),
+          zone: this.zoneAt(p.z), vehicle: true, bus: bus ? color : null, line: 100 + Math.floor(Math.random() * 800) });
+      };
+      for (const c of k.cross || []) if (Math.sign(c.v) === dir) add(c.x, c.z, c.bus, c.color, c.v);
+      k.cross = [];
+      for (const o of this.obstacles) if (o.tl && !o.gone && o.zone.corner === k) { o.gone = true; if (o.side === dir) add(o.x, o.z, o.type === 'bus', o.type === 'bus' ? o.bus : o.color, o.v); }
+      this.obstacles.sort((a, b) => a.z - b.z);
+    }
+
     // obstáculos que andam
     // semáforo / guarda: verde 8 s, amarelo 1,6 s, vermelho 7 s (para quem vem pela via da moto)
     static SIG = { g: 8, y: 1.6, r: 7 };
@@ -672,7 +689,13 @@
           const px = -KC.dir * (KC.kind === 'side' ? 1.6 : 3.3), pz = KC.zc + KC.cw / 2;
           L.push({ z: pz, x: px, draw: (c) => this._police(c, cam, KC, px, pz, t) });
         }
-        for (const cc of KC.cross) L.push({ z: cc.z, x: cc.x, draw: (c) => { const p = this.proj(cam, cc.x, 0, cc.z); if (p) City.carSide(c, p.x, p.y, p.s, cc.color, (q) => this._fog(q, p.dz), Math.sign(cc.v), t, cc.bus); } });
+        for (const cc of KC.cross) L.push({ z: cc.z, x: cc.x, draw: (c) => {
+          const p = this.proj(cam, cc.x, 0, cc.z); if (!p) return;
+          const F = (q) => this._fog(q, p.dz);
+          if (!City.rearNow(cam, cc.v)) City.carSide(c, p.x, p.y, p.s, cc.color, F, Math.sign(cc.v), t, cc.bus);
+          else if (cc.bus) City.busRear(c, p.x, p.y, p.s, cc.color, 100, F, false);
+          else City.carRear(c, p.x, p.y, p.s, cc.color, F, false);
+        } });
       }
       this.stops.forEach((s, i) => { if (vis(s.z) && !s.done) L.push({ z: s.z + 0.5, x: 7 * (s.side || 1), draw: (c) => this._pin(c, cam, s, t) }); });
       // placas das lojas (perpendiculares, de frente para a câmera)
@@ -961,10 +984,10 @@
           break;
         }
         case 'parked': case 'traffic':
-          if (o.side) { City.carSide(ctx, p.x, p.y, s, o.color, F, o.side, t, false); break; }
+          if (o.side && !City.rearNow(cam, o.side)) { City.carSide(ctx, p.x, p.y, s, o.color, F, o.side, t, false); break; }
           City.carRear(ctx, p.x, p.y, s, o.color, F, o.type === 'traffic' && Math.sin(t * 2 + o.seed * 9) > 0.6);
           break;
-        case 'bus': if (o.side) { City.carSide(ctx, p.x, p.y, s, o.bus, F, o.side, t, true); break; } City.busRear(ctx, p.x, p.y, s, o.bus, o.line, F, Math.sin(t * 1.5 + o.seed * 9) > 0.5); break;
+        case 'bus': if (o.side && !City.rearNow(cam, o.side)) { City.carSide(ctx, p.x, p.y, s, o.bus, F, o.side, t, true); break; } City.busRear(ctx, p.x, p.y, s, o.bus, o.line, F, Math.sin(t * 1.5 + o.seed * 9) > 0.5); break;
         case 'oncoming': City.carFront(ctx, p.x, p.y, s, o.color, F, t); break;
         case 'dumpster': {
           const w = 1.6 * s, h = 1.0 * s;

@@ -7,11 +7,21 @@
   const W = 1080, H = 1920;
   const FT = U.FONT_TITLE, FU = U.FONT_UI;
 
+  // imagens oficiais dos presentes (config: img), indexadas pelo ícone de cada presente
+  const GIFT_IMG = {};
+  for (const k in CNB.CONFIG.gifts) {
+    const def = CNB.CONFIG.gifts[k];
+    if (def.img) { const im = new Image(); im.src = def.img; GIFT_IMG[def.icon] = im; }
+  }
+  const giftImage = (icon) => { const im = GIFT_IMG[icon]; return im && im.complete && im.naturalWidth ? im : null; };
+
   // ---------------- ícones vetoriais dos presentes ----------------
   function giftIcon(ctx, icon, x, y, r, color) {
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
     ctx.strokeStyle = color; ctx.lineWidth = r * 0.1; ctx.stroke();
+    const im = giftImage(icon);
+    if (im) { const sz = r * 1.7; ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore(); return; }
     const s = r / 30;
     ctx.scale(s, s);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -138,6 +148,21 @@
       if (g.mode === 'title') this.drawTitle(ctx, t);
       if (g.mode === 'win') this.drawWin(ctx, t);
       if (g.mode === 'gameover') this.drawGameOver(ctx, t);
+      // lista de presentes fixa na tela o tempo todo (por cima de tudo)
+      if (g.mode !== 'title' && g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 236 + 214 + 16);
+    }
+
+    // guia fixo na lateral: qual presente do TikTok faz o quê (só os ligados a um presente real)
+    drawGiftGuide(ctx, y0) {
+      const G = this.g.cfg.gifts, keys = Object.keys(G).filter((k) => G[k].tiktok), rowH = 46;
+      glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.62);
+      ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
+      keys.forEach((k, i) => {
+        const def = G[k], y = y0 + 56 + i * rowH;
+        giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok, 22), 790, y + 15);
+        ctx.font = `600 16px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def, 1), 28), 790, y + 36);
+      });
     }
 
     // ---------------- barra superior ----------------

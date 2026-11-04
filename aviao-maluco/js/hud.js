@@ -163,7 +163,6 @@
         this.drawTop(ctx, top, t);
         this.drawFeed(ctx, top + 250);
         this.drawRanking(ctx, top + 250);
-        if ((g.mode === 'playing' || g.mode === 'takeoff') && g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 250 + 214 + 12, t);
         if (g.mode === 'landing' || g.mode === 'unload') this.drawFinal(ctx, t);
         this.drawCard(ctx, t);
         this.drawBanners(ctx, t);
@@ -171,6 +170,8 @@
       }
       if (g.mode === 'win') this.drawSummary(ctx, t);
       if (g.mode === 'gameover') { this.drawBanners(ctx, t); this.drawGameOver(ctx, t); }
+      // lista de presentes fixa na tela o tempo todo (por cima de tudo)
+      if (g.cfg.ui.giftGuide) this.drawGiftGuide(ctx, top + 250 + 214 + 12, t);
     }
 
     drawLoading(ctx, t) {
