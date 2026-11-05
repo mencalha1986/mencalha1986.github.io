@@ -400,15 +400,43 @@ class R3D {
     g.position.set(x, 0, -s.x / PXM);
     return { obj: g, people };
   }
+  // GAIVOTA realista: corpo afilado branco, dorso cinza, asas com "cotovelo" que dobram ao bater,
+  // pontas pretas com pintas brancas, bico amarelo com a mancha vermelha. Bico para +Z (lookAt aponta +Z).
   _gull() {
-    const g = new THREE.Group(), white = mat(0xf8fafc), grey = mat(0x9ca3af);
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), white); body.scale.set(1, 0.7, 1.8); g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), white); head.position.set(0, 0.08, -0.38); g.add(head);
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 6), mat(0xf59e0b)); beak.rotation.x = -Math.PI / 2; beak.position.set(0, 0.06, -0.54); g.add(beak);
-    const wl = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.32), grey), wr = wl.clone();
-    wl.geometry = wl.geometry.clone(); wl.geometry.translate(-0.45, 0, 0); wr.geometry = wr.geometry.clone(); wr.geometry.translate(0.45, 0, 0);
-    g.add(wl, wr); g.userData = { wl, wr };
-    const bis = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.06), mat(0xf8fafc)); bis.position.set(0, -0.18, -0.4); bis.visible = false; g.add(bis); g.userData.bis = bis;
+    const g = new THREE.Group(), white = mat(0xf7f8fa, { roughness: 0.8 }), grey = mat(0xaab4bf, { roughness: 0.75 }),
+      black = mat(0x1d1f23, { roughness: 0.7 }), yellow = mat(0xf2c230, { roughness: 0.5 }), red = mat(0xd9342b), pink = mat(0xe8b4a0);
+    // corpo (lathe = fuso), deitado ao longo de Z
+    const prof = [[0, -0.42], [0.06, -0.36], [0.12, -0.2], [0.15, 0], [0.13, 0.16], [0.09, 0.28], [0, 0.34]].map(([r, y]) => new THREE.Vector2(r, y));
+    const body = new THREE.Mesh(new THREE.LatheGeometry(prof, 14), white); body.rotation.x = Math.PI / 2; body.scale.set(1, 1, 0.85); g.add(body);
+    const mantle = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2.4), grey); mantle.scale.set(0.95, 0.5, 1.9); mantle.position.set(0, 0.04, -0.02); g.add(mantle);
+    // cabeça, olho e bico
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.095, 14, 10), white); head.position.set(0, 0.07, 0.36); head.scale.set(0.9, 0.95, 1.1); g.add(head);
+    [-1, 1].forEach((sd) => { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), black); eye.position.set(sd * 0.068, 0.1, 0.4); g.add(eye); });
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 8), yellow); beak.rotation.x = Math.PI / 2; beak.position.set(0, 0.055, 0.5); beak.scale.set(1, 1, 0.8); g.add(beak);
+    const spot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 4), red); spot.position.set(0, 0.035, 0.52); g.add(spot);
+    // cauda em leque
+    const ts = new THREE.Shape(); ts.moveTo(-0.06, 0); ts.lineTo(0.06, 0); ts.lineTo(0.09, 0.16); ts.lineTo(-0.09, 0.16); ts.closePath();
+    const tail = new THREE.Mesh(new THREE.ShapeGeometry(ts), white); tail.rotation.x = -Math.PI / 2; tail.position.set(0, 0.02, -0.36); tail.material.side = THREE.DoubleSide; g.add(tail);
+    // patas recolhidas
+    [-1, 1].forEach((sd) => { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 5), pink); leg.rotation.x = Math.PI / 2.3; leg.position.set(sd * 0.04, -0.09, -0.24); g.add(leg); });
+    // asas: braço (cinza) + mão (cinza com ponta preta e pintas brancas). Forma desenhada em XY e deitada no plano XZ.
+    const flat = (pts) => { const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(([x, y]) => sh.lineTo(x, y)); sh.closePath();
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false }); geo.rotateX(-Math.PI / 2); return geo; };
+    const wing = (sd) => {
+      const shoulder = new THREE.Group(); shoulder.position.set(sd * 0.1, 0.05, 0.06); g.add(shoulder);
+      const armG = flat([[0, -0.12], [0.5, -0.1], [0.5, 0.12], [0.25, 0.2], [0, 0.18]]);   // y negativo = bordo de ataque (frente)
+      const arm = new THREE.Mesh(armG, grey); arm.scale.x = sd; shoulder.add(arm);
+      const trail = new THREE.Mesh(flat([[0, 0.15], [0.5, 0.1], [0.5, 0.13], [0, 0.19]]), white); trail.scale.x = sd; trail.position.y = 0.002; shoulder.add(trail);   // borda branca
+      const wrist = new THREE.Group(); wrist.position.set(sd * 0.5, 0, 0); shoulder.add(wrist);
+      const hand = new THREE.Mesh(flat([[0, -0.1], [0.42, -0.02], [0.62, 0.06], [0.3, 0.12], [0, 0.12]]), grey); hand.scale.x = sd; wrist.add(hand);
+      const tip = new THREE.Mesh(flat([[0.3, -0.045], [0.42, -0.02], [0.62, 0.06], [0.3, 0.12], [0.24, 0.12]]), black); tip.scale.x = sd; tip.position.y = 0.004; wrist.add(tip);
+      [[0.5, 0.05], [0.4, 0.07]].forEach(([x, z]) => { const m = new THREE.Mesh(new THREE.CircleGeometry(0.018, 8), white); m.rotation.x = -Math.PI / 2; m.position.set(sd * x, 0.018, -z); wrist.add(m); });
+      return { shoulder, wrist };
+    };
+    const L = wing(-1), Rw = wing(1);
+    g.userData = { wl: L.shoulder, wr: Rw.shoulder, wl2: L.wrist, wr2: Rw.wrist, flap: true };
+    const bis = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.12), mat(0xd9a35f)); bis.position.set(0, 0.03, 0.6); bis.visible = false; g.add(bis); g.userData.bis = bis;
+    g.scale.setScalar(1.25);
     return { obj: shadowAll(g) };
   }
 
@@ -489,7 +517,8 @@ class R3D {
       const d = Math.hypot(gu.x - v.x - 20, gu.y - v.y + 240), p = U.clamp(1 - d / gu.d0, 0, 1);
       if (!gu.hitDone) { gu.z0 = gu.z0 || head.z - 26 - Math.random() * 6; gu.x3 = gu.x3 === undefined ? U.rand(-6, 6) : gu.x3; e.obj.position.set(U.lerp(gu.x3, head.x, p), U.lerp(9, head.y + 0.2, p), U.lerp(gu.z0, head.z - 0.3, p)); e.obj.lookAt(head); }
       else { e.obj.position.x += dt * 4; e.obj.position.y += dt * 5; e.obj.position.z -= dt * 6; e.obj.userData.bis.visible = true; }
-      const f = Math.sin(t * 22 + gu.ph) * 0.7; e.obj.userData.wl.rotation.z = f; e.obj.userData.wr.rotation.z = -f;
+      const ud = e.obj.userData, ph = t * (gu.hitDone ? 14 : 9) + gu.ph, f = Math.sin(ph) * 0.65 + 0.12, f2 = Math.sin(ph - 0.9) * 0.45;
+      ud.wl.rotation.z = -f; ud.wr.rotation.z = f; ud.wl2.rotation.z = -f2; ud.wr2.rotation.z = f2;   // asa sobe/desce e a mão dobra atrasada
     }
     // o rapa: vem correndo pela areia e leva o isopor
     const r = g.rapa;

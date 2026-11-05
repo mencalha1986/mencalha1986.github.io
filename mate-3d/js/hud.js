@@ -175,7 +175,7 @@
     drawLoading(ctx, t) {
       ctx.fillStyle = '#0e0c16'; ctx.fillRect(0, 0, W, H);
       ctx.textAlign = 'center'; ctx.font = `90px ${FT}`; ctx.fillStyle = '#fff'; ctx.fillText('OLHA O MATE!', W / 2, 900);
-      ctx.font = `600 30px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('Enchendo os galões' + '.'.repeat(1 + Math.floor(t * 3) % 3), W / 2, 970);
+      ctx.font = `600 30px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('Enchendo os galões' + '.'.repeat(1 + Math.abs(Math.floor(t * 3)) % 3), W / 2, 970);
     }
 
     drawTop(ctx, top, t) {
