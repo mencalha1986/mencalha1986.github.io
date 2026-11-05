@@ -164,7 +164,7 @@ body{background:#05040d}
 #app{position:fixed;left:50%;top:50%;width:540px;height:960px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center;overflow:hidden;background:var(--night);--panelW:0px;--panelH:0px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 #app #stage{position:absolute}
 #app #touch{display:none!important}
-#app #top{top:84px;left:12px;right:12px;width:auto;min-width:0;transform:none;gap:6px}
+#app #top{top:84px;left:60px;right:60px;width:auto;min-width:0;transform:none;gap:4px}
 #app #portrait{top:212px;left:12px;padding:6px 12px 6px 6px}
 #app #face{width:42px;height:42px;font-size:26px}
 #app #banner{left:50%;top:30%;width:500px}
@@ -183,27 +183,28 @@ body{background:#05040d}
 #app .box ul{font-size:13px}
 #app .go{font-size:21px;padding:12px 20px}
 /* ranking + cabo de guerra */
-#rank{top:282px;left:12px;width:196px;background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:9px 11px;backdrop-filter:blur(8px)}
-#rank h4,#glist h4{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.03em;color:var(--sun)}
-#rankList{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:4px}
-#rankList li{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;white-space:nowrap}
+#app #portrait{display:none}
+#rank{top:200px;left:10px;width:168px;background:rgba(18,14,44,.48);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:7px 9px;backdrop-filter:blur(4px)}
+#rank h4,#glist h4{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.03em;color:var(--sun)}
+#rankList{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:3px}
+#rankList li{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;white-space:nowrap}
 #rankList li.empty{color:var(--muted);font-weight:600}
-#rankList .md{flex:0 0 20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#1a1420}
+#rankList .md{flex:0 0 17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:10px;color:#1a1420}
 #rankList .nm{flex:1;overflow:hidden;text-overflow:ellipsis}
 #rankList .pt{color:var(--sun);font-variant-numeric:tabular-nums}
-#app #tug .tbar{height:8px}
-#app .tlbl{font-size:11px}
+#app #tug .tbar{height:6px}
+#app .tlbl{font-size:10px;margin-top:3px}
 /* últimos presentes */
-#feed{top:438px;left:12px;width:196px;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:11.5px}
-#feed li{background:rgba(18,14,44,.72);border:1px solid var(--edge);border-radius:9px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fin .3s}
+#feed{top:330px;left:10px;width:168px;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:10.5px}
+#feed li{background:rgba(18,14,44,.5);border-radius:8px;padding:3px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fin .3s}
 #feed li b{font-weight:800}
-/* lista de presentes na tela */
-#glist{top:212px;right:12px;width:200px;background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:9px 10px;backdrop-filter:blur(8px)}
-.gr{display:flex;align-items:center;gap:7px;padding:2px 0;border-top:1px solid rgba(255,255,255,.06)}
-.gr img{width:26px;height:26px;object-fit:contain;flex:0 0 26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
-.gr div{min-width:0;line-height:1.1}
-.gr b{display:block;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gr span{font-size:11px;font-weight:800}
+/* lista de presentes na tela (compacta, uma linha cada) */
+#glist{top:200px;right:10px;width:150px;background:rgba(18,14,44,.48);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:7px 8px;backdrop-filter:blur(4px)}
+.gr{display:flex;align-items:center;gap:6px;padding:2px 0}
+.gr img{width:24px;height:24px;object-fit:contain;flex:0 0 24px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.gr div{min-width:0;line-height:1.05}
+.gr b{display:block;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr span{font-size:12.5px;font-weight:800;white-space:nowrap}
 .gr.help span{color:var(--help)} .gr.sab span{color:var(--sab)} .gr.end span{color:#d58cff}
 .gr.flash{animation:grf .9s}
 @keyframes grf{30%{background:rgba(255,210,63,.25);border-radius:8px}}
@@ -242,10 +243,10 @@ body.live #startScreen .cols .box:first-child{display:none}
 
 <div class="hud" id="banner"><div id="bIcon">🌹</div><div id="bFrom"></div><div id="bFx"></div><div id="bSpecial"></div><div id="bCombo"></div></div>
 <div class="hud" id="worldCard"><div id="wcNum">Mundo 1</div><div id="wcName">Ilhas do Amanhecer</div></div>
-<div class="hud" id="rank"><h4>QUEM MAIS MANDOU</h4><ol id="rankList"><li class="empty">Mande um presente!</li></ol>
+<div class="hud" id="rank"><h4>🏆 QUEM MAIS MANDOU</h4><ol id="rankList"><li class="empty">Mande um presente!</li></ol>
   <div id="tug"><div class="tbar"><i id="tugHelp"></i></div><div class="tlbl"><span class="h">Ajudas <span id="nHelp">0</span></span><span class="s"><span id="nSab">0</span> Sabotagens</span></div></div></div>
 <ol class="hud" id="feed"></ol>
-<div class="hud" id="glist"><h4>MANDE E VEJA</h4><div id="glistRows"></div></div>
+<div class="hud" id="glist"><h4>🎁 MANDE E VEJA</h4><div id="glistRows"></div></div>
 <div class="hud" id="sub"><span><b>Luna:</b> <i id="subText"></i></span></div>
 
 
@@ -265,14 +266,12 @@ body.live #startScreen .cols .box:first-child{display:none}
         <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar · arraste para olhar</li>
         <li><kbd>Espaço</kbd> pular</li>
         <li><kbd>T</kbd> Luna anda sozinha (bom para live)</li>
-        <li><kbd>1</kbd>…<kbd>0</kbd> presentes · <kbd>H</kbd> esconder painel</li>
+        <li><kbd>1</kbd>…<kbd>6</kbd> presentes · <kbd>H</kbd> esconder painel</li>
       </ul></div>
       <div class="box"><h3>Segredos</h3><ul>
         <li><b>Galáxia chama o dragão:</b> ele agarra a Luna, leva embora e o jogo acaba.</li>
         <li>Sol logo depois da chuva cria um arco-íris que protege a Luna.</li>
-        <li>Raios durante a chuva viram tempestade dobrada.</li>
-        <li>Neve junto com ventania vira nevasca extrema.</li>
-      </ul></div>
+                      </ul></div>
     </div>
     <div class="row">
       <button class="go" id="goBtn">Começar a travessia</button>
@@ -817,14 +816,10 @@ function resetGame(){
 const GIFTS=[
   {key:'1',gift:'Rosa',img:'img/presentes/rose.webp',coins:1,icon:'🌹',fx:'sol',label:'Sol',team:'help'},
   {key:'2',gift:'TikTok',img:'img/presentes/tiktok.webp',coins:1,icon:'🎵',fx:'jetpack',label:'Jetpack',team:'help'},
-  {key:'3',gift:'Coração com os dedos',img:'img/presentes/finger-heart.webp',coins:5,icon:'🫰',fx:'escudo',label:'Escudo arco-íris',team:'help'},
+  {key:'3',gift:'Coração c/ dedos',img:'img/presentes/finger-heart.webp',coins:5,icon:'🫰',fx:'escudo',label:'Escudo',team:'help'},
   {key:'4',gift:'Pistola de dinheiro',img:'img/presentes/money-gun.png',coins:500,icon:'💸',fx:'teleporte',label:'Teleporte',team:'help'},
-  {key:'5',gift:'GG',img:'img/presentes/gg.webp',coins:1,icon:'🆖',fx:'vento',label:'Ventania',team:'sab'},
-  {key:'6',gift:'Casquinha',img:'img/presentes/ice-cream-cone.webp',coins:1,icon:'🍦',fx:'neve',label:'Nevasca',team:'sab'},
-  {key:'7',gift:'Perfume',img:'img/presentes/perfume.webp',coins:20,icon:'⚡',fx:'raio',label:'Raios',team:'sab'},
-  {key:'8',gift:'Rosquinha',img:'img/presentes/doughnut.webp',coins:30,icon:'🍩',fx:'chuva',label:'Chuva',team:'sab'},
-  {key:'9',gift:'Corgi',img:'img/presentes/corgi.webp',coins:299,icon:'🐶',fx:'terremoto',label:'Terremoto',team:'sab'},
-  {key:'0',gift:'Galáxia',img:'img/presentes/galaxy.webp',coins:1000,icon:'🌌',fx:'dragao',label:'Dragão: fim de jogo',team:'sab'},
+  {key:'5',gift:'Rosquinha',img:'img/presentes/doughnut.webp',coins:30,icon:'🍩',fx:'chuva',label:'Chuva',team:'sab'},
+  {key:'6',gift:'Galáxia',img:'img/presentes/galaxy.webp',coins:1000,icon:'🌌',fx:'dragao',label:'Dragão (fim)',team:'sab'},
 ];
 const FAKE=['@biazinha.gamer','@pedrao_lives','@ju.mendes','@kaique77','@lari_sz','@dudu.fps','@mari.bolo','@tio_nando','@gabi.rj','@caio.zn'];
 const grid=$('#grid');
@@ -851,7 +846,7 @@ const IS_LIVE=new URLSearchParams(location.search).get('modo')==='live';
 const BC='BroadcastChannel' in window?new BroadcastChannel('luna-live'):null;
 let liveWinOpen=false;
 function sendGift(g,who){if(liveWinOpen&&BC){BC.postMessage({t:'gift',fx:g.fx,who});feedPreview(g,who);return;}if(state==='menu'&&IS_LIVE)start();triggerGift(g,who+' (teste)');}
-function feedPreview(g,who){const li=document.createElement('li');li.textContent='→ live: '+who+' · '+g.gift;const f=$('#feed');f.prepend(li);while(f.children.length>3)f.lastChild.remove();}
+function feedPreview(g,who){const li=document.createElement('li');li.textContent='→ live: '+who+' · '+g.gift;const f=$('#feed');f.prepend(li);while(f.children.length>2)f.lastChild.remove();}
 let lastGift={fx:null,t:-9,n:0};
 function updateTug(){const t=stats.help+stats.sab;$('#tugHelp').style.width=(t?stats.help/t*100:50)+'%';$('#nHelp').textContent=stats.help;$('#nSab').textContent=stats.sab;}
 function triggerGift(g,who,count){
@@ -871,7 +866,7 @@ function triggerGift(g,who,count){
   const bn=$('#banner');bn.classList.remove('show');void bn.offsetWidth;bn.classList.add('show');
   const li=document.createElement('li');li.innerHTML=`<b></b> · <span></span>`;
   li.querySelector('b').textContent=(who||'Chat').replace(' (teste)','');const sp=li.querySelector('span');sp.textContent=g.label;sp.style.color=g.team==='help'?'var(--help)':'var(--sab)';
-  const feed=$('#feed');feed.prepend(li);while(feed.children.length>3)feed.lastChild.remove();
+  const feed=$('#feed');feed.prepend(li);while(feed.children.length>2)feed.lastChild.remove();
   g.team==='help'?tone([660,880,1320],.22,'sine',.12):tone([330,247],.25,'square',.06);
 }
 function applyFx(g){
