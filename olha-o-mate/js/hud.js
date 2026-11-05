@@ -133,10 +133,12 @@
     banner(title, sub, color = '#ffd23f', dur = 1.9) { this.banners = [{ title, sub, color, dur, age: 0 }]; }
     clearBanners() { this.banners = []; }
     showCard(d) { this.card = { ...d, age: 0, dur: 1.4 }; }
+    showProduct(item, kind) { if (item) this.product = { item, kind, age: 0, dur: 4.2 }; }
     bubble(who, text, dur) { this.bubbles = this.bubbles.filter((b) => b.who !== who); this.bubbles.push({ who, text, dur, age: 0 }); }
     update(dt) {
       this.banners.forEach((b) => (b.age += dt)); this.banners = this.banners.filter((b) => b.age < b.dur);
       if (this.card) { this.card.age += dt; if (this.card.age > this.card.dur) this.card = null; }
+      if (this.product) { this.product.age += dt; if (this.product.age > this.product.dur) this.product = null; }
       this.bubbles.forEach((b) => (b.age += dt)); this.bubbles = this.bubbles.filter((b) => b.age < b.dur);
     }
     actionText(def) {
@@ -159,6 +161,7 @@
         this.drawFeed(ctx, top + 250);
         this.drawRanking(ctx, top + 250);
         this.drawBubbles(ctx, t);
+        this.drawProduct(ctx, t);
         if (g.mode === 'arrive') this.drawFinal(ctx, t);
         this.drawBanners(ctx, t);
         if (g.control === 'manual' && g.mode === 'playing') this.drawFlapHint(ctx, t);
@@ -281,6 +284,26 @@
         ctx.textAlign = 'left'; ctx.font = `600 21px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(u.name, 14), 788, y);
         ctx.textAlign = 'right'; ctx.font = `800 21px ${FU}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(String(u.points), 1022, y);
       });
+    }
+
+    // achado do site usado na areia: foto, nome e preço (lado esquerdo, fora da lista de presentes)
+    drawProduct(ctx, t) {
+      const c = this.product; if (!c) return;
+      const inT = U.easeOutBack(U.clamp(c.age * 4, 0, 1)), out = U.clamp((c.dur - c.age) / 0.35, 0, 1);
+      const it = c.item, x = 40, y = 670, w = 650, h = 210;
+      const head = { copo: 'TEM NA PRAIA E NO SITE', churrasco: 'CHURRASCO NA AREIA', cadeira: 'CONFORTO NA AREIA', infantil: 'PRA CRIANÇADA', esteira: 'SEM AREIA NA TOALHA', short: 'SAÍDA DE PRAIA' }[c.kind] || 'ACHADO DO SITE';
+      ctx.save(); ctx.globalAlpha = out; ctx.translate(x + w / 2, y + h / 2); ctx.scale(inT, inT); ctx.translate(-(x + w / 2), -(y + h / 2));
+      glass(ctx, x, y, w, h, 30, 0.9);
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4; U.roundRect(ctx, x, y, w, h, 30); ctx.stroke();
+      this.g.catalog.drawPhoto(ctx, it, x + 16, y + 16, h - 32, 18);
+      const tx = x + h + 4;
+      ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fcd34d'; ctx.fillText(head, tx, y + 40);
+      ctx.font = `700 25px ${FU}`; ctx.fillStyle = '#fff';
+      const ln = wrap(ctx, it.name || it.short, w - h - 26); if (ln.length > 2) { ln.length = 2; ln[1] = ln[1].replace(/s*S*$/, '') + '…'; }
+      ln.forEach((l, i) => ctx.fillText(l, tx, y + 78 + i * 30));
+      ctx.font = `52px ${FT}`; ctx.fillStyle = '#4ade80'; ctx.fillText((it.from ? 'a partir de ' : '') + CNB.fmtBRL(it.price), tx, y + 160);
+      ctx.font = `700 17px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(this.g.cfg.siteUrl, tx, y + 190);
+      ctx.restore();
     }
 
     // chegada no quiosque

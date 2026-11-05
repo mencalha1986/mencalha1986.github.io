@@ -24,6 +24,19 @@ CNB.CONFIG = {
   obstacleSpacing: [14, 24], // metros entre castelos de areia, buracos, bolas
   sellTime: 1.1,           // segundos parado servindo um copo
 
+  // ---------- Achados do site na areia ----------
+  // cenas com gente usando os produtos do achadosuteisporai.com.br (pelo "slug" do produtos.js do site);
+  // ao passar por elas aparece o cartão com foto, nome e preço
+  sceneSpacing: [42, 58],  // metros entre uma cena e outra
+  beachProducts: [
+    { slug: 'copo-termico-caixa-de-som', scene: 'copo' },
+    { slug: 'churrasqueira-portatil-carvao', scene: 'churrasco' },
+    { slug: 'cadeira-de-praia-aluminio', scene: 'cadeira' },
+    { slug: 'cadeira-de-praia-infantil', scene: 'infantil' },
+    { slug: 'esteira-de-praia', scene: 'esteira' },
+    { slug: 'short-renda-saida-de-praia', scene: 'short' }
+  ],
+
   control: 'auto',         // automático: pula sozinho; espaço / ↑ / clique pula na hora que você quiser
   autopilot: { skill: 0.94, returnAfter: 5 },
 

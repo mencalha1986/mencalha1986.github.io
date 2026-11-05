@@ -14,7 +14,7 @@
       this.canvas = canvas; this.ctx = canvas.getContext('2d');
       this.cfg = CNB.CONFIG;
       this.catalog = new CNB.Catalog(this.cfg);
-      this.world = new CNB.World(this.cfg);
+      this.world = new CNB.World(this.cfg); this.world.catalog = this.catalog;
       this.vendor = new CNB.Vendor(this.cfg);
       this.audio = new CNB.AudioEngine(this.cfg.audio);
       this.fx = new CNB.Effects();
@@ -22,7 +22,7 @@
       this.gifts = new CNB.GiftSystem(this.cfg, (k, def, n, user) => this.applyGift(k, def, n, user));
       this.bridge = new CNB.Bridge(this.gifts, this.cfg);
       this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
-      this.timers = []; this.followQueue = []; this.feathers = [];
+      this.timers = []; this.followQueue = []; this.feathers = []; this.gulls = [];
       this.voice = { cfg: this.cfg.voice, stop: () => {}, setMuted: () => {} };
       this.setControl(new URLSearchParams(location.search).get('controle') || this.cfg.control);
       this.catalog.ready.then(() => { this.mode = 'title'; });
@@ -49,7 +49,7 @@
       this.gifts.resetRound(); this.fx.clear(); this.timers = []; this.followQueue = []; this.feathers = [];
       this.mode = 'playing'; this.roundTime = 0; this.sumTime = -1; this.countdown = 0; this.overTime = 0;
       this.money = 0; this.sold = 0; this.lost = 0; this.helpM = 0; this.sabM = 0; this.combo = 0; this.comboT = -9;
-      this.gull = null; this.rapa = null; this.overBy = ''; this.newRecord = false; this.arriveT = 0;
+      this.gulls = []; this.rapa = null; this.overBy = ''; this.newRecord = false; this.arriveT = 0;
       try { this.record = parseFloat(localStorage.getItem('om-record')) || 0; } catch (e) { this.record = 0; }
       this.audio.intensity = 0; this.audio.tempoMul = 1; this.audio.setMusicLevel(this.cfg.audio.music);
       this.hud.banner(`RODADA ${this.roundNo}`, 'leve o mate até o Posto 6 — mandem presentes!', '#ffd23f', 2.4);
@@ -60,7 +60,6 @@
     cancelCurrentAction() {
       const v = this.vendor;
       v.turbo = 0; v.impulse = 0; v.retreat = 0; v.rush = false;
-      if (this.gull && !this.gull.hitDone) this.gull.flee = true;
       this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
       this.fx.clearTag('gift'); this.hud.clearBanners();
     }
@@ -69,6 +68,16 @@
       const v = this.vendor, head = v.headScreen;
       if (this.mode !== 'playing') { this.audio.gift(0); return; }
       if (def.action === 'follow') { this.followQueue.push(user); return; }
+      // GAIVOTAS se acumulam: cada Rosquinha manda mais uma (combo de 5 = 5 gaivotas) e nenhuma espanta a outra
+      if (def.action === 'gull') {
+        this.combo = this.time - this.comboT < this.cfg.combo.window ? this.combo + 1 : 1; this.comboT = this.time;
+        const k = Math.min(12, n), back = Math.round((def.amount || 30) * this.comboMul());
+        for (let i = 0; i < k; i++) this.gulls.push({ x: W + 140 + i * 130 + Math.random() * 60, y: 430 + Math.random() * 260, ph: Math.random() * 6, name: user, back, speed: U.rand(820, 1000) });
+        this.audio.whoosh(false);
+        const voando = this.gulls.filter((gu) => !gu.hitDone).length;
+        this.hud.banner(voando > 1 ? `${voando} GAIVOTAS!` : 'GAIVOTA!', `${user} mandou ${k > 1 ? k + ' gaivotas' : 'uma gaivota'}`, def.color, 1.5);
+        return;
+      }
       this.cancelCurrentAction();   // o último presente manda
       this.combo = this.time - this.comboT < this.cfg.combo.window ? this.combo + 1 : 1; this.comboT = this.time;
       const mul = this.comboMul();
@@ -84,11 +93,6 @@
           this.audio.turbo(); this.fx.doFlash(0.25, '255,220,80'); this.shake = 10;
           if (def.rush) { this.hud.banner('CHUVA DE CLIENTES!', `${user}: todo mundo quer mate — vendas em dobro!`, def.color, 2.2); this.audio.kaching(); for (const cu of this.world.customers) cu.wants = true; }
           else this.hud.banner('CORRE!', `${user} botou o vendedor pra correr`, def.color, 1.8);
-          break;
-        case 'gull':
-          this.gull = { x: W + 140, y: 520, ph: 0, name: user, back: Math.round((def.amount || 30) * mul) };
-          this.audio.whoosh(false);
-          this.hud.banner('GAIVOTA!', `${user} mandou uma gaivota`, def.color, 1.5);
           break;
         case 'gameover':
           this.rapa = { x: W + 160, name: user, walk: 0, got: false };
@@ -187,7 +191,7 @@
         let target = cfg.walkSpeed;
         if (v.impulse > 0) target = cfg.boostSpeed;
         if (v.turbo > 0) target = cfg.turboSpeed;
-        if (v.retreat > 0) target = -5;
+        if (v.retreat > 0) target = -Math.min(18, 5 + v.retreat * 0.06);   // muita gaivota junta: volta mais rápido
         if (v.stun > 0 || v.sell > 0) target = 0;
         v.speed = U.damp(v.speed, target, v.retreat > 0 ? 8 : 4, dt);
         const dx = v.speed * PXM * dt;
@@ -211,6 +215,8 @@
         // grito de vendedor de tempos em tempos
         this.shoutT -= dt;
         if (this.shoutT <= 0) { this.shoutT = U.rand(4.5, 8); v.shout = 1; this.hud.bubble('vendedor', U.choice(GRITOS), 1.6); }
+        // passou por uma cena com achado do site: mostra o cartão do produto
+        for (const s of w.scenes) if (!s.shown && Math.abs(s.x - w.x) < 60) { s.shown = true; this.hud.showProduct(s.item, s.kind); this.audio.chime(); }
         if (v.turbo > 0 && Math.random() < dt * 30) w.puffs.push({ x: w.x - 40, y: GY - 10, vx: -120, vy: -40, r: 10, age: 0, life: 0.6, a: 0.6, c: '214,190,140' });
         w.spawn();
         if (w.x >= w.goalX - 1) this._arrive();
@@ -248,22 +254,27 @@
       this.shake = Math.max(0, this.shake - dt * 45);
       this.fx.update(dt); this.hud.update(dt);
     }
-    // gaivota mergulha, rouba o biscoito e o vendedor volta
+    // gaivotas mergulham, roubam o biscoito e o vendedor volta (o recuo de cada uma se soma)
     _updateGull(dt) {
-      const gu = this.gull, v = this.vendor; if (!gu) return;
-      gu.ph += dt * 12;
-      if (gu.hitDone || gu.flee) { gu.x += (gu.flee ? 900 : 520) * dt; gu.y -= 380 * dt; if (gu.y < -200 || gu.x > W + 300) this.gull = null; return; }
-      const tx = v.x + 20, ty = v.y - 240, dx = tx - gu.x, dy = ty - gu.y, d = Math.hypot(dx, dy);
-      gu.x += dx / d * 900 * dt; gu.y += dy / d * 900 * dt;
-      if (d < 60) {
-        gu.hitDone = true; gu.biscoito = true; v.retreat = Math.max(v.retreat, gu.back); this.sabM += gu.back;
-        const loss = Math.min(this.money, this.cfg.price); this.money -= loss;
-        this.audio.crash(); this.shake = 18;
-        this.fx.text(v.x + 60, v.y - 320, 'PÁ!', '#fff', 90, { life: 1.1, vy: -80, rot: -0.1 });
-        this.fx.text(v.x, v.y - 400, `−${gu.back} m`, '#ff8a8a', 56, { life: 1.4, vy: -60 });
-        for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, s = U.rand(120, 480); this.feathers.push({ x: v.x + 20, y: v.y - 240, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, rot: Math.random() * 6, vr: U.rand(-5, 5), age: 0, life: U.rand(1.8, 3), s: U.rand(0.6, 1.2), c: Math.random() < 0.7 ? '#f8fafc' : '#9ca3af' }); }
-        this.hud.banner('ROUBOU O BISCOITO!', `a gaivota de ${gu.name} fez o vendedor voltar ${gu.back} m`, '#e5e7eb', 2);
+      const v = this.vendor;
+      for (const gu of this.gulls) {
+        gu.ph += dt * 12;
+        if (gu.hitDone) { gu.x += 520 * dt; gu.y -= 380 * dt; continue; }
+        const tx = v.x + 20, ty = v.y - 240, dx = tx - gu.x, dy = ty - gu.y, d = Math.hypot(dx, dy);
+        gu.x += dx / d * gu.speed * dt; gu.y += dy / d * gu.speed * dt;
+        if (d < 60) {
+          gu.hitDone = true; gu.biscoito = true;
+          v.retreat = Math.min(v.retreat + gu.back, 200); this.sabM += gu.back;
+          const loss = Math.min(this.money, this.cfg.price); this.money -= loss;
+          this.audio.crash(); this.shake = Math.min(30, this.shake + 12);
+          this.fx.text(v.x + 60 + U.rand(-40, 40), v.y - 320, 'PÁ!', '#fff', 80, { life: 1.1, vy: -80, rot: U.rand(-0.2, 0.2) });
+          this.fx.text(v.x + U.rand(-40, 40), v.y - 400, `−${gu.back} m`, '#ff8a8a', 50, { life: 1.4, vy: -60 });
+          for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s2 = U.rand(120, 480); this.feathers.push({ x: v.x + 20, y: v.y - 240, vx: Math.cos(a) * s2, vy: Math.sin(a) * s2 - 120, rot: Math.random() * 6, vr: U.rand(-5, 5), age: 0, life: U.rand(1.8, 3), s: U.rand(0.6, 1.2), c: Math.random() < 0.7 ? '#f8fafc' : '#9ca3af' }); }
+          const hits = this.gulls.filter((g2) => g2.hitDone && g2.y > -100).length;
+          this.hud.banner(hits > 1 ? `${hits} GAIVOTAS NO VENDEDOR!` : 'ROUBOU O BISCOITO!', `${gu.name}: o vendedor volta ${Math.round(v.retreat)} m`, '#e5e7eb', 2);
+        }
       }
+      this.gulls = this.gulls.filter((gu) => gu.y > -200 && gu.x < W + 300 + 2000);
     }
 
     render() {
@@ -276,7 +287,7 @@
       w.draw(ctx, t, camX);
       v.draw(ctx, t);
       if (this.rapa) this._drawRapa(ctx, t);
-      if (this.gull) this._drawGull(ctx, t);
+      for (const gu of this.gulls) this._drawGull(ctx, gu, t);
       for (const c of w.coins) { ctx.save(); ctx.translate(c.x - camX, c.y); ctx.rotate(c.rot); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 14 * Math.abs(Math.cos(c.rot)), 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#a16207'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
       for (const f of this.feathers) { ctx.save(); ctx.globalAlpha = U.clamp((f.life - f.age) / 0.6, 0, 1); ctx.translate(f.x, f.y); ctx.rotate(f.rot); ctx.scale(f.s, f.s); ctx.fillStyle = f.c; ctx.beginPath(); ctx.moveTo(0, -16); ctx.quadraticCurveTo(8, -3, 0, 16); ctx.quadraticCurveTo(-8, -3, 0, -16); ctx.fill(); ctx.restore(); }
       if (v.turbo > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineCap = 'round'; for (let i = 0; i < 12; i++) { const y = v.y - 300 + ((i * 97) % 300), x = W - ((i * 331 + t * 2400) % (W + 300)); ctx.lineWidth = 2 + (i % 3); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 120 + (i % 4) * 40, y); ctx.stroke(); } }
@@ -285,8 +296,8 @@
       this.fx.draw(ctx);
       this.hud.draw(ctx, t);
     }
-    _drawGull(ctx, t) {
-      const g = this.gull; ctx.save(); ctx.translate(g.x, g.y); ctx.scale(-1.6, 1.6);
+    _drawGull(ctx, g, t) {
+      ctx.save(); ctx.translate(g.x, g.y); ctx.scale(-1.6, 1.6);
       const f = Math.sin(g.ph) * 14;
       ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(0, 0, 26, 12, 0, 0, 7); ctx.fill();
       ctx.beginPath(); ctx.arc(22, -6, 10, 0, 7); ctx.fill();

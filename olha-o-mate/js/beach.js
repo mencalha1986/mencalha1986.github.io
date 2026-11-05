@@ -17,16 +17,25 @@
     reset() {
       const c = this.cfg;
       this.x = 0; this.goalX = c.goal * PXM; this.seed = Math.floor(Math.random() * 1e6);
-      this.customers = []; this.obstacles = []; this.puffs = []; this.cups = []; this.coins = [];
-      this.nextCust = 7 * PXM; this.nextObs = 16 * PXM;
+      this.customers = []; this.obstacles = []; this.puffs = []; this.cups = []; this.coins = []; this.scenes = []; this.notes = [];
+      this.nextCust = 7 * PXM; this.nextObs = 16 * PXM; this.nextScene = 24 * PXM; this.sceneIdx = Math.floor(Math.random() * 6);
       this.left = c.goal;
     }
     // banhistas e obstáculos vão aparecendo à frente
     spawn() {
       const c = this.cfg, ahead = this.x + W + 300;
+      // cenas com os achados do site (gente usando os produtos)
+      const BP = (c.beachProducts || []).map((b) => ({ ...b, item: this.catalog && this.catalog.items.find((i) => i.slug === b.slug) })).filter((b) => b.item);
+      while (BP.length && this.nextScene < Math.min(ahead, this.goalX - 18 * PXM)) {
+        const b = BP[this.sceneIdx++ % BP.length];
+        this.scenes.push({ x: this.nextScene, kind: b.scene, item: b.item, seed: Math.random(), shown: false });
+        this.nextScene += U.rand(c.sceneSpacing[0], c.sceneSpacing[1]) * PXM;
+      }
+      this.scenes = this.scenes.filter((s) => s.x > this.x - 900);
+      const nearScene = (x, m) => this.scenes.some((s) => Math.abs(s.x - x) < m * PXM);
       while (this.nextCust < Math.min(ahead, this.goalX - 14 * PXM)) {
-        // banhista nunca colado num obstáculo (o vendedor para na frente dele para vender)
-        if (this.obstacles.some((o) => Math.abs(o.x - this.nextCust) < 2.6 * PXM)) { this.nextCust += 3 * PXM; continue; }
+        // banhista nunca colado num obstáculo (o vendedor para na frente dele para vender) nem numa cena de produto
+        if (this.obstacles.some((o) => Math.abs(o.x - this.nextCust) < 2.6 * PXM) || nearScene(this.nextCust, 5)) { this.nextCust += 3 * PXM; continue; }
         const s = Math.random();
         this.customers.push({ x: this.nextCust, kind: s < 0.45 ? 'cadeira' : s < 0.8 ? 'canga' : 'empe', seed: Math.random(), wants: Math.random() < 0.82, served: false, raise: 0, skin: U.choice(SKIN), suit: U.choice(SUITS), umb: U.choice(UMB), hair: U.choice(['#1f1410', '#3b2414', '#e8c170', '#7a3b1f', '#111']) });
         this.nextCust += U.rand(c.customerSpacing[0], c.customerSpacing[1]) * PXM;
@@ -34,7 +43,7 @@
       while (this.nextObs < Math.min(ahead, this.goalX - 20 * PXM)) {
         const k = U.choice(['castelo', 'buraco', 'bola', 'balde', 'castelo']);
         // não coloca obstáculo colado num banhista (o vendedor para ali)
-        if (!this.customers.some((cu) => Math.abs(cu.x - this.nextObs) < 2.6 * PXM)) this.obstacles.push({ x: this.nextObs, kind: k, w: { castelo: 84, buraco: 96, bola: 46, balde: 50 }[k], hit: false, seed: Math.random() });
+        if (!this.customers.some((cu) => Math.abs(cu.x - this.nextObs) < 2.6 * PXM) && !nearScene(this.nextObs, 3)) this.obstacles.push({ x: this.nextObs, kind: k, w: { castelo: 84, buraco: 96, bola: 46, balde: 50 }[k], hit: false, seed: Math.random() });
         this.nextObs += U.rand(c.obstacleSpacing[0], c.obstacleSpacing[1]) * PXM;
       }
       this.customers = this.customers.filter((cu) => cu.x > this.x - 900);
@@ -61,6 +70,7 @@
       this._postos(ctx, camX);
       this._kiosk(ctx, this.goalX - camX, t);
       for (const o of this.obstacles) { const sx = o.x - camX; if (sx > -150 && sx < W + 150) this._obstacle(ctx, o, sx, t); }
+      for (const s of this.scenes) { const sx = s.x - camX; if (sx > -320 && sx < W + 320) this._scene(ctx, s, sx, t); }
       for (const cu of this.customers) { const sx = cu.x - camX; if (sx > -220 && sx < W + 220) this._customer(ctx, cu, sx, t); }
       for (const p of this.puffs) { ctx.globalAlpha = p.a * (1 - p.age / p.life); ctx.fillStyle = `rgb(${p.c})`; ctx.beginPath(); ctx.arc(p.x - camX, p.y, p.r * (1 + p.age), 0, 7); ctx.fill(); }
       ctx.globalAlpha = 1;
@@ -190,6 +200,120 @@
       }
       ctx.restore();
     }
+    // ------------------------------------------------------------ cenas com os achados do site
+    // pessoa simples: pose 'pe' (em pé), 'senta' (sentada), 'deita' (deitada); arm = ângulo do braço da frente
+    _person(ctx, x, y, o) {
+      const sk = o.skin || '#c98a5e', su = o.suit || '#e63946', hair = o.hair || '#2b1a10', s = o.s || 1, arm = o.arm === undefined ? 0.2 : o.arm;
+      ctx.save(); ctx.translate(x, y); ctx.scale(s * (o.flip ? -1 : 1), s);
+      const limb = (px, py, a, len, w, col) => { ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.fillStyle = col; U.roundRect(ctx, -w / 2, 0, w, len, w / 2); ctx.fill(); ctx.restore(); };
+      if (o.pose === 'deita') {
+        ctx.fillStyle = sk; U.roundRect(ctx, -70, -26, 140, 26, 13); ctx.fill(); ctx.beginPath(); ctx.arc(-84, -16, 17, 0, 7); ctx.fill();
+        ctx.fillStyle = hair; ctx.beginPath(); ctx.arc(-88, -22, 15, Math.PI, 0.2); ctx.fill();
+        ctx.fillStyle = su; U.roundRect(ctx, -10, -26, 40, 24, 8); ctx.fill(); if (o.top) U.roundRect(ctx, -52, -28, 26, 14, 6), ctx.fill();
+        limb(-50, -18, -2.2 + arm, 54, 12, sk);
+      } else {
+        const sit = o.pose === 'senta', hy = sit ? -150 : -220;
+        if (sit) { limb(-8, -60, -1.4, 62, 20, sk); limb(10, -60, -1.3, 62, 20, sk); limb(46, -60, 0.1, 58, 18, sk); }
+        else { const lg = o.leg || 0; limb(-8, -110, -lg, 110, 22, sk); limb(10, -110, lg, 110, 22, sk); }
+        ctx.fillStyle = o.shorts || su; U.roundRect(ctx, -26, sit ? -78 : -130, 54, sit ? 30 : 40, 9); ctx.fill();
+        if (o.lace) { ctx.fillStyle = 'rgba(255,255,255,0.9)'; for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.arc(-20 + (i % 5) * 11, (sit ? -72 : -122) + Math.floor(i / 5) * 10, 3, 0, 7); ctx.fill(); } }
+        ctx.fillStyle = o.shirt || sk; U.roundRect(ctx, -26, hy + 30, 54, sit ? 80 : 96, 16); ctx.fill();
+        if (o.top) { ctx.fillStyle = su; U.roundRect(ctx, -22, hy + 46, 46, 18, 8); ctx.fill(); }
+        ctx.fillStyle = sk; ctx.beginPath(); ctx.arc(2, hy + 8, 24, 0, 7); ctx.fill();
+        ctx.fillStyle = hair; ctx.beginPath(); ctx.arc(0, hy, 24, Math.PI, 0.15); ctx.fill(); if (o.long) U.roundRect(ctx, -24, hy, 16, 52, 8), ctx.fill();
+        if (o.shades) { ctx.fillStyle = '#111'; U.roundRect(ctx, 4, hy + 2, 24, 9, 4); ctx.fill(); }
+        else { ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(14, hy + 6, 3, 0, 7); ctx.fill(); }
+        if (o.hat) { ctx.fillStyle = o.hat; ctx.beginPath(); ctx.ellipse(2, hy - 12, 38, 9, 0, 0, 7); ctx.fill(); U.roundRect(ctx, -16, hy - 34, 36, 24, 10); ctx.fill(); }
+        limb(-14, hy + 40, -arm * 0.4 + 0.15, 74, 15, sk);
+        limb(16, hy + 40, -arm, 74, 15, sk);
+      }
+      ctx.restore();
+    }
+    // plaquinha com a foto real do produto e o preço
+    _tag(ctx, it, x, y, t) {
+      if (!it) return;
+      const by = y + Math.sin(t * 2 + x * 0.01) * 6, w = 150, h = 190;
+      ctx.save(); ctx.translate(x - w / 2, by - h);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; U.roundRect(ctx, 4, 6, w, h, 16); ctx.fill();
+      ctx.fillStyle = '#fff'; U.roundRect(ctx, 0, 0, w, h, 16); ctx.fill();
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4; ctx.stroke();
+      if (this.catalog) this.catalog.drawPhoto(ctx, it, 10, 10, w - 20, 10);
+      ctx.fillStyle = '#16a34a'; U.roundRect(ctx, 10, h - 46, w - 20, 36, 10); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = `28px ${U.FONT_TITLE}`; ctx.textAlign = 'center'; ctx.fillText(CNB.fmtBRL(it.price), w / 2, h - 18);
+      ctx.fillStyle = '#fff'; U.poly(ctx, [w / 2 - 12, h - 1, w / 2 + 12, h - 1, w / 2, h + 16]); ctx.fill();
+      ctx.restore();
+    }
+    _scene(ctx, s, sx, t) {
+      const y = GY - 60, seed = s.seed;
+      ctx.save();
+      switch (s.kind) {
+        case 'copo': {   // turma dançando com o copo térmico com caixa de som
+          const b = Math.abs(Math.sin(t * 6)) * 10;
+          this._person(ctx, sx - 70, y - b, { suit: '#2563eb', top: true, skin: '#a86a45', hair: '#111', long: true, arm: 2.6 + Math.sin(t * 6) * 0.3, leg: Math.sin(t * 6) * 0.3 });
+          this._person(ctx, sx + 60, y - (10 - b), { suit: '#16a34a', shirt: '#facc15', skin: '#f1c7a3', hair: '#7a3b1f', arm: 1.9, leg: -Math.sin(t * 6) * 0.3, shades: true });
+          // o copo na mão
+          const cx = sx + 60 + 40, cy = y - (10 - b) - 230;
+          const g = ctx.createLinearGradient(cx - 14, 0, cx + 14, 0); g.addColorStop(0, '#94a3b8'); g.addColorStop(0.5, '#f1f5f9'); g.addColorStop(1, '#64748b');
+          ctx.fillStyle = g; U.poly(ctx, [cx - 16, cy - 30, cx + 16, cy - 30, cx + 12, cy + 26, cx - 12, cy + 26]); ctx.fill();
+          ctx.fillStyle = '#1f2937'; U.roundRect(ctx, cx - 18, cy - 38, 36, 10, 4); ctx.fill();
+          ctx.fillStyle = '#111'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(cx - 6 + (i % 3) * 6, cy + 4 + Math.floor(i / 3) * 6, 1.8, 0, 7); ctx.fill(); }
+          // notas musicais saindo
+          for (let i = 0; i < 4; i++) { const p = ((t * 0.7 + i / 4 + seed) % 1), nx = cx + Math.sin(p * 6 + i) * 30 + p * 40, ny = cy - 40 - p * 160;
+            ctx.globalAlpha = 1 - p; ctx.fillStyle = ['#f472b6', '#38bdf8', '#facc15', '#4ade80'][i]; ctx.font = `900 ${34 + i * 4}px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText(i % 2 ? '♪' : '♫', nx, ny); }
+          ctx.globalAlpha = 1;
+          this._tag(ctx, s.item, sx, y - 340, t); break;
+        }
+        case 'churrasco': {   // família no churrasco com a churrasqueira portátil
+          const gx = sx + 10;
+          // fumaça
+          for (let i = 0; i < 5; i++) { const p = ((t * 0.35 + i / 5 + seed) % 1); ctx.globalAlpha = 0.35 * (1 - p); ctx.fillStyle = '#e5e7eb'; ctx.beginPath(); ctx.arc(gx + Math.sin(p * 5 + i) * 18 + p * 30, y - 120 - p * 220, 16 + p * 30, 0, 7); ctx.fill(); }
+          ctx.globalAlpha = 1;
+          // churrasqueira: corpo redondo preto, pezinhos, brasa e espetinhos
+          ctx.strokeStyle = '#111'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(gx - 34, y + 40); ctx.lineTo(gx - 22, y - 50); ctx.moveTo(gx + 34, y + 40); ctx.lineTo(gx + 22, y - 50); ctx.stroke();
+          ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.ellipse(gx, y - 70, 58, 30, 0, 0, Math.PI); ctx.fill();
+          ctx.fillStyle = `rgba(255,${90 + Math.sin(t * 9) * 40},30,0.95)`; ctx.beginPath(); ctx.ellipse(gx, y - 72, 50, 10, 0, 0, 7); ctx.fill();
+          ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 3; for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(gx - 52, y - 76 + k * 2); ctx.lineTo(gx + 52, y - 76 + k * 2); ctx.stroke(); }
+          ctx.fillStyle = '#7c2d12'; [-26, 0, 26].forEach((d) => { U.roundRect(ctx, gx + d - 12, y - 90, 24, 12, 6); ctx.fill(); });
+          ctx.fillStyle = '#ef4444'; U.roundRect(ctx, gx + 50, y - 40, 40, 30, 6); ctx.fill();   // ventoinha
+          // pai com o pegador, mãe sentada, criança pulando
+          this._person(ctx, gx - 110, y, { suit: '#1e3a5f', shirt: '#ef4444', skin: '#c98a5e', hair: '#2b1a10', arm: 1.1 + Math.sin(t * 3) * 0.15, hat: '#fde68a' });
+          this._person(ctx, gx + 140, y + 10, { pose: 'senta', suit: '#db2777', top: true, skin: '#a86a45', hair: '#111', long: true, arm: 0.9, shades: true });
+          this._person(ctx, gx + 230, y - Math.abs(Math.sin(t * 5)) * 26, { s: 0.6, suit: '#22c55e', shirt: '#38bdf8', skin: '#c98a5e', hair: '#5b3417', arm: 2.8 });
+          this._tag(ctx, s.item, gx, y - 330, t); break;
+        }
+        case 'cadeira': {   // cadeira de praia alta de alumínio
+          const cx = sx;
+          ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(cx - 40, y + 40); ctx.lineTo(cx + 10, y - 40); ctx.moveTo(cx + 40, y + 40); ctx.lineTo(cx - 20, y - 40); ctx.moveTo(cx - 50, y - 40); ctx.lineTo(cx + 30, y - 40); ctx.lineTo(cx + 10, y - 150); ctx.stroke();
+          ['#ef4444', '#facc15', '#2563eb', '#16a34a'].forEach((c2, i) => { ctx.fillStyle = c2; U.poly(ctx, [cx - 46 + i * 0, y - 46 - i * 26, cx + 26, y - 46 - i * 26, cx + 20 - i * 3, y - 72 - i * 26, cx - 40, y - 72 - i * 26]); ctx.fill(); });
+          this._person(ctx, cx - 6, y - 30, { pose: 'senta', suit: '#0f766e', skin: '#f1c7a3', hair: '#e8c170', arm: 1.6, shades: true, hat: '#fef3c7' });
+          this._tag(ctx, s.item, cx, y - 320, t); break;
+        }
+        case 'infantil': {   // cadeirinha infantil com guarda-sol
+          const cx = sx;
+          ctx.strokeStyle = '#6b5a45'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx + 30, y + 20); ctx.lineTo(cx + 30, y - 140); ctx.stroke();
+          this._umbrella(ctx, cx + 30, y - 140, 80, ['#f472b6', '#fef08a']);
+          ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx - 26, y + 34); ctx.lineTo(cx + 6, y - 10); ctx.moveTo(cx + 26, y + 34); ctx.lineTo(cx - 10, y - 10); ctx.stroke();
+          ctx.fillStyle = '#38bdf8'; U.poly(ctx, [cx - 30, y - 10, cx + 16, y - 10, cx + 6, y - 60, cx - 36, y - 56]); ctx.fill();
+          this._person(ctx, cx - 6, y + 4, { pose: 'senta', s: 0.6, suit: '#f97316', shirt: '#fde68a', skin: '#c98a5e', hair: '#3b2414', arm: 1.2 + Math.sin(t * 4) * 0.4 });
+          ctx.fillStyle = '#ef4444'; U.poly(ctx, [cx + 50, y + 30, cx + 80, y + 30, cx + 76, y + 6, cx + 54, y + 6]); ctx.fill();   // baldinho
+          this._tag(ctx, s.item, cx, y - 260, t); break;
+        }
+        case 'esteira': {   // esteira de praia, pessoa deitada lendo
+          const cx = sx;
+          for (let i = 0; i < 9; i++) { ctx.fillStyle = i % 2 ? '#0ea5e9' : '#f0f9ff'; ctx.fillRect(cx - 110 + i * 24, y + 20, 24, 18); }
+          this._person(ctx, cx, y + 22, { pose: 'deita', suit: '#e11d48', top: true, skin: '#a86a45', hair: '#111', arm: 0.4 });
+          ctx.fillStyle = '#fef3c7'; ctx.save(); ctx.translate(cx - 110, y - 18); ctx.rotate(-0.5); ctx.fillRect(-18, -12, 36, 24); ctx.restore();   // livro
+          this._tag(ctx, s.item, cx, y - 200, t); break;
+        }
+        case 'short': {   // saída de praia: short de renda
+          const walk = Math.sin(t * 4);
+          this._person(ctx, sx, y + 4, { suit: '#db2777', top: true, shorts: '#f8fafc', lace: true, skin: '#c98a5e', hair: '#3b2414', long: true, arm: 0.3 + walk * 0.2, leg: walk * 0.35, hat: '#fde68a', shades: true });
+          this._tag(ctx, s.item, sx, y - 330, t); break;
+        }
+      }
+      ctx.restore();
+    }
+
     // banhista sob o guarda-sol; quando quer mate, levanta a mão e grita
     _customer(ctx, cu, sx, t) {
       const y = GY - 70;
