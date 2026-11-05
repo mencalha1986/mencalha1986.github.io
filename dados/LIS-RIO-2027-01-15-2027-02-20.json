@@ -4,14 +4,170 @@
   "destino": "RIO",
   "ida": "2027-01-15",
   "volta": "2027-02-20",
-  "issue": 5
+  "issue": 4
  },
- "atualizado": null,
- "tentativa": "2026-11-05T17:03:44.409Z",
- "erro": "Nenhum voo encontrado.",
- "voos": [],
- "escolhas": null,
- "historico": [],
+ "atualizado": "2026-11-05T22:05:43.939Z",
+ "tentativa": "2026-11-05T22:05:43.939Z",
+ "erro": null,
+ "voos": [
+  {
+   "saida": "08:50",
+   "chegada": "21:20",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 930,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "4h 20 min GRU",
+   "brl": 5543,
+   "eur": 899
+  },
+  {
+   "saida": "08:50",
+   "chegada": "22:00",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 970,
+   "sai": "LIS",
+   "chega": "SDU",
+   "paradas": 1,
+   "detalhe": "5h GRU",
+   "brl": 5570,
+   "eur": 903
+  },
+  {
+   "saida": "08:50",
+   "chegada": "21:10",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 920,
+   "sai": "LIS",
+   "chega": "SDU",
+   "paradas": 1,
+   "detalhe": "Mudança de aeroporto",
+   "brl": 5596,
+   "eur": 907
+  },
+  {
+   "saida": "14:35",
+   "chegada": "01:00⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 805,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "2h 10 min GRU",
+   "brl": 5790,
+   "eur": 939
+  },
+  {
+   "saida": "09:20",
+   "chegada": "20:10",
+   "companhia": "Azul / Tap Air Portugal",
+   "operador": "EUROATLANTIC Airways",
+   "duracao": 830,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "2h 25 min VCP",
+   "brl": 6646,
+   "eur": 1078
+  },
+  {
+   "saida": "12:10",
+   "chegada": "00:25⁺¹",
+   "companhia": "Azul",
+   "operador": "",
+   "duracao": 915,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 35 min VCP",
+   "brl": 6998,
+   "eur": 1135
+  },
+  {
+   "saida": "06:30",
+   "chegada": "18:50",
+   "companhia": "Iberia",
+   "operador": "",
+   "duracao": 920,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 35 min MAD",
+   "brl": 7655,
+   "eur": 1241
+  },
+  {
+   "saida": "10:00",
+   "chegada": "21:55",
+   "companhia": "Tap Air Portugal",
+   "operador": "",
+   "duracao": 895,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 30 min OPO",
+   "brl": 7678,
+   "eur": 1245
+  },
+  {
+   "saida": "13:00",
+   "chegada": "20:05",
+   "companhia": "Tap Air Portugal / Gol",
+   "operador": "",
+   "duracao": 605,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 0,
+   "detalhe": "",
+   "brl": 7928,
+   "eur": 1285
+  },
+  {
+   "saida": "23:20",
+   "chegada": "06:30⁺¹",
+   "companhia": "Tap Air Portugal / Gol",
+   "operador": "",
+   "duracao": 610,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 0,
+   "detalhe": "",
+   "brl": 8853,
+   "eur": 1435
+  }
+ ],
+ "escolhas": {
+  "barato": 0,
+  "rapido": 2,
+  "direto": 8
+ },
+ "historico": [
+  {
+   "quando": "2026-11-05T22:05:36.308Z",
+   "brl": 5543,
+   "eur": 899,
+   "direto": 7928,
+   "razoavelEur": 899,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-05T22:05:43.939Z",
+   "brl": 5543,
+   "eur": 899,
+   "direto": 7928,
+   "razoavelEur": 899,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  }
+ ],
  "links": {
   "brl": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202027-01-15%20through%202027-02-20&hl=pt-BR&gl=BR&curr=BRL",
   "eur": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202027-01-15%20through%202027-02-20&hl=pt-BR&gl=BR&curr=EUR"
