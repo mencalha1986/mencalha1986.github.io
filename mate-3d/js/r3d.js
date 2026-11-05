@@ -13,6 +13,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const CNB = window.CNB, U = CNB.U;
 const PXM = CNB.World.PXM, GY = CNB.World.GY;
@@ -305,21 +306,26 @@ class R3D {
   _makeVendor() {
     const OR = '#f26a1b';
     const p = new Person('homem', { Shirt: OR, Pants: OR, Socks: '#f8fafc', Hair: '#1a120c' });
-    const tex = boxTex(), side = mat(0xffffff, { map: tex, roughness: 0.55 }), plain = mat(0xf26a1b, { roughness: 0.55 }), lid = mat(0xe0e3e7, { metalness: 0.6, roughness: 0.3 });
-    const box = () => { const g = new THREE.Group();
-      const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.36, 0.24), [side, side, plain, plain, side, side]); g.add(b);
-      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.352, 0.022, 0.252), mat(0xd9561a)); edge.position.y = 0.17; g.add(edge);
-      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), lid); top.position.set(0, 0.195, 0); g.add(top);
-      const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.07, 8), lid); tap.rotation.x = Math.PI / 2; tap.position.set(0, -0.12, 0.15); g.add(tap);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), mat(0x1f2328)); ring.position.set(0, 0.2, 0); ring.rotation.x = Math.PI / 2; g.add(ring);
+    const tex = boxTex(), side = mat(0xffffff, { map: tex, roughness: 0.45 }), plain = mat(0xf26a1b, { roughness: 0.45 }), lid = mat(0xe0e3e7, { metalness: 0.7, roughness: 0.25 }), dark = mat(0x15171a, { roughness: 0.6 });
+    // caixa térmica: cantos arredondados, tampa com borda, torneirinha, alça de engate em cima
+    const box = (sd) => { const g = new THREE.Group();
+      const b = new THREE.Mesh(new RoundedBoxGeometry(0.32, 0.36, 0.24, 4, 0.035), [side, side, plain, plain, side, side]); g.add(b);
+      const lidM = new THREE.Mesh(new RoundedBoxGeometry(0.33, 0.035, 0.25, 3, 0.012), mat(0xe85f12, { roughness: 0.4 })); lidM.position.y = 0.19; g.add(lidM);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.035, 18), lid); cap.position.set(0, 0.22, 0); g.add(cap);
+      const tap = new THREE.Group(); const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.06, 10), lid); tb.rotation.x = Math.PI / 2; tap.add(tb);
+      const tv = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.035, 0.02), lid); tv.position.set(0, 0.02, 0.02); tap.add(tv); tap.position.set(sd * 0.165, -0.11, 0); tap.rotation.y = sd * Math.PI / 2; g.add(tap);
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.007, 6, 14), dark); hook.position.set(-sd * 0.09, 0.235, 0); hook.rotation.y = Math.PI / 2; g.add(hook);
       return shadowAll(g); };
-    const g1 = box(), g2 = box(); g1.position.set(-0.36, 0.86, 0.04); g2.position.set(0.36, 0.86, 0.04); g1.rotation.y = 0.12; g2.rotation.y = -0.12;
-    g1.userData.galao = g2.userData.galao = true; p.root.add(g1, g2);
-    // alças pretas cruzadas (ombro → caixa do outro lado), pela frente e pelas costas
-    const strapMat = mat(0x15171a, { roughness: 0.6 });
-    const strap = (x0, x1, z) => { const a = new THREE.Vector3(x0, 1.05, z), b2 = new THREE.Vector3(x1, 1.47, z * 0.9), len = a.distanceTo(b2);
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.045, len, 0.012), strapMat); m.position.copy(a).lerp(b2, 0.5); m.lookAt(b2); m.rotateX(Math.PI / 2); m.userData.galao = true; return m; };
-    [strap(-0.36, 0.14, -0.13), strap(0.36, -0.14, -0.13), strap(-0.36, 0.14, 0.13), strap(0.36, -0.14, 0.13)].forEach((m) => p.root.add(m));
+    const g1 = box(-1), g2 = box(1);
+    const piv1 = new THREE.Group(), piv2 = new THREE.Group();   // pivô no ombro: a caixa balança pendurada
+    piv1.position.set(-0.3, 1.12, 0.02); piv2.position.set(0.3, 1.12, 0.02);
+    g1.position.set(-0.06, -0.3, 0); g2.position.set(0.06, -0.3, 0); piv1.add(g1); piv2.add(g2);
+    piv1.userData.galao = piv2.userData.galao = true; p.root.add(piv1, piv2); p.boxes = [piv1, piv2];
+    // alças pretas transversais: saem da caixa, sobem pelo peito, passam no ombro do outro lado e descem pelas costas
+    const strapLoop = (sd) => {
+      const pts = [[sd * 0.33, 0.99, 0.05], [sd * 0.17, 1.16, 0.115], [0, 1.31, 0.12], [-sd * 0.1, 1.43, 0.08], [-sd * 0.12, 1.47, -0.01], [-sd * 0.1, 1.42, -0.1], [0, 1.3, -0.125], [sd * 0.17, 1.15, -0.115], [sd * 0.33, 0.99, -0.05]].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.011, 6, false), dark); tube.scale.set(1, 1, 1); tube.userData.galao = true; return tube; };
+    p.root.add(strapLoop(-1), strapLoop(1));
     // nome nas costas da camisa
     const back = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.2), new THREE.MeshBasicMaterial({ map: shirtTex(), transparent: true, depthWrite: false }));
     back.position.set(0, 1.3, -0.135); back.rotation.y = Math.PI; p.root.add(back); p.backPrint = back;
@@ -506,6 +512,9 @@ class R3D {
     this.vx = U.damp(this.vx || 0, sel ? sel.side * 1.0 : 0, 6, dt);
     this.vry = this.vry === undefined ? Math.PI : U.damp(this.vry, sel ? sel.side * Math.PI / 2 : Math.PI, 7, dt);
     P.root.position.set(this.vx, jump, vz); P.root.rotation.y = this.vry;
+    if (P.boxes) { const sw = Math.sin(t * 9.5), mv = g.mode === 'playing' ? 1 : 0.3;   // caixas balançam com o passo
+      P.boxes[0].rotation.x = sw * 0.12 * mv; P.boxes[1].rotation.x = -sw * 0.12 * mv; P.boxes[0].rotation.z = -0.04 + Math.abs(sw) * 0.03 * mv; P.boxes[1].rotation.z = 0.04 - Math.abs(sw) * 0.03 * mv;
+      P.boxes[0].position.y = P.boxes[1].position.y = 1.12 + Math.abs(Math.cos(t * 9.5)) * 0.015 * mv; }
     let anim = 'walk', spd = 1;
     if (g.mode === 'title') { anim = 'walk'; spd = 0.9; }
     else if (v.dead) anim = 'death';
