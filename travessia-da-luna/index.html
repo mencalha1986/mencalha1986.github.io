@@ -140,6 +140,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .opt input{width:18px;height:18px;accent-color:var(--coral)}
 .go{font-family:var(--display);font-size:24px;letter-spacing:.02em;background:var(--coral);border:0;border-radius:16px;padding:14px 26px;cursor:pointer;box-shadow:0 6px 0 #b8204b;transition:transform .1s,box-shadow .1s}
 .go:active{transform:translateY(4px);box-shadow:0 2px 0 #b8204b}
+.podium{display:flex;flex-direction:column;gap:4px;background:var(--glass);border:1px solid var(--edge);border-radius:14px;padding:10px 14px;font-weight:800;font-size:15px}.podium b{color:var(--sun);font-family:var(--display);font-weight:400;font-size:18px}
 .auto-r{font-weight:800;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .stats div{background:var(--glass);border:1px solid var(--edge);border-radius:14px;padding:12px;text-align:center}
@@ -152,21 +153,78 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   #top{left:50%;width:calc(100vw - 32px)}
   #portrait{padding:6px 12px 6px 6px}
   #face{width:42px;height:42px;font-size:26px}
-  #panel{top:auto;left:0;right:0;bottom:0;width:auto;border-radius:18px 18px 0 0;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(12px,env(safe-area-inset-left,0px));gap:8px}
-  #grid{display:flex;overflow-x:auto;overflow-y:hidden;padding-bottom:2px}
-  .gift{flex:0 0 118px}
-  #feed,.note{display:none}
   .phead h2{font-size:18px}
   .cols{grid-template-columns:1fr}
   .stats{grid-template-columns:repeat(2,1fr)}
   #banner{top:30%}
   #bIcon{font-size:48px}
 }
+/* ===== Formato TikTok LIVE: palco 9:16 (540×960 lógico, escalado para caber) ===== */
+body{background:#05040d}
+#app{position:fixed;left:50%;top:50%;width:540px;height:960px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center;overflow:hidden;background:var(--night);--panelW:0px;--panelH:0px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+#app #stage{position:absolute}
+#app #touch{display:none!important}
+#app #top{top:84px;left:12px;right:12px;width:auto;min-width:0;transform:none;gap:6px}
+#app #portrait{top:212px;left:12px;padding:6px 12px 6px 6px}
+#app #face{width:42px;height:42px;font-size:26px}
+#app #banner{left:50%;top:30%;width:500px}
+#app #bFx{font-size:46px}
+#app #worldCard{left:50%;width:500px}
+#app #wcName{font-size:54px}
+#app #sub{left:50%;bottom:300px;width:500px}
+#app .bar{margin-top:8px}
+#app #sub span{font-size:17px}
+#app .screen{position:absolute}
+#app .card{gap:12px}
+#app .card h1{font-size:54px}
+#app .lead{font-size:15px}
+#app .cols{grid-template-columns:1fr}
+#app .stats{grid-template-columns:repeat(2,1fr)}
+#app .box ul{font-size:13px}
+#app .go{font-size:21px;padding:12px 20px}
+/* ranking + cabo de guerra */
+#rank{top:282px;left:12px;width:196px;background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:9px 11px;backdrop-filter:blur(8px)}
+#rank h4,#glist h4{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.03em;color:var(--sun)}
+#rankList{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:4px}
+#rankList li{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;white-space:nowrap}
+#rankList li.empty{color:var(--muted);font-weight:600}
+#rankList .md{flex:0 0 20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#1a1420}
+#rankList .nm{flex:1;overflow:hidden;text-overflow:ellipsis}
+#rankList .pt{color:var(--sun);font-variant-numeric:tabular-nums}
+#app #tug .tbar{height:8px}
+#app .tlbl{font-size:11px}
+/* últimos presentes */
+#feed{top:438px;left:12px;width:196px;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:11.5px}
+#feed li{background:rgba(18,14,44,.72);border:1px solid var(--edge);border-radius:9px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fin .3s}
+#feed li b{font-weight:800}
+/* lista de presentes na tela */
+#glist{top:212px;right:12px;width:200px;background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:9px 10px;backdrop-filter:blur(8px)}
+.gr{display:flex;align-items:center;gap:7px;padding:2px 0;border-top:1px solid rgba(255,255,255,.06)}
+.gr img{width:26px;height:26px;object-fit:contain;flex:0 0 26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.gr div{min-width:0;line-height:1.1}
+.gr b{display:block;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr span{font-size:11px;font-weight:800}
+.gr.help span{color:var(--help)} .gr.sab span{color:var(--sab)} .gr.end span{color:#d58cff}
+.gr.flash{animation:grf .9s}
+@keyframes grf{30%{background:rgba(255,210,63,.25);border-radius:8px}}
+/* painel do operador (fora do palco) */
+#panel{top:12px!important;bottom:12px!important;right:12px!important;left:auto!important;width:300px!important;border-radius:20px!important}
+.livewin{padding:9px;font-size:13px;background:var(--coral)!important;color:#fff;border:0!important}
+.glbl{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:-6px}
+.gift .ic img{width:28px;height:28px;object-fit:contain}
+#panel #grid{overflow:auto}
+body.live #panel,body.live #showPanel{display:none!important}
+body.live #app{box-shadow:none}
+#app.calm .hud{opacity:0;transition:opacity .3s}
+#app .hud{transition:opacity .3s}
+body.live #startScreen .cols .box:first-child{display:none}
+#app #startScreen{background:radial-gradient(ellipse at 50% 30%,rgba(16,14,38,.7),rgba(16,14,38,.95))}
 @media (prefers-reduced-motion:reduce){#banner.show{animation-duration:2.8s}#face.pop{animation:none}}
 </style>
 </head>
 <body>
 
+<div id="app">
 <div id="stage"></div>
 <div id="vig"></div><div id="cold"></div><div id="dvig"></div><div id="lbox"><i></i><i></i></div><div id="flash"></div>
 
@@ -184,26 +242,13 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 <div class="hud" id="banner"><div id="bIcon">🌹</div><div id="bFrom"></div><div id="bFx"></div><div id="bSpecial"></div><div id="bCombo"></div></div>
 <div class="hud" id="worldCard"><div id="wcNum">Mundo 1</div><div id="wcName">Ilhas do Amanhecer</div></div>
+<div class="hud" id="rank"><h4>QUEM MAIS MANDOU</h4><ol id="rankList"><li class="empty">Mande um presente!</li></ol>
+  <div id="tug"><div class="tbar"><i id="tugHelp"></i></div><div class="tlbl"><span class="h">Ajudas <span id="nHelp">0</span></span><span class="s"><span id="nSab">0</span> Sabotagens</span></div></div></div>
+<ol class="hud" id="feed"></ol>
+<div class="hud" id="glist"><h4>MANDE E VEJA</h4><div id="glistRows"></div></div>
 <div class="hud" id="sub"><span><b>Luna:</b> <i id="subText"></i></span></div>
 
-<aside id="panel" aria-label="Presentes">
-  <div class="phead">
-    <h2>Presentes</h2>
-    <div class="tools">
-      <button class="tbtn" id="bAuto" aria-pressed="false" title="Luna anda sozinha">Auto<kbd>T</kbd></button>
-      <button class="tbtn" id="bVoice" aria-pressed="true" title="Voz da Luna">Voz<kbd>V</kbd></button>
-      <button class="tbtn" id="bHide" title="Esconder painel">Ocultar<kbd>H</kbd></button>
-    </div>
-  </div>
-  <div class="vrow" id="liveRow" hidden><label for="wsUrl">Live</label><input id="wsUrl" value="ws://localhost:21213/" spellcheck="false"><button class="tbtn" id="wsBtn">Conectar</button></div>
-  <div class="wsline">TikFinity: <span id="wsStat">desligado</span></div>
-  <div class="vrow"><label for="voiceSel">Voz</label><select id="voiceSel"></select><button class="tbtn" id="voiceTest">Ouvir</button></div>
-  <div id="tug"><div class="tbar"><i id="tugHelp"></i></div><div class="tlbl"><span class="h">Ajudas <span id="nHelp">0</span></span><span class="s"><span id="nSab">0</span> Sabotagens</span></div></div>
-  <div id="grid"></div>
-  <ol id="feed"></ol>
-  <p class="note">Clique num presente para testar. Na live, ligue cada presente do TikTok à tecla indicada (por exemplo, com o TikFinity) e o efeito acontece sozinho.</p>
-</aside>
-<button id="showPanel" hidden>Presentes</button>
+
 
 <div id="touch">
   <div class="pad"><button data-k="KeyA" aria-label="Esquerda">◀</button><button data-k="KeyW" aria-label="Andar">▲</button><button data-k="KeyD" aria-label="Direita">▶</button></div>
@@ -214,7 +259,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   <div class="card">
     <div class="eyebrow">Jogo em primeira pessoa para live do TikTok</div>
     <h1>A Travessia <em>da Luna</em></h1>
-    <p class="lead">Luna precisa atravessar plataformas suspensas sobre o abismo até o farol no fim do caminho. Quem assiste decide o clima: alguns presentes ajudam, outros atrapalham, e ela reage a tudo em voz alta.</p>
+    <p class="lead">Luna precisa atravessar as plataformas sobre o abismo até o farol. <b>Você decide o clima:</b> mande presentes na live para ajudar ou atrapalhar — e ela reage a tudo em voz alta.</p>
     <div class="cols">
       <div class="box"><h3>Controles</h3><ul>
         <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar · arraste para olhar</li>
@@ -232,7 +277,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     <div class="row">
       <button class="go" id="goBtn">Começar a travessia</button>
       <label class="opt"><input type="checkbox" id="optVoice" checked> Voz da Luna</label>
-      <label class="opt"><input type="checkbox" id="optAuto"> Andar sozinha</label>
+      <label class="opt"><input type="checkbox" id="optAuto" checked> Andar sozinha</label>
     </div>
   </div>
 </div>
@@ -248,6 +293,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
       <div><b id="wHelp">0</b><span>Ajudas</span></div>
       <div><b id="wSab">0</b><span>Sabotagens</span></div>
     </div>
+    <div id="winPod"></div>
     <div class="row"><button class="go" id="againBtn">Jogar de novo</button><span class="auto-r" id="winCount"></span></div>
   </div>
 </div>
@@ -263,9 +309,31 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
       <div><b id="lFalls">0</b><span>Quedas</span></div>
       <div><b id="lSab">0</b><span>Sabotagens</span></div>
     </div>
+    <div id="losePod"></div>
     <div class="row"><button class="go" id="againBtn2">Jogar de novo</button><span class="auto-r" id="loseCount"></span></div>
   </div>
 </div>
+</div><!-- /app -->
+
+<aside id="panel" aria-label="Presentes">
+  <div class="phead">
+    <h2>Presentes</h2>
+    <div class="tools">
+      <button class="tbtn" id="bAuto" aria-pressed="false" title="Luna anda sozinha">Auto<kbd>T</kbd></button>
+      <button class="tbtn" id="bVoice" aria-pressed="true" title="Voz da Luna">Voz<kbd>V</kbd></button>
+      <button class="tbtn" id="bHide" title="Esconder painel">Ocultar<kbd>H</kbd></button>
+    </div>
+  </div>
+  <div class="vrow" id="liveRow" hidden><label for="wsUrl">Live</label><input id="wsUrl" value="ws://localhost:21213/" spellcheck="false"><button class="tbtn" id="wsBtn">Conectar</button></div>
+  <div class="wsline">TikFinity: <span id="wsStat">desligado</span></div>
+  <div class="vrow"><label for="voiceSel">Voz</label><select id="voiceSel"></select><button class="tbtn" id="voiceTest">Ouvir</button></div>
+  <button class="tbtn livewin" id="liveWinBtn">📺 Abrir janela da live (só o jogo)</button>
+  <p class="note" id="liveWinNote">Capture a janela nova no TikTok LIVE Studio. Esta aqui vira o controle.</p>
+  <div class="glbl">Testar presentes (clique ou tecla)</div>
+  <div id="grid"></div>
+  <p class="note">Clique num presente para testar. Na live, ligue cada presente do TikTok à tecla indicada (por exemplo, com o TikFinity) e o efeito acontece sozinho.</p>
+</aside>
+<button id="showPanel" hidden>Presentes</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -728,7 +796,7 @@ function say(key,mood){
 /* ---------- Estado ---------- */
 let state='menu',clock=0,startClock=0,restartAt=0;
 const P={pos:new V3(0,0,-2),vel:new V3(),onGround:false,seg:null,lastGround:0,jumpReq:-9,cp:0,fly:null,shake:0,bob:0,backup:false,stuckSaid:0,hasLanded:true};
-let yaw=0,pitch=0,lastDrag=-9,auto=false;
+let yaw=0,pitch=0,lastDrag=-9,auto=true;
 const FX={storm:0,rain:0,snow:0,wind:0,windDir:1,sun:0,shield:0,night:0,quake:0,rainbow:0,blizzard:0};
 const I={storm:0,rain:0,snow:0,wind:0,sun:0,night:0,shield:0,rainbow:0,blizzard:0};
 const on=k=>FX[k]>clock;
@@ -742,31 +810,48 @@ function progress(){return -P.pos.z;}
 function resetGame(){
   P.pos.set(0,0,-2);P.vel.set(0,0,0);P.cp=0;P.fly=null;P.seg=null;P.backup=false;
   yaw=0;pitch=0;for(const k in FX)if(k!=='windDir')FX[k]=0;strikes.length=0;
-  stats.help=stats.sab=stats.falls=0;startClock=clock;$('#feed').innerHTML='';updateTug();
+  stats.help=stats.sab=stats.falls=0;startClock=clock;$('#feed').innerHTML='';updateTug();fans.clear();renderRank();
 }
 
 /* ---------- Presentes ---------- */
 const GIFTS=[
-  {key:'1',gift:'Rosa',icon:'🌹',fx:'sol',label:'Sol',team:'help'},
-  {key:'2',gift:'Donut',icon:'🍩',fx:'chuva',label:'Chuva',team:'sab'},
-  {key:'3',gift:'Sorvete',icon:'🍦',fx:'neve',label:'Nevasca',team:'sab'},
-  {key:'4',gift:'Chapéu',icon:'🎩',fx:'vento',label:'Ventania',team:'sab'},
-  {key:'5',gift:'Coração',icon:'💗',fx:'escudo',label:'Escudo arco-íris',team:'help'},
-  {key:'6',gift:'Galáxia',icon:'🌌',fx:'dragao',label:'Dragão',team:'sab'},
-  {key:'7',gift:'Unicórnio',icon:'🦄',fx:'raio',label:'Raios',team:'sab'},
-  {key:'8',gift:'Foguete',icon:'🚀',fx:'jetpack',label:'Jetpack',team:'help'},
-  {key:'9',gift:'Leão',icon:'🦁',fx:'terremoto',label:'Terremoto',team:'sab'},
-  {key:'0',gift:'Universo',icon:'🪐',fx:'teleporte',label:'Teleporte',team:'help'},
+  {key:'1',gift:'Rosa',img:'img/presentes/rose.webp',coins:1,icon:'🌹',fx:'sol',label:'Sol',team:'help'},
+  {key:'2',gift:'TikTok',img:'img/presentes/tiktok.webp',coins:1,icon:'🎵',fx:'jetpack',label:'Jetpack',team:'help'},
+  {key:'3',gift:'Coração com os dedos',img:'img/presentes/finger-heart.webp',coins:5,icon:'🫰',fx:'escudo',label:'Escudo arco-íris',team:'help'},
+  {key:'4',gift:'Pistola de dinheiro',img:'img/presentes/money-gun.png',coins:500,icon:'💸',fx:'teleporte',label:'Teleporte',team:'help'},
+  {key:'5',gift:'GG',img:'img/presentes/gg.webp',coins:1,icon:'🆖',fx:'vento',label:'Ventania',team:'sab'},
+  {key:'6',gift:'Casquinha',img:'img/presentes/ice-cream-cone.webp',coins:1,icon:'🍦',fx:'neve',label:'Nevasca',team:'sab'},
+  {key:'7',gift:'Perfume',img:'img/presentes/perfume.webp',coins:20,icon:'⚡',fx:'raio',label:'Raios',team:'sab'},
+  {key:'8',gift:'Rosquinha',img:'img/presentes/doughnut.webp',coins:30,icon:'🍩',fx:'chuva',label:'Chuva',team:'sab'},
+  {key:'9',gift:'Corgi',img:'img/presentes/corgi.webp',coins:299,icon:'🐶',fx:'terremoto',label:'Terremoto',team:'sab'},
+  {key:'0',gift:'Galáxia',img:'img/presentes/galaxy.webp',coins:1000,icon:'🌌',fx:'dragao',label:'Dragão: fim de jogo',team:'sab'},
 ];
 const FAKE=['@biazinha.gamer','@pedrao_lives','@ju.mendes','@kaique77','@lari_sz','@dudu.fps','@mari.bolo','@tio_nando','@gabi.rj','@caio.zn'];
 const grid=$('#grid');
 GIFTS.forEach(g=>{
   const b=document.createElement('button');b.className='gift '+g.team;b.id='gift-'+g.fx;
-  b.innerHTML=`<span class="ic">${g.icon}</span><span class="gn">${g.gift}</span><span class="fx">${g.label}</span><kbd>${g.key}</kbd>`;
+  b.innerHTML=`<span class="ic"><img src="${g.img}" alt=""></span><span class="gn">${g.gift}</span><span class="fx">${g.label}</span><kbd>${g.key}</kbd>`;
   b.title=(g.team==='help'?'Ajuda':'Atrapalha')+': '+g.label;
-  b.addEventListener('click',()=>{triggerGift(g,FAKE[Math.floor(Math.random()*FAKE.length)]+' (teste)');b.blur();});
+  b.addEventListener('click',()=>{sendGift(g,FAKE[Math.floor(Math.random()*FAKE.length)]);b.blur();});
   grid.appendChild(b);
+  // lista que aparece na live
+  const r=document.createElement('div');r.className='gr '+(g.fx==='dragao'?'end':g.team);r.id='gr-'+g.fx;
+  r.innerHTML=`<img src="${g.img}" alt=""><div><b></b><span></span></div>`;r.querySelector('b').textContent=g.gift;r.querySelector('span').textContent=(g.team==='help'?'↑ ':'↓ ')+g.label;
+  $('#glistRows').appendChild(r);
 });
+/* ranking: quem mais mandou (em moedas) */
+const fans=new Map();
+function addFan(who,g,count){if(!who)return;const n=who.replace(' (teste)','');const f=fans.get(n)||{name:n,pts:0,help:0,sab:0};f.pts+=(g.coins||1)*(count||1);g.team==='help'?f.help++:f.sab++;fans.set(n,f);renderRank();}
+function topFans(n){return[...fans.values()].sort((a,b)=>b.pts-a.pts).slice(0,n);}
+function renderRank(){const ol=$('#rankList');const top=topFans(3);ol.innerHTML='';if(!top.length){ol.innerHTML='<li class="empty">Mande um presente!</li>';return;}
+  const md=['#ffd23f','#d6dbe4','#d08a4a'];top.forEach((f,i)=>{const li=document.createElement('li');li.innerHTML=`<span class="md" style="background:${md[i]}">${i+1}</span><span class="nm"></span><span class="pt"></span>`;li.querySelector('.nm').textContent=f.name;li.querySelector('.pt').textContent=f.pts;ol.appendChild(li);});}
+function rankHTML(){const top=topFans(3);if(!top.length)return'';return'<div class="podium"><b>Quem mais mandou presente</b>'+top.map((f,i)=>`<span>${['🥇','🥈','🥉'][i]} ${f.name.replace(/[<>&]/g,'')} · ${f.pts}</span>`).join('')+'</div>';}
+/* janela da live separada: o controle manda os comandos por BroadcastChannel */
+const IS_LIVE=new URLSearchParams(location.search).get('modo')==='live';
+const BC='BroadcastChannel' in window?new BroadcastChannel('luna-live'):null;
+let liveWinOpen=false;
+function sendGift(g,who){if(liveWinOpen&&BC){BC.postMessage({t:'gift',fx:g.fx,who});feedPreview(g,who);return;}if(state==='menu'&&IS_LIVE)start();triggerGift(g,who+' (teste)');}
+function feedPreview(g,who){const li=document.createElement('li');li.textContent='→ live: '+who+' · '+g.gift;const f=$('#feed');f.prepend(li);while(f.children.length>3)f.lastChild.remove();}
 let lastGift={fx:null,t:-9,n:0};
 function updateTug(){const t=stats.help+stats.sab;$('#tugHelp').style.width=(t?stats.help/t*100:50)+'%';$('#nHelp').textContent=stats.help;$('#nSab').textContent=stats.sab;}
 function triggerGift(g,who,count){
@@ -774,18 +859,19 @@ function triggerGift(g,who,count){
   if(lastGift.fx===g.fx&&clock-lastGift.t<4)lastGift.n++;else lastGift.n=1;
   if(count>1)lastGift.n=Math.max(lastGift.n,count);
   lastGift.fx=g.fx;lastGift.t=clock;
-  g.team==='help'?stats.help++:stats.sab++;updateTug();
+  g.team==='help'?stats.help++:stats.sab++;updateTug();addFan(who,g,count);
+  const row=$('#gr-'+g.fx);if(row){row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash');}
   const special=g.fx==='dragao'?(summonDragon(who),'FIM DE JOGO!'):applyFx(g);
   // banner
-  $('#bIcon').textContent=g.icon;
-  $('#bFrom').textContent=(who||'O chat')+' enviou '+g.gift;
+  $('#bIcon').innerHTML=`<img src="${g.img}" alt="" style="width:84px;height:84px;object-fit:contain">`;
+  $('#bFrom').textContent=(who||'O chat').replace(' (teste)','')+' enviou '+g.gift+(count>1?' ×'+count:'');
   const bfx=$('#bFx');bfx.textContent=g.label.toUpperCase()+'!';bfx.className=g.team;
   $('#bSpecial').textContent=special||'';
   $('#bCombo').textContent=lastGift.n>1?'COMBO x'+lastGift.n:'';
   const bn=$('#banner');bn.classList.remove('show');void bn.offsetWidth;bn.classList.add('show');
-  const li=document.createElement('li');li.innerHTML=`<b></b> · ${g.icon} ${g.gift} → <span></span>`;
-  li.querySelector('b').textContent=who||'Chat';li.querySelector('span').textContent=g.label;
-  const feed=$('#feed');feed.prepend(li);while(feed.children.length>8)feed.lastChild.remove();
+  const li=document.createElement('li');li.innerHTML=`<b></b> · <span></span>`;
+  li.querySelector('b').textContent=(who||'Chat').replace(' (teste)','');const sp=li.querySelector('span');sp.textContent=g.label;sp.style.color=g.team==='help'?'var(--help)':'var(--sab)';
+  const feed=$('#feed');feed.prepend(li);while(feed.children.length>3)feed.lastChild.remove();
   g.team==='help'?tone([660,880,1320],.22,'sine',.12):tone([330,247],.25,'square',.06);
 }
 function applyFx(g){
@@ -971,8 +1057,8 @@ function lose(){
   state='lose';restartAt=clock+10;
   $('#lDist').textContent=Math.round(clamp(D.startD,0,FINISH));$('#lTime').textContent=fmt(clock-startClock);
   $('#lFalls').textContent=stats.falls;$('#lSab').textContent=stats.sab;
-  $('#loseLine').textContent=D.who.replace(' (teste)','')+' mandou a Galáxia e o dragão levou a Luna embora.';
-  $('#loseScreen').hidden=false;tone([392,330,262,196],.4,'triangle',.12);
+  $('#loseLine').textContent=(D.who||'Alguém').replace(' (teste)','')+' mandou a Galáxia e o dragão levou a Luna embora.';
+  $('#losePod').innerHTML=rankHTML();$('#loseScreen').hidden=false;tone([392,330,262,196],.4,'triangle',.12);
 }
 const angLerp=(a,b,k)=>{let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return a+d*Math.min(1,k);};
 
@@ -984,7 +1070,7 @@ addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(e.code==='Space')P.jumpReq=clock;
   if(e.repeat)return;
-  const g=GIFTS.find(g=>g.key===e.key);if(g){triggerGift(g,null);return;}
+  const g=GIFTS.find(g=>g.key===e.key);if(g){sendGift(g,FAKE[Math.floor(Math.random()*FAKE.length)]);return;}
   if(e.code==='KeyT')setAuto(!auto);
   if(e.code==='KeyV')setVoice(!voiceOn);
   if(e.code==='KeyH')togglePanel();
@@ -1006,12 +1092,12 @@ document.querySelectorAll('#touch button').forEach(b=>{
 function setAuto(v){auto=v;$('#bAuto').setAttribute('aria-pressed',v);$('#optAuto').checked=v;}
 function setVoice(v){voiceOn=v;$('#bVoice').setAttribute('aria-pressed',v);$('#optVoice').checked=v;if(!v)try{speechSynthesis.cancel()}catch(e){}}
 function togglePanel(){const pn=$('#panel');pn.hidden=!pn.hidden;$('#showPanel').hidden=!pn.hidden;layout();}
-$('#bAuto').onclick=()=>setAuto(!auto);$('#bVoice').onclick=()=>setVoice(!voiceOn);
+$('#bAuto').onclick=()=>{setAuto(!auto);if(liveWinOpen&&BC)BC.postMessage({t:'auto',v:auto});};$('#bVoice').onclick=()=>{const v=$('#bVoice').getAttribute('aria-pressed')!=='true';setVoice(v);if(liveWinOpen&&BC){BC.postMessage({t:'voice',v});setVoiceLocal(false);}};
 $('#bHide').onclick=togglePanel;$('#showPanel').onclick=togglePanel;
 $('#voiceSel').onchange=e=>{ptVoice=ptVoices.find(v=>v.name===e.target.value)||ptVoice;voicePref=e.target.value;try{localStorage.setItem('luna-voz',voicePref)}catch(err){}speak('Oi, chat! Essa é a minha voz agora. Gostaram?');};
 $('#voiceTest').onclick=()=>{const was=voiceOn;voiceOn=true;speak('Oi, chat! Eu sou a Luna e vou chegar no farol, nem que seja na marra!');voiceOn=was;};
 try{if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;setTimeout(pickVoice,500);setTimeout(pickVoice,1500);}}catch(e){}
-$('#optAuto').onchange=e=>setAuto(e.target.checked);$('#optVoice').onchange=e=>setVoice(e.target.checked);
+$('#optAuto').onchange=e=>setAuto(e.target.checked);setAuto(true);$('#optVoice').onchange=e=>setVoice(e.target.checked);
 function start(){initAudio();if(AC&&AC.state==='suspended')AC.resume();$('#startScreen').hidden=true;$('#winScreen').hidden=true;$('#loseScreen').hidden=true;D=null;curWorld=-1;restartAt=0;dragon.visible=false;luna.visible=false;hands.visible=true;$('#lbox').classList.remove('on');$('#dvig').style.opacity=0;resetGame();state='play';setTimeout(()=>say('start','😤'),400);}
 $('#goBtn').onclick=start;
 $('#againBtn').onclick=start;$('#againBtn2').onclick=start;
@@ -1099,7 +1185,7 @@ function win(){
   state='win';restartAt=clock+12;const t=clock-startClock;
   $('#wTime').textContent=fmt(t);$('#wFalls').textContent=stats.falls;$('#wHelp').textContent=stats.help;$('#wSab').textContent=stats.sab;
   $('#winLine').textContent=stats.sab>stats.help?'O chat tentou de tudo pra me derrubar, mas eu cheguei. Obrigada mesmo assim!':'Obrigada, chat! Até vocês que mandaram raio.';
-  $('#winScreen').hidden=false;say('win','🥳');tone([523,659,784,1046,1318],.3,'triangle',.12);
+  $('#winPod').innerHTML=rankHTML();$('#winScreen').hidden=false;say('win','🥳');tone([523,659,784,1046,1318],.3,'triangle',.12);
 }
 const fmt=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
 
@@ -1213,10 +1299,11 @@ function hud(dt){
 }
 
 function layout(){
-  const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
-  const pn=$('#panel'),mobile=w<=760;const root=document.documentElement.style;
-  if(mobile){root.setProperty('--panelW','0px');root.setProperty('--panelH',pn.hidden?'0px':pn.offsetHeight+'px');}
-  else{root.setProperty('--panelW',pn.hidden?'0px':'300px');root.setProperty('--panelH','0px');}
+  const pn=$('#panel'),showP=!IS_LIVE&&!pn.hidden,pw=showP?324:0,W=innerWidth,H=innerHeight;
+  const sc=Math.min((W-pw-(showP?16:0))/540,H/960);
+  const app=$('#app');app.style.setProperty('--s',sc);app.style.left=((W-pw)/2)+'px';
+  renderer.setPixelRatio(Math.min(2,(window.devicePixelRatio||1)*sc));
+  renderer.setSize(540,960,false);camera.aspect=540/960;camera.updateProjectionMatrix();
 }
 addEventListener('resize',layout);layout();
 
@@ -1227,15 +1314,15 @@ addEventListener('resize',layout);layout();
 const low=s=>String(s||'').trim().toLowerCase();
 const ALIASES={
   sol:{ids:[5655],names:['rose','rosa']},
+  jetpack:{ids:[5269],names:['tiktok']},
+  escudo:{ids:[],names:['finger heart','coração com os dedos','coracao com os dedos']},
+  teleporte:{ids:[7168],names:['money gun','pistola de dinheiro']},
+  vento:{ids:[],names:['gg']},
+  neve:{ids:[],names:['ice cream cone','casquinha','casquinha de sorvete','sorvete']},
+  raio:{ids:[],names:['perfume']},
   chuva:{ids:[5879],names:['doughnut','donut','rosquinha']},
-  neve:{ids:[],names:['ice cream cone','ice cream','casquinha','casquinha de sorvete','sorvete']},
-  vento:{ids:[],names:['hat and mustache','chapéu e bigode','top hat','cartola','chapéu']},
-  escudo:{ids:[],names:['finger heart','coração com os dedos','heart me','coração']},
+  terremoto:{ids:[],names:['corgi']},
   dragao:{ids:[11046],names:['galaxy','galáxia','galaxia']},
-  raio:{ids:[],names:['unicorn fantasy','fantasia de unicórnio','unicorn','unicórnio']},
-  jetpack:{ids:[],names:['rocket','foguete']},
-  terremoto:{ids:[],names:['lion','leão','leao']},
-  teleporte:{ids:[],names:['universe','universo']},
 };
 function findGift(name,id){const n=low(name);for(const g of GIFTS){const a=ALIASES[g.fx];if(!a)continue;if(id&&a.ids.includes(+id))return g;if(a.names.includes(n))return g;}return null;}
 const LIVE={ws:null,want:false,timer:0,seen:new Map()};
@@ -1263,15 +1350,32 @@ function handleLive(m){
   if(LIVE.seen.has(key))return;LIVE.seen.set(key,now);
   const g=findGift(d.giftName,d.giftId);
   if(!g){feedLine(who,(d.giftName||'Presente')+' → sem ação','#ff6464');return;}
+  if(state==='menu')start();
   triggerGift(g,who,Number(d.repeatCount)||1);
 }
-if(canLive){
+// janela da live (?modo=live): só o jogo; ela mesma recebe os presentes do TikFinity
+if(IS_LIVE){document.body.classList.add('live');$('#panel').hidden=true;
+  if(BC){BC.postMessage({t:'hello'});addEventListener('beforeunload',()=>BC.postMessage({t:'bye'}));
+    BC.onmessage=e=>{const m=e.data||{};if(m.t==='ping')BC.postMessage({t:'hello'});
+      if(m.t==='gift'){const g=GIFTS.find(x=>x.fx===m.fx);if(g){if(state==='menu')start();triggerGift(g,m.who);}}
+      if(m.t==='start')start();if(m.t==='auto')setAuto(m.v);if(m.t==='voice')setVoice(m.v);};}
+}else if(BC){
+  BC.onmessage=e=>{const m=e.data||{};
+    if(m.t==='hello'&&!liveWinOpen){liveWinOpen=true;LIVE.want=false;clearTimeout(LIVE.timer);try{if(LIVE.ws){LIVE.ws.onclose=null;LIVE.ws.close();}}catch(er){}
+      liveStat('na janela da live','on');if(master)master.gain.value=0;setVoiceLocal(false);$('#liveWinBtn').textContent='📺 Janela da live aberta';}
+    if(m.t==='bye'){liveWinOpen=false;$('#liveWinBtn').textContent='📺 Abrir janela da live (só o jogo)';if(master)master.gain.value=1;setVoiceLocal(true);if(canLive)liveConnect();}};
+  BC.postMessage({t:'ping'});
+}
+function setVoiceLocal(v){if(!v){try{speechSynthesis.cancel()}catch(e){}voiceOn=false;}else voiceOn=$('#bVoice').getAttribute('aria-pressed')==='true';}
+$('#liveWinBtn').onclick=()=>{const u=new URL(location.href);u.searchParams.set('modo','live');window.open(u.toString(),'luna-live','width=540,height=960');};
+if(canLive&&!IS_LIVE){
   $('#liveRow').hidden=false;
   try{const u=localStorage.getItem('luna-ws');if(u)$('#wsUrl').value=u;}catch(e){}
   $('#wsBtn').onclick=liveConnect;
   $('.note').textContent='Os presentes da live chegam pelo TikFinity. Clique num presente aqui para testar sem live.';
   liveConnect();
 }
+if(canLive&&IS_LIVE){try{const u=localStorage.getItem('luna-ws');if(u)$('#wsUrl').value=u;}catch(e){}liveConnect();}
 
 let last=performance.now()/1000;
 function frame(){
@@ -1280,6 +1384,7 @@ function frame(){
   if(state==='play')update(dt);
   if((state==='lose'||state==='win')&&restartAt){const left=Math.ceil(restartAt-clock);const t='Recomeçando em '+left+'s';$('#loseCount').textContent=t;$('#winCount').textContent=t;if(clock>=restartAt)start();}
   if(D&&(state==='dragon'||state==='lose')){dragonUpdate(dt);for(const s of segs){if(!s.move)continue;s.x=s.baseX+Math.sin(clock*s.move.speed+s.move.phase)*s.move.amp;s.mesh.position.x=s.x;}}
+  $('#app').classList.toggle('calm',state==='menu'||state==='win'||state==='lose');
   visuals(dt);cameraUpdate(dt);hud(dt);
   renderer.render(scene,camera);
 }
