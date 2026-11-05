@@ -148,7 +148,7 @@
         case 'engine': return `pane: volta ${def.amount} m`;
         case 'loop': return 'looping radical';
         case 'gameover': return 'MÍSSIL: explode o avião';
-        case 'follow': return 'caixa de paraquedas p/ você';
+        case 'follow': return `avião volta ${def.back || 3} m`;
         case 'shield': return `escudo ${def.duration}s (bloqueia míssil)`;
         case 'likes': return `${def.every} curtidas = +${def.amount} m`;
       }
@@ -274,7 +274,7 @@
       const sab = keys.filter((k) => ['wind', 'engine', 'birds', 'gameover'].includes(G[k].action));
       const fun = keys.filter((k) => !help.includes(k) && !sab.includes(k));
       const groups = [['AJUDA', '#4ade80', help], ['SABOTAGEM', '#f87171', sab], ['DIVERSÃO', '#38bdf8', fun]].filter((x) => x[2].length);
-      const rowH = 37, headH = 30, h = 58 + groups.length * headH + keys.length * rowH + 8;
+      const rowH = 72, headH = 30, h = 58 + groups.length * headH + keys.length * rowH + 8;
       ctx.save();
       glass(ctx, 718, y0, 326, h, 24, 0.82);
       ctx.textAlign = 'left'; ctx.font = `32px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 740, y0 + 40);
@@ -284,10 +284,10 @@
         y += headH;
         for (const k of list) {
           const def = G[k];
-          giftIcon(ctx, def.icon, 756, y + 17, 16, def.color);
-          ctx.textAlign = 'left'; ctx.font = `800 17px ${FU}`; ctx.fillStyle = '#fff';
-          ctx.fillText(U.truncate(def.tiktok || def.label, 24), 780, y + 14);
-          ctx.font = `700 14px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 32), 780, y + 32);
+          giftIcon(ctx, def.icon, 768, y + 34, 32, def.color);
+          ctx.textAlign = 'left'; ctx.font = `800 23px ${FU}`; ctx.fillStyle = '#fff';
+          ctx.fillText(U.truncate(def.tiktok || def.label, 20), 810, y + 30);
+          ctx.font = `700 18px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 24), 810, y + 54);
           y += rowH;
         }
       }

@@ -135,11 +135,12 @@
     }
     comboMul() { const c = this.cfg.combo; return Math.min(c.max, 1 + Math.max(0, this.combo - 1) * c.step); }
 
+    // NOVO SEGUIDOR: o avião volta um pouquinho (sem cancelar a ação em andamento)
     _follow(user) {
-      const w = this.world, p = this.plane, items = this.catalog.items;
-      w.chutes.push({ x: w.x + 160, y: p.y + 40, name: user, item: items.length ? U.choice(items) : null, catalog: this.catalog, seed: Math.random() });
+      const p = this.plane, back = (this.cfg.gifts.seguir && this.cfg.gifts.seguir.back) || 3;
+      p.wind = Math.max(p.wind || 0, back / 20); this.sabM += back;
       this.audio.chime(); this.fx.confetti(p.x, p.y, 40, 0.6);
-      this.hud.banner('NOVO SEGUIDOR!', `caixa de paraquedas para ${user}`, '#fe2c55', 2.4);
+      this.hud.banner('NOVO SEGUIDOR!', `${user} fez o avião voltar ${back} m`, '#fe2c55', 2.4);
       this.after(0.6, () => this.say('seguidor', { force: true }));
     }
 

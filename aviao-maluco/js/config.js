@@ -38,38 +38,21 @@ CNB.CONFIG = {
   gifts: {
     // --- AJUDA (empurram o avião) ---
     rose:     { tiktok: 'Rosa', coins: 1, img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 40, points: 1, color: '#ff4d6d', icon: 'rose', key: '1', demo: 30 },
-    tiktok:   { tiktok: 'TikTok', coins: 1, img: 'img/presentes/tiktok.webp', label: 'TikTok', action: 'advance', amount: 60, points: 1, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
-    turbo:    { tiktok: 'Mãos fazendo coração', coins: 5, img: 'img/presentes/finger-heart.webp', label: 'Caça reboca', action: 'turbo', duration: 6, points: 5, color: '#ffd23f', icon: 'bolt', key: '3', demo: 10 },
-    buque:    { tiktok: 'Coração em chamas', coins: 1, img: 'img/presentes/flame-heart.png', label: 'Coração em chamas', action: 'advance', amount: 80, points: 1, color: '#f472b6', icon: 'bouquet', key: 'q', demo: 6 },
-    escudo:   { tiktok: 'Fogos de artifício', coins: 5, img: 'img/presentes/fireworks.png', label: 'Escudo', action: 'shield', duration: 15, points: 5, color: '#22d3ee', icon: 'shield', key: 'y', demo: 3 },
-    festa:    { tiktok: 'Confete', coins: 100, img: 'img/presentes/confetti.png', label: 'Festa', action: 'advance', amount: 400, points: 100, color: '#facc15', icon: 'confetti', key: 'e', demo: 2 },
+    tiktok:   { tiktok: 'TikTok', coins: 1, img: 'img/presentes/tiktok.webp', label: 'Caça reboca', action: 'turbo', duration: 6, points: 5, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
     esquadrilha: { tiktok: 'Pistola de dinheiro', coins: 500, img: 'img/presentes/money-gun.png', label: 'Esquadrilha', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: 't', demo: 1 },
     // --- SABOTAGEM (atrapalham) ---
-    vento:    { tiktok: 'Bom jogo (GG)', coins: 1, img: 'img/presentes/gg.webp', label: 'Vento contra', action: 'wind', amount: 60, points: 1, color: '#a78bfa', icon: 'wind', key: '5', demo: 8 },
-    pane:     { tiktok: 'Casquinha de sorvete', coins: 1, img: 'img/presentes/ice-cream-cone.webp', label: 'Pane no motor', action: 'engine', duration: 5, amount: 40, points: 1, color: '#fb923c', icon: 'smoke', key: '6', demo: 8 },
     urubus:   { tiktok: 'Rosquinha', coins: 30, img: 'img/presentes/doughnut.webp', label: 'Urubu', action: 'birds', amount: 80, points: 30, color: '#a3a3a3', icon: 'bird', key: '4', demo: 6 },
     gasolina: { tiktok: 'Galáxia', coins: 1000, img: 'img/presentes/galaxy.webp', label: 'Míssil', action: 'gameover', points: 1000, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     // --- DIVERSÃO / GRÁTIS ---
-    looping:  { tiktok: 'Heart Me', coins: 1, img: 'img/presentes/heart-me.png', label: 'Looping', action: 'loop', points: 1, color: '#38bdf8', icon: 'loop', key: '8', demo: 8 },
-    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 4, free: true }
+    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 3, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 4, free: true }
   },
 
   giftAliases: {
-    'rose': 'rose',
+    'rose': 'rose', 'rosa': 'rose',
     'tiktok': 'tiktok',
-    'finger heart': 'turbo', 'coração com os dedos': 'turbo', 'turbo': 'turbo',
-    'doughnut': 'urubus', 'donut': 'urubus', 'urubu': 'urubus', 'urubus': 'urubus',
-    'gg': 'vento', 'vento': 'vento', 'vento contra': 'vento',
-    'ice cream cone': 'pane', 'sorvete': 'pane', 'pane': 'pane',
-    'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina', 'missil': 'gasolina', 'míssil': 'gasolina',
-    'heart me': 'looping', 'looping': 'looping',
-    'flame heart': 'buque', 'coração em chamas': 'buque', 'coracao em chamas': 'buque', 'buque': 'buque',
-    'rosa': 'rose',
-    'fireworks': 'escudo', 'fogos de artifício': 'escudo', 'fogos de artificio': 'escudo', 'fogos': 'escudo', 'escudo': 'escudo',
-    'confetti': 'festa', 'confete': 'festa', 'festa': 'festa',
     'money gun': 'esquadrilha', 'pistola de dinheiro': 'esquadrilha', 'esquadrilha': 'esquadrilha',
-    // nomes oficiais em português (TikTok pt-BR)
-    'mãos fazendo coração': 'turbo', 'rosquinha': 'urubus', 'bom jogo': 'vento', 'casquinha de sorvete': 'pane',
+    'doughnut': 'urubus', 'donut': 'urubus', 'rosquinha': 'urubus', 'urubu': 'urubus', 'urubus': 'urubus',
+    'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina', 'missil': 'gasolina', 'míssil': 'gasolina',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 
