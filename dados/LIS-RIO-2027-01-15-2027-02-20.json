@@ -1,0 +1,19 @@
+{
+ "rota": {
+  "origem": "LIS",
+  "destino": "RIO",
+  "ida": "2027-01-15",
+  "volta": "2027-02-20",
+  "issue": 5
+ },
+ "atualizado": null,
+ "tentativa": "2026-11-05T17:03:44.409Z",
+ "erro": "Nenhum voo encontrado.",
+ "voos": [],
+ "escolhas": null,
+ "historico": [],
+ "links": {
+  "brl": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202027-01-15%20through%202027-02-20&hl=pt-BR&gl=BR&curr=BRL",
+  "eur": "https://www.google.com/travel/flights?q=Flights%20from%20LIS%20to%20RIO%20on%202027-01-15%20through%202027-02-20&hl=pt-BR&gl=BR&curr=EUR"
+ }
+}

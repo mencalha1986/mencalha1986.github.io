@@ -43,5 +43,20 @@
   "direto": 14197,
   "variacao": 357,
   "minimo": 10277
+ },
+ {
+  "slug": "LIS-RIO-2027-01-15-2027-02-20",
+  "issue": 5,
+  "origem": "LIS",
+  "destino": "RIO",
+  "ida": "2027-01-15",
+  "volta": "2027-02-20",
+  "atualizado": null,
+  "erro": "Nenhum voo encontrado.",
+  "brl": null,
+  "eur": null,
+  "direto": null,
+  "variacao": null,
+  "minimo": null
  }
 ]
