@@ -1,0 +1,4 @@
+Modelos 3D (CC0 - domínio público), por Quaternius, baixados do Poly Pizza em 05/11/2026:
+- homem.glb  https://poly.pizza/m/HMnuH5geEG (Man)
+- mulher.glb https://poly.pizza/m/9kF7eTDbhO (Animated Woman)
+- humano.glb https://poly.pizza/m/c3Ibh9I3udk (Animated Human)
