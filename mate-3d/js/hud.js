@@ -385,7 +385,8 @@
       if (items.length) {
         const n = 4, size = 170, gap = 26, x0 = (W - (n * size + (n - 1) * gap)) / 2, off = Math.floor(t / 2.2);
         for (let i = 0; i < n; i++) {
-          const it = items[(off * n + i) % items.length], x = x0 + i * (size + gap), y = 640 + Math.sin(t * 2 + i) * 6;
+          const it = items[((off * n + i) % items.length + items.length) % items.length], x = x0 + i * (size + gap), y = 640 + Math.sin(t * 2 + i) * 6;
+          if (!it) continue;
           ctx.fillStyle = '#f59e0b'; U.roundRect(ctx, x - 8, y - 8, size + 16, size + 16, 18); ctx.fill();
           this.g.catalog.drawPhoto(ctx, it, x, y, size, 14);
         }
