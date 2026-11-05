@@ -61,6 +61,34 @@ function waterNormalsTex() {
   x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 // saquinho de biscoito de polvilho
+// caixa térmica do mate: laranja, marca em branco e praia com coqueiro embaixo
+const boxTex = () => canvasTex(256, 272, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ff8a3d'); g.addColorStop(1, '#ee6a1c'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(0, 0, w, 8);
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.font = '900 58px Rubik, sans-serif'; x.fillText('mate', w / 2, 80);
+  x.font = '800 30px Rubik, sans-serif'; x.fillText('da praia', w / 2, 116);
+  // areia e mar
+  x.fillStyle = '#f4d7a1'; x.beginPath(); x.moveTo(0, h - 70); x.quadraticCurveTo(w * 0.5, h - 100, w, h - 60); x.lineTo(w, h); x.lineTo(0, h); x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(0, h - 74, w, 3);
+  // coqueiro
+  x.strokeStyle = '#7a4a1f'; x.lineWidth = 7; x.beginPath(); x.moveTo(178, h - 66); x.quadraticCurveTo(190, h - 120, 182, h - 160); x.stroke();
+  x.strokeStyle = '#1f8a4c'; x.lineWidth = 7; x.lineCap = 'round';
+  [-2.6, -2.1, -1.6, -1.0, -0.5].forEach((a) => { x.beginPath(); x.moveTo(182, h - 160); x.quadraticCurveTo(182 + Math.cos(a) * 30, h - 160 + Math.sin(a) * 30 - 6, 182 + Math.cos(a) * 52, h - 150 + Math.sin(a) * 26 + 18); x.stroke(); });
+  x.strokeStyle = 'rgba(0,0,0,0.12)'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6);
+});
+// estampa das costas do uniforme
+const shirtTex = () => canvasTex(256, 150, (x, w, h) => {
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.font = '900 64px Rubik, sans-serif'; x.fillText('mate', w / 2, 62);
+  x.font = '900 46px Rubik, sans-serif'; x.fillText('achados', w / 2, 118);
+});
+// caixa com cantos arredondados (para as caixas térmicas)
+function roundBox(w, h, d, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r * 0.5, bevelEnabled: true, bevelThickness: r * 0.5, bevelSize: r * 0.5, bevelSegments: 3, curveSegments: 6 });
+  geo.translate(0, 0, -(d - r) / 2); return geo;
+}
 const biscoitoTex = () => canvasTex(128, 192, (x, w, h) => {
   x.fillStyle = '#fbfaf5'; x.fillRect(0, 0, w, h);
   x.fillStyle = '#15803d'; x.fillRect(0, h * 0.38, w, h * 0.22); x.fillStyle = '#dc2626'; x.fillRect(0, h * 0.62, w, h * 0.06);
@@ -272,20 +300,37 @@ class R3D {
   }
 
   // ------------------------------------------------------------ vendedor (camiseta laranja, boné, galões)
+  // VENDEDOR DE MATE da praia: uniforme laranja inteiro, chapéu bucket laranja, duas caixas térmicas
+  // laranja com a marca (praia e coqueiro) penduradas em alças pretas cruzadas, torneirinha prateada
   _makeVendor() {
-    const p = new Person('homem', { Shirt: '#f97316', Pants: '#1e3a5f', Socks: '#2563eb', Hair: '#1a120c' });
-    const gal = (color) => { const g = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.5, 18), mat(0xe5e7eb, { metalness: 0.35, roughness: 0.35 })); g.add(body);
-      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.175, 0.14, 18), mat(color)); g.add(band);
-      const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.08, 8), mat(0x222222)); tap.position.set(0, -0.28, 0.12); g.add(tap);
+    const OR = '#f26a1b';
+    const p = new Person('homem', { Shirt: OR, Pants: OR, Socks: '#f8fafc', Hair: '#1a120c' });
+    const tex = boxTex(), side = mat(0xffffff, { map: tex, roughness: 0.55 }), plain = mat(0xf26a1b, { roughness: 0.55 }), lid = mat(0xe0e3e7, { metalness: 0.6, roughness: 0.3 });
+    const box = () => { const g = new THREE.Group();
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.36, 0.24), [side, side, plain, plain, side, side]); g.add(b);
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.352, 0.022, 0.252), mat(0xd9561a)); edge.position.y = 0.17; g.add(edge);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), lid); top.position.set(0, 0.195, 0); g.add(top);
+      const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.07, 8), lid); tap.rotation.x = Math.PI / 2; tap.position.set(0, -0.12, 0.15); g.add(tap);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), mat(0x1f2328)); ring.position.set(0, 0.2, 0); ring.rotation.x = Math.PI / 2; g.add(ring);
       return shadowAll(g); };
-    const g1 = gal(0xf59e0b), g2 = gal(0xfacc15); g1.position.set(-0.36, 1.0, 0.0); g2.position.set(0.36, 1.0, 0.0); g1.userData.galao = g2.userData.galao = true;
-    p.root.add(g1, g2);
-    const strap = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.025, 6, 24, Math.PI), mat(0x78350f)); strap.position.set(0, 1.0, 0); strap.rotation.z = 0; strap.userData.galao = true; p.root.add(strap);
-    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.07), [mat(0xfbfaf5), mat(0xfbfaf5), mat(0xfbfaf5), mat(0xfbfaf5), mat(0xffffff, { map: biscoitoTex() }), mat(0xffffff, { map: biscoitoTex() })]); bag.position.set(0.12, 0.82, -0.2); p.root.add(shadowAll(bag));
-    const cap = new THREE.Group();
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x16a34a)); cap.add(crown);
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.02, 16, 1, false, -Math.PI / 2, Math.PI), mat(0x15803d)); brim.position.set(0, 0, 0.1); brim.scale.set(1, 1, 1.4); cap.add(brim);
+    const g1 = box(), g2 = box(); g1.position.set(-0.36, 0.86, 0.04); g2.position.set(0.36, 0.86, 0.04); g1.rotation.y = 0.12; g2.rotation.y = -0.12;
+    g1.userData.galao = g2.userData.galao = true; p.root.add(g1, g2);
+    // alças pretas cruzadas (ombro → caixa do outro lado), pela frente e pelas costas
+    const strapMat = mat(0x15171a, { roughness: 0.6 });
+    const strap = (x0, x1, z) => { const a = new THREE.Vector3(x0, 1.05, z), b2 = new THREE.Vector3(x1, 1.47, z * 0.9), len = a.distanceTo(b2);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.045, len, 0.012), strapMat); m.position.copy(a).lerp(b2, 0.5); m.lookAt(b2); m.rotateX(Math.PI / 2); m.userData.galao = true; return m; };
+    [strap(-0.36, 0.14, -0.13), strap(0.36, -0.14, -0.13), strap(-0.36, 0.14, 0.13), strap(0.36, -0.14, 0.13)].forEach((m) => p.root.add(m));
+    // nome nas costas da camisa
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.2), new THREE.MeshBasicMaterial({ map: shirtTex(), transparent: true, depthWrite: false }));
+    back.position.set(0, 1.3, -0.135); back.rotation.y = Math.PI; p.root.add(back); p.backPrint = back;
+    // saquinho de biscoito Globo na mão
+    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.07), [mat(0xfbfaf5), mat(0xfbfaf5), mat(0xfbfaf5), mat(0xfbfaf5), mat(0xffffff, { map: biscoitoTex() }), mat(0xffffff, { map: biscoitoTex() })]); bag.position.set(0.12, 0.66, -0.22); p.root.add(shadowAll(bag));
+    // chapéu bucket laranja
+    const cap = new THREE.Group(), hatM = mat(0xf26a1b, { roughness: 0.85 });
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.125, 0.11, 18), hatM); crown.position.y = 0.03; cap.add(crown);
+    const topc = new THREE.Mesh(new THREE.SphereGeometry(0.105, 18, 6, 0, Math.PI * 2, 0, Math.PI / 2), hatM); topc.scale.y = 0.35; topc.position.y = 0.085; cap.add(topc);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.05, 22, 1, true), mat(0xe85f12, { roughness: 0.85, side: THREE.DoubleSide })); brim.position.y = -0.04; cap.add(brim);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.127, 0.127, 0.025, 18), mat(0xffffff)); band.position.y = -0.005; cap.add(band);
     this.scene.add(shadowAll(cap)); p.cap = cap;
     p.play('walk');
     return p;
