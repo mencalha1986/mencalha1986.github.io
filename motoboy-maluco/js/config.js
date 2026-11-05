@@ -42,28 +42,20 @@ CNB.CONFIG = {
   // ---------- PRESENTES (o último presente cancela a ação em andamento) ----------
   // action: advance | turbo | dog | back | flat | gameover | follow
   gifts: {
-    rosa:     { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa',        action: 'advance', amount: 8,  points: 1,  color: '#ff4d6d', icon: 'rose',  key: '1', demo: 30 },
-    tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'TikTok',      action: 'advance', amount: 22, points: 1,  color: '#25f4ee', icon: 'note',  key: '2', demo: 20 },
-    turbo:    { tiktok: 'Mãos fazendo coração', img: 'img/presentes/finger-heart.webp', label: 'Turbo',       action: 'turbo',   duration: 6, points: 10, color: '#ffd23f', icon: 'bolt', key: '3', demo: 10 },
+    rosa:     { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 8, points: 1, color: '#ff4d6d', icon: 'rose', key: '1', demo: 30 },
+    tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'Turbo', action: 'turbo', duration: 6, points: 10, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
+    pistola:  { tiktok: 'Pistola de dinheiro', img: 'img/presentes/money-gun.png', label: 'Super turbo', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: '3', demo: 2 },
     cachorro: { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Cachorro',    action: 'dog',     duration: 9, points: 5, color: '#e0a35a', icon: 'dog',  key: '4', demo: 12 },
-    errado:   { tiktok: 'Bom jogo (GG)', img: 'img/presentes/gg.webp', label: 'Endereço errado', action: 'back', amount: 25, points: 5, color: '#a78bfa', icon: 'back', key: '5', demo: 8 },
-    pneu:     { tiktok: 'Casquinha de sorvete', img: 'img/presentes/ice-cream-cone.webp', label: 'Pneu furado', action: 'flat',    points: 5,  color: '#facc15', icon: 'tire',  key: '6', demo: 8 },
     gasolina: { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Sem gasolina', action: 'gameover', points: 50, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
-    // NOVO SEGUIDOR (de graça): o seguidor vira cliente da próxima entrega e a moto volta 10 m
-    // BUZINA: não cancela nada — o motoboy buzina, carros abrem caminho, pedestres correm e o caramelo foge
-    buzina:   { tiktok: 'Heart Me', img: 'img/presentes/heart-me.png', label: 'Buzina', action: 'horn', points: 1, color: '#38bdf8', icon: 'horn', key: '8', demo: 14 },
-    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor',    action: 'follow',  back: 10, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6, free: true }
+    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 3, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6, free: true }
   },
 
   giftAliases: {
     'rose': 'rosa', 'rosa': 'rosa',
-    'tiktok': 'tiktok',
-    'finger heart': 'turbo', 'mãos fazendo coração': 'turbo', 'coração com os dedos': 'turbo', 'turbo': 'turbo',
-    'doughnut': 'cachorro', 'rosquinha': 'cachorro', 'donut': 'cachorro', 'doggo': 'cachorro', 'dog': 'cachorro', 'puppy': 'cachorro', 'cachorro': 'cachorro',
-    'gg': 'errado', 'bom jogo': 'errado', 'endereço errado': 'errado', 'errado': 'errado',
-    'ice cream cone': 'pneu', 'casquinha de sorvete': 'pneu', 'sorvete': 'pneu', 'pneu': 'pneu', 'pneu furado': 'pneu',
-    'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina',
-    'heart me': 'buzina', 'buzina': 'buzina', 'horn': 'buzina', 'bi bi': 'buzina',
+    'tiktok': 'tiktok', 'turbo': 'tiktok',
+    'money gun': 'pistola', 'pistola de dinheiro': 'pistola', 'pistola': 'pistola',
+    'doughnut': 'cachorro', 'donut': 'cachorro', 'rosquinha': 'cachorro', 'cachorro': 'cachorro',
+    'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina', 'sem gasolina': 'gasolina',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 

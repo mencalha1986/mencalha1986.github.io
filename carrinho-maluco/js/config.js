@@ -45,30 +45,23 @@ CNB.CONFIG = {
   // tiktok: nome do presente mostrado na tela (legenda da abertura e guia lateral da partida).
   // img: imagem oficial do presente (em img/presentes). Sem img, usa o ícone desenhado.
   gifts: {
-    rosa:      { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa',      action: 'advance', amount: 4,  points: 1,  color: '#ff4d6d', icon: 'rose',   key: '1', demo: 30 },
-    tiktok:    { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'TikTok',    action: 'advance', amount: 12, points: 1,  color: '#25f4ee', icon: 'note',   key: '2', demo: 20 },
-    turbo:     { tiktok: 'Mãos fazendo coração', img: 'img/presentes/finger-heart.webp', label: 'Turbo',     action: 'turbo',   duration: 6, points: 10, color: '#ffd23f', icon: 'bolt',  key: '3', demo: 10 },
-    ima:       { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Ímã',       action: 'magnet',  duration: 8, amount: 6, points: 5, color: '#60a5fa', icon: 'magnet', key: '4', demo: 9 },
-    voltar:    { tiktok: 'Bom jogo (GG)', img: 'img/presentes/gg.webp', label: 'Esqueci',   action: 'back',    amount: 15, points: 5,  color: '#a78bfa', icon: 'back',   key: '5', demo: 9 },
-    molhado:   { tiktok: 'Casquinha de sorvete', img: 'img/presentes/ice-cream-cone.webp', label: 'Chão molhado', action: 'slip', points: 5,  color: '#facc15', icon: 'wet',    key: '6', demo: 8 },
-    liquidacao:{ tiktok: 'Perfume', img: 'img/presentes/perfume.webp', label: 'Liquidação', action: 'sale',   count: 6,   points: 10, color: '#fb7185', icon: 'tag',    key: '7', demo: 6 },
-    recusado:  { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '8', demo: 0 },
-    // NOVO SEGUIDOR (de graça): o carrinho volta e achados caem de volta no corredor para serem pegos de novo.
-    // Não cancela a ação em andamento. Cada pessoa conta uma vez só.
-    seguir:    { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 8, drop: 2, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6 }
+    rosa:      { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 4, points: 1, color: '#ff4d6d', icon: 'rose', key: '1', demo: 30 },
+    tiktok:    { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'Turbo', action: 'turbo', duration: 6, points: 10, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
+    pistola:   { tiktok: 'Pistola de dinheiro', img: 'img/presentes/money-gun.png', label: 'Super turbo', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: '3', demo: 2 },
+    ima:       { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Ímã', action: 'magnet', duration: 8, amount: 6, points: 5, color: '#60a5fa', icon: 'magnet', key: '4', demo: 9 },
+    recusado:  { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Cartão recusado', action: 'gameover', points: 50, color: '#e879f9', icon: 'card', key: '5', demo: 0 },
+    // NOVO SEGUIDOR (de graça): o carrinho volta um pouquinho. Não cancela a ação em andamento. Cada pessoa conta uma vez só.
+    seguir:    { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 3, drop: 0, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6 }
   },
 
   // nome do presente que chega da live -> presente do jogo (minúsculas)
   giftAliases: {
     'rose': 'rosa', 'rosa': 'rosa',
-    'tiktok': 'tiktok',
-    'finger heart': 'turbo', 'mãos fazendo coração': 'turbo', 'coração com os dedos': 'turbo', 'turbo': 'turbo',
-    'doughnut': 'ima', 'rosquinha': 'ima', 'donut': 'ima', 'ímã': 'ima', 'ima': 'ima',
-    'gg': 'voltar', 'bom jogo': 'voltar', 'esqueci': 'voltar', 'voltar': 'voltar',
-    'ice cream cone': 'molhado', 'casquinha de sorvete': 'molhado', 'sorvete': 'molhado', 'chão molhado': 'molhado', 'molhado': 'molhado',
-    'perfume': 'liquidacao', 'liquidação': 'liquidacao', 'liquidacao': 'liquidacao',
-    'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir',
-    'galaxy': 'recusado', 'galáxia': 'recusado', 'cartão recusado': 'recusado', 'recusado': 'recusado'
+    'tiktok': 'tiktok', 'turbo': 'tiktok',
+    'money gun': 'pistola', 'pistola de dinheiro': 'pistola', 'pistola': 'pistola',
+    'doughnut': 'ima', 'donut': 'ima', 'rosquinha': 'ima', 'ímã': 'ima', 'ima': 'ima',
+    'galaxy': 'recusado', 'galáxia': 'recusado', 'cartão recusado': 'recusado', 'recusado': 'recusado',
+    'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 
   specialEvents: {

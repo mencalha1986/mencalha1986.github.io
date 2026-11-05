@@ -62,6 +62,10 @@
         ctx.quadraticCurveTo(4, 6, 14, 18); ctx.quadraticCurveTo(20, 4, 2, -16); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#6b4f00'; ctx.fillRect(-3, -21, 5, 7);
         break;
+      case 'follow':   // botão "+" vermelho de seguir do TikTok
+        ctx.fillStyle = '#fe2c55'; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(0, 11); ctx.moveTo(-11, 0); ctx.lineTo(11, 0); ctx.stroke(); break;
       case 'dog':
         ctx.fillStyle = '#c88a46'; ctx.beginPath(); ctx.ellipse(0, 2, 14, 13, 0, 0, 7); ctx.fill();
         ctx.fillStyle = '#94602c';
@@ -154,14 +158,14 @@
 
     // guia fixo na lateral: qual presente do TikTok faz o quê (só os ligados a um presente real)
     drawGiftGuide(ctx, y0) {
-      const G = this.g.cfg.gifts, keys = Object.keys(G).filter((k) => G[k].tiktok), rowH = 46;
+      const G = this.g.cfg.gifts, keys = Object.keys(G).filter((k) => G[k].tiktok), rowH = 72;
       glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.62);
       ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
       keys.forEach((k, i) => {
         const def = G[k], y = y0 + 56 + i * rowH;
-        giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok, 22), 790, y + 15);
-        ctx.font = `600 16px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def, 1), 28), 790, y + 36);
+        giftIcon(ctx, def.icon, 768, y + 34, 32, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 23px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok, 20), 810, y + 30);
+        ctx.font = `700 18px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def, 1), 24), 810, y + 54);
       });
     }
 

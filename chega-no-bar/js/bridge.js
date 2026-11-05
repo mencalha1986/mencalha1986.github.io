@@ -67,6 +67,11 @@
       if (!msg || typeof msg !== 'object') return null;
       const env = msg.data && typeof msg.data === 'object' ? msg.data : msg.payload && typeof msg.payload === 'object' ? msg.payload : msg;
       const type = String(msg.type || msg.event || env.type || env.event || 'gift').toLowerCase();
+      // novo seguidor: evento "follow" (ou "social" com displayType de follow)
+      if (type.includes('follow') || type === 'seguir' || (type.includes('social') && String(env.displayType || env.label || '').toLowerCase().includes('follow'))) {
+        const fu = env.user && typeof env.user === 'object' ? env.user : {};
+        return { user: env.nickname || env.uniqueId || env.username || fu.nickname || fu.uniqueId || fu.username || 'anônimo', gift: 'follow', count: 1, source: 'live' };
+      }
       if (!type.includes('gift') && !type.includes('presente')) return null;
       const u = env.user && typeof env.user === 'object' ? env.user : {};
       const user = env.nickname || env.uniqueId || env.username || u.nickname || u.uniqueId || u.username || (typeof env.user === 'string' ? env.user : '') || 'anônimo';

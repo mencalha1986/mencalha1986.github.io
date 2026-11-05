@@ -66,29 +66,24 @@ CNB.CONFIG = {
   // tiktok: nome do presente em português (TikTok pt-BR) mostrado na lista fixa; img: imagem oficial (img/presentes).
   // Sem "tiktok", o presente não aparece na lista (só funciona pelas teclas de teste).
   gifts: {
-    rosa:     { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa',    action: 'advance', amount: 3,  points: 1,  color: '#ff4d6d', icon: 'rose',   key: '1' },
-    tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'TikTok',  action: 'advance', amount: 10, points: 1,  color: '#25f4ee', icon: 'note',   key: '2' },
-    turbo:    { tiktok: 'Mãos fazendo coração', img: 'img/presentes/finger-heart.webp', label: 'Turbo',   action: 'turbo',   duration: 6, points: 10, color: '#ffd23f', icon: 'bolt',   key: '3' },
-    cerveja:  { tiktok: 'Cogumelo', img: 'img/presentes/mushroom.webp', label: 'Cerveja', action: 'beer',    amount: 14, drunk: 0.14, points: 5, color: '#f5a623', icon: 'beer', key: '4' },
-    voltar:   { tiktok: 'Bom jogo (GG)', img: 'img/presentes/gg.webp', label: 'Voltar',  action: 'back',    amount: 14, points: 5,  color: '#a78bfa', icon: 'back',   key: '5' },
-    tropeco:  { tiktok: 'Casquinha de sorvete', img: 'img/presentes/ice-cream-cone.webp', label: 'Tropeço', action: 'trip',    points: 5,  color: '#facc15', icon: 'banana', key: '6' },
+    rosa:     { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 3, points: 1, color: '#ff4d6d', icon: 'rose', key: '1' },
+    tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'Turbo', action: 'turbo', duration: 6, points: 10, color: '#25f4ee', icon: 'note', key: '2' },
+    pistola:  { tiktok: 'Pistola de dinheiro', img: 'img/presentes/money-gun.png', label: 'Super turbo', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: '3' },
+    voltar:   { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Voltar', action: 'back', amount: 14, points: 5, color: '#a78bfa', icon: 'back', key: '4' },
     especial: { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Especial',action: 'gameover', event: 'dormiu', points: 50, color: '#e879f9', icon: 'moon', key: '7' },
-    cachorro: { tiktok: 'Corgi', img: 'img/presentes/corgi.webp', label: 'Cachorro', action: 'dog', points: 5, color: '#e0a35a', icon: 'dog', key: '8' }   // xixi na perna (para ~5s)
+    // NOVO SEGUIDOR (de graça): volta um pouquinho
+    seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'back', amount: 3, points: 1, color: '#fe2c55', icon: 'follow', key: '9' }
   },
 
   // Nome do presente vindo da integração -> key interna (sem diferenciar maiúsculas)
   // Ajuste para os presentes que você usa na sua live.
   giftAliases: {
     'rose': 'rosa', 'rosa': 'rosa',
-    'tiktok': 'tiktok',
-    'turbo': 'turbo', 'finger heart': 'turbo', 'coração com os dedos': 'turbo',
-    'cerveja': 'cerveja', 'beer': 'cerveja', 'cheers': 'cerveja', 'mushroom': 'cerveja', 'cogumelo': 'cerveja',
-    'voltar': 'voltar', 'gg': 'voltar',
-    'tropeço': 'tropeco', 'tropeco': 'tropeco', 'ice cream cone': 'tropeco', 'sorvete': 'tropeco',
+    'tiktok': 'tiktok', 'turbo': 'tiktok',
+    'money gun': 'pistola', 'pistola de dinheiro': 'pistola', 'pistola': 'pistola',
+    'doughnut': 'voltar', 'donut': 'voltar', 'rosquinha': 'voltar', 'voltar': 'voltar',
     'especial': 'especial', 'galaxy': 'especial', 'galáxia': 'especial',
-    'cachorro': 'cachorro', 'dog': 'cachorro', 'doggo': 'cachorro', 'puppy': 'cachorro', 'corgi': 'cachorro',
-    // nomes oficiais em português (TikTok pt-BR)
-    'mãos fazendo coração': 'turbo', 'bom jogo': 'voltar', 'casquinha de sorvete': 'tropeco'
+    'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
 
   // Eventos de GAME OVER configuráveis (presente "especial")

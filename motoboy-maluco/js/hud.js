@@ -223,21 +223,21 @@
         case 'back': return `volta ${def.amount} m`;
         case 'flat': return 'fura o pneu';
         case 'gameover': return 'GAME OVER';
-        case 'follow': return 'vira cliente da entrega';
+        case 'follow': return `moto volta ${def.back} m`;
         case 'horn': return 'BI-BI! abre caminho';
       }
       return '';
     }
 
     drawGiftGuide(ctx, y0) {
-      const G = this.g.cfg.gifts, keys = Object.keys(G), rowH = 46;
+      const G = this.g.cfg.gifts, keys = Object.keys(G), rowH = 72;
       glass(ctx, 724, y0, 320, 56 + keys.length * rowH, 26, 0.62);
       ctx.textAlign = 'left'; ctx.font = `30px ${FT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText('MANDE E VEJA', 748, y0 + 40);
       keys.forEach((k, i) => {
         const def = G[k], y = y0 + 56 + i * rowH;
-        giftIcon(ctx, def.icon, 762, y + 20, 18, def.color);
-        ctx.textAlign = 'left'; ctx.font = `800 19px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 22), 790, y + 15);
-        ctx.font = `600 16px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 26), 790, y + 36);
+        giftIcon(ctx, def.icon, 768, y + 34, 32, def.color);
+        ctx.textAlign = 'left'; ctx.font = `800 23px ${FU}`; ctx.fillStyle = '#fff'; ctx.fillText(U.truncate(def.tiktok || def.label, 20), 810, y + 30);
+        ctx.font = `700 18px ${FU}`; ctx.fillStyle = def.color; ctx.fillText(U.truncate(this.actionText(def), 24), 810, y + 54);
       });
     }
 
