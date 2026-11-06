@@ -190,6 +190,52 @@ span.li.emo{font-size:52px}
 .fi span.fe.emo{font-size:20px;width:auto;height:auto}
 #banner .bi{width:clamp(48px,9vw,86px);height:clamp(48px,9vw,86px);object-fit:contain;vertical-align:middle;margin-right:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 #banner span.bi.emo{font-size:clamp(40px,8vw,72px);width:auto;height:auto}
+
+/* ===== JANELA DA LIVE (?obs=1): palco fixo 9:16 (540×960), igual em qualquer tamanho de janela ===== */
+.live #top{left:10px;right:10px;max-width:none}
+.live #top h1{font-size:19px}
+.live #left{top:calc(env(safe-area-inset-top,0px) + 102px);left:8px;width:min(220px,56vw);gap:6px}
+.live #rank{display:grid;padding:6px 8px;gap:6px;font-size:11.5px}
+.live #stats{font-size:12.5px;padding:6px 10px}
+.live #feedWrap{padding:6px;background:transparent;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.live #feedWrap .ttl{display:none}
+.live #feed:empty::after{display:none}
+.live .fi{background:var(--panel);font-size:12px;padding:5px 7px}
+.live .fi small{display:none}
+.live #gifts{left:0;right:0;top:auto;bottom:0;width:auto;max-height:64%;border-radius:20px 20px 0 0;transform:translateY(105%);transition:transform .25s ease;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:8}
+.live #gifts.open{transform:none}
+.live #giftClose{display:block}
+.live .glist{grid-template-columns:1fr 1fr}
+.live .gift{grid-template-columns:28px 1fr;gap:6px}
+.live .gift .ge{font-size:21px}
+.live .gift .gc{grid-column:2;text-align:left;font-size:12px}
+.live .gift kbd{display:none}
+.live #giftToggle{display:block}
+.live #climb{width:104px;height:104px;font-size:21px}
+.live #climb span{font-size:30px}
+.live .legend{top:calc(env(safe-area-inset-top,0px) + 108px);gap:4px}
+.live #legBad{left:4px}
+.live #legGood{right:4px}
+.live .li{font-size:38px}
+.live img.li{width:44px;height:44px}
+.live span.li.emo{font-size:36px}
+.live .li.gg{font-size:32px}
+.live .ln{font-size:20px;-webkit-text-stroke:4px #2a1a00}
+.live .leg kbd{display:none}
+.live #left{right:auto;left:6px;transform:none;top:calc(env(safe-area-inset-top,0px) + 330px);bottom:auto;width:min(170px,34vw)}
+.live #rank{grid-template-columns:1fr!important}
+.live #stats{flex-direction:column;gap:2px}
+.live #feed .fi:nth-child(n+4){display:none}
+.live #corner .cbtn span{display:none}
+.live body{background:#000}
+.live #stage{position:fixed;left:50%;top:50%;width:540px;height:960px;transform:translate(-50%,-50%) scale(var(--s,1));overflow:hidden;background:var(--bg)}
+/* áreas livres do TikTok: topo (nome/perfil) e rodapé (botões) ficam limpos */
+.live #top{top:128px!important;left:12px;right:12px}
+.live .legend{top:236px!important;gap:6px}
+.live #left{top:462px!important}
+.live #banner{top:32%}
+.live #feed .fi:nth-child(n+4){display:none}
+
 /* modo live (?obs=1): só o jogo, sem botões de operador */
 .live #corner,.live #climb,.live .leg kbd,.live #giftToggle{display:none!important}
 .live #overlay{background:rgba(8,3,24,.35)}
@@ -260,6 +306,7 @@ span.li.emo{font-size:52px}
 <div id="corner">
   <button class="cbtn" id="btnSound" aria-label="Som">🔊 <span>Som</span></button>
   <button class="cbtn" id="btnSim" aria-label="Live simulada">🤖 <span>Live simulada</span></button>
+  <button class="cbtn" id="btnLive" aria-label="Abrir janela da live">📺 <span>Abrir janela da live</span></button>
 </div>
 
 <div id="overlay">
@@ -303,8 +350,19 @@ const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(60,1,0.1,1200);
+if(LIVE){   // tudo dentro de um palco 540×960 escalado (posição fixa vira relativa ao palco)
+  const st=document.createElement("div"); st.id="stage";
+  [...document.body.children].forEach(el=>{ if(el.tagName!=="SCRIPT") st.appendChild(el); });
+  document.body.prepend(st);
+}
+function viewSize(){ return LIVE?{w:540,h:960}:{w:window.innerWidth,h:window.innerHeight}; }
 function resize(){
-  const w=window.innerWidth,h=window.innerHeight;
+  const {w,h}=viewSize();
+  if(LIVE){
+    const sc=Math.min(window.innerWidth/540,window.innerHeight/960);
+    document.getElementById("stage").style.setProperty("--s",sc);
+    renderer.setPixelRatio(Math.min(2,(window.devicePixelRatio||1)*sc));
+  }
   renderer.setSize(w,h,false);
   camera.aspect=w/h; camera.fov=w<h?72:58; camera.updateProjectionMatrix();
 }
@@ -610,7 +668,7 @@ function buildGiftPanel(){
     b.innerHTML=num+'<kbd>'+g.key.toUpperCase()+'</kbd>';
     const ic=giftIcon(g,"li");
     if(g.type==="bad") b.prepend(ic); else b.querySelector("kbd").before(ic);
-    b.addEventListener("click",()=>{audio(); if(state==="play") applyGift(g,"Você");});
+    b.addEventListener("click",()=>{audio(); relay(g,"Você"); if(state==="play") applyGift(g,"Você");});
     return b;
   };
   $("#legGood").innerHTML=""; $("#legBad").innerHTML="";
@@ -856,7 +914,7 @@ function update(dt){
   if(state==="menu") camA+=dt*.18;
   else if(state==="win"&&delivered) camA+=dt*.35;
   else if(state==="play") camA+=(ahead-camA)*Math.min(1,dt*3);
-  const portrait=window.innerHeight>window.innerWidth;
+  const vs=viewSize(), portrait=vs.h>vs.w;
   const back=state==="menu"?11:(portrait?9:7.8), up=state==="menu"?6:(portrait?6.8:5.2);
   const fx=Math.sin(camA),fz=-Math.cos(camA);
   desired.set(focus.x-fx*back,focus.y+up,focus.z-fz*back);
@@ -897,7 +955,7 @@ window.addEventListener("keydown",e=>{
   }
   if(e.repeat) return;
   const g=GIFTS.find(x=>x.key===k);
-  if(g&&state==="play"){audio();applyGift(g,"Espectador");}
+  if(g){relay(g,"Espectador"); if(state==="play"){audio();applyGift(g,"Espectador");}}
 });
 window.addEventListener("keyup",e=>{
   const k=e.key.toLowerCase();
@@ -946,6 +1004,15 @@ function connectWS(){
   };
   ws.onclose=()=>setTimeout(connectWS,5000);
 }
+
+/* ---------- janela da live: o painel manda os presentes de teste para ela ---------- */
+let bc=null; try{bc=new BroadcastChannel("topo-live");}catch(e){}
+if(bc&&LIVE) bc.onmessage=e=>{const m=e.data||{}; if(m.t==="gift"){const g=GIFTS.find(x=>x.id===m.id); if(g) giftQueue.push([g,m.user||"Você"]);}};
+function relay(g,user){ if(bc&&!LIVE) bc.postMessage({t:"gift",id:g.id,user}); }
+$("#btnLive").addEventListener("click",()=>{
+  const u=location.pathname+"?obs=1"+(PARAMS.get("ws")?"&ws="+encodeURIComponent(PARAMS.get("ws")):"");
+  window.open(u,"entrega-live","width=540,height=960");
+});
 
 /* ---------- início ---------- */
 buildGiftPanel(); renderRank();
