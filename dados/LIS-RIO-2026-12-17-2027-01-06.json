@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-11-05T22:06:03.908Z",
- "tentativa": "2026-11-05T22:06:03.908Z",
+ "atualizado": "2026-11-06T02:32:57.022Z",
+ "tentativa": "2026-11-06T02:32:57.022Z",
  "erro": null,
  "voos": [
   {
@@ -20,8 +20,21 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 9824,
-   "eur": 1593
+   "brl": 9851,
+   "eur": 1597
+  },
+  {
+   "saida": "13:50",
+   "chegada": "07:20⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 1230,
+   "sai": "LIS",
+   "chega": "SDU",
+   "paradas": 1,
+   "detalhe": "Mudança de aeroporto",
+   "brl": 9877,
+   "eur": 1601
   },
   {
    "saida": "13:50",
@@ -33,21 +46,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "11h 10 min GRU",
-   "brl": 9824,
-   "eur": 1593
-  },
-  {
-   "saida": "13:50",
-   "chegada": "07:45⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 1255,
-   "sai": "LIS",
-   "chega": "SDU",
-   "paradas": 2,
-   "detalhe": "GRU, BPS",
-   "brl": null,
-   "eur": 1653
+   "brl": 9949,
+   "eur": 1613
   },
   {
    "saida": "08:50",
@@ -59,7 +59,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 10172,
+   "brl": 10173,
    "eur": 1649
   },
   {
@@ -72,7 +72,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 10236,
+   "brl": 10237,
    "eur": 1660
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 10236,
+   "brl": 10237,
    "eur": 1660
   },
   {
@@ -98,21 +98,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 10686,
+   "brl": 10688,
    "eur": 1732
-  },
-  {
-   "saida": "08:50",
-   "chegada": "21:20",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 930,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 2,
-   "detalhe": "GRU, CWB",
-   "brl": 11179,
-   "eur": null
   },
   {
    "saida": "05:30",
@@ -124,21 +111,21 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min CDG",
-   "brl": 11716,
+   "brl": 11717,
    "eur": 1899
   },
   {
-   "saida": "14:40",
-   "chegada": "06:40⁺¹",
-   "companhia": "Tap Air Portugal / ITA",
+   "saida": "06:30",
+   "chegada": "18:50",
+   "companhia": "Iberia / LATAM",
    "operador": "",
-   "duracao": 1140,
+   "duracao": 920,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "3h 45 min FCO",
-   "brl": 11885,
-   "eur": 1927
+   "detalhe": "3h 35 min MAD",
+   "brl": 11931,
+   "eur": 1934
   },
   {
    "saida": "09:20",
@@ -150,7 +137,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 12274,
+   "brl": 12275,
    "eur": 1990
   },
   {
@@ -163,7 +150,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14103,
+   "brl": 14105,
    "eur": 2286
   },
   {
@@ -176,14 +163,14 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 14854,
+   "brl": 14856,
    "eur": 2408
   }
  ],
  "escolhas": {
   "barato": 0,
   "rapido": 5,
-  "direto": 11
+  "direto": 10
  },
  "historico": [
   {
@@ -537,6 +524,16 @@
    "eur": 1593,
    "direto": 14103,
    "razoavelEur": 1593,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2286,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-06T02:32:57.022Z",
+   "brl": 9851,
+   "eur": 1597,
+   "direto": 14105,
+   "razoavelEur": 1597,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 2286,
    "diretoCia": "Tap Air Portugal / Gol, direto"
