@@ -6,7 +6,7 @@
 (function () {
   const U = CNB.U;
   const S = { RIDE: 'ride', RUN: 'run', CHASE: 'chase', BACK: 'back', WOBBLE: 'wobble', NEAR: 'near', FALL: 'fall', DOWN: 'down',
-              GETUP: 'getup', FLAT: 'flat', ARRIVE: 'arrive', STOP: 'stop', NOGAS: 'nogas' };
+              GETUP: 'getup', FLAT: 'flat', ARRIVE: 'arrive', STOP: 'stop', NOGAS: 'nogas', BLITZ: 'blitz' };
 
   function logo(ctx, x, y, sc) {
     const MINT = '#82e8cc', CREAM = '#f3efe7', INK = '#0e3a4a', GOLD = '#ffd45e';
@@ -41,7 +41,7 @@
         state: S.RIDE, st: 0, t: 0, phase: 0, roll: 0, jump: 0, vy: 0, fallDir: 1, fall: 0, slowT: 0, legsUp: 0, footDown: 0, brake: 0,
         lookSide: 0, stopZ: 0, manual: this.manual || false, headScreen: { x: 540, y: 900 }, boxScreen: { x: 540, y: 1100 } });
     }
-    get busy() { return [S.WOBBLE, S.NEAR, S.FALL, S.DOWN, S.GETUP, S.FLAT].includes(this.state); }
+    get busy() { return [S.WOBBLE, S.NEAR, S.FALL, S.DOWN, S.GETUP, S.FLAT, S.BLITZ].includes(this.state); }
     get finished() { return [S.ARRIVE, S.STOP, S.NOGAS].includes(this.state); }
     setState(s) { if (this.state === s) return; this.prev = this.state; this.state = s; this.st = 0; this.onEvent && this.onEvent('state', s); }
     force(s) { this.state = null; this.setState(s); }
@@ -49,7 +49,7 @@
     cancelAction() {
       if (this.finished) return;
       this.turbo = 0; this.impulse = 0; this.retreat = 0; this.chase = 0; this.slowT = 0; this.waitFix = false; this.tireOk = false;
-      if ([S.RUN, S.CHASE, S.BACK, S.WOBBLE, S.NEAR, S.FLAT].includes(this.state)) this.force(S.RIDE);
+      if ([S.RUN, S.CHASE, S.BACK, S.WOBBLE, S.NEAR, S.FLAT, S.BLITZ].includes(this.state)) this.force(S.RIDE);
       else if ([S.FALL, S.DOWN].includes(this.state)) { this.force(S.GETUP); this.st = 0.4; }
     }
     hit(kind, dir) {
@@ -82,6 +82,7 @@
         case S.DOWN: target = 0; if (this.st > 1.3) this.setState(S.GETUP); break;
         case S.GETUP: target = 0; if (this.st > 1.0) this.setState(S.RIDE); break;
         case S.FLAT: target = 0; lerp = 6; if (!this.waitFix && this.st > 2.8) { this.slowT = 3; this.setState(S.RIDE); } break;   // waitFix: esperando o borracheiro
+        case S.BLITZ: target = 0; lerp = 3.2; this.brake = 1; if (!this.waitFix) { this.slowT = 1.5; this.setState(S.RIDE); } break;   // parado na blitz
         case S.ARRIVE: {
           const left = this.stopZ - this.z;
           target = U.clamp(left * 1.3, 0.8, Math.max(2.5, this.speed)); lerp = 4; this.brake = 1;
@@ -117,7 +118,7 @@
       const fallT = this.state === S.FALL ? U.easeInCubic(Math.min(1, this.st / 0.45)) * 1.3 : this.state === S.DOWN ? 1.3 : this.state === S.GETUP ? 1.3 * (1 - U.easeInOut(Math.min(1, this.st / 0.8))) : 0;
       this.fall = fallT;
       this.legsUp = U.damp(this.legsUp, this.state === S.CHASE ? 1 : 0, 8, dt);
-      this.footDown = U.damp(this.footDown, [S.STOP, S.NEAR, S.FLAT, S.NOGAS].includes(this.state) || (this.speed < 0.6 && !this.finished && this.state !== S.FALL && this.state !== S.DOWN) ? 1 : 0, 8, dt);
+      this.footDown = U.damp(this.footDown, [S.STOP, S.NEAR, S.FLAT, S.NOGAS, S.BLITZ].includes(this.state) || (this.speed < 0.6 && !this.finished && this.state !== S.FALL && this.state !== S.DOWN) ? 1 : 0, 8, dt);
       this.lookSide = U.damp(this.lookSide, this.state === S.STOP ? (this.stopSide || 1) : this.state === S.CHASE ? -0.6 * Math.sign(Math.sin(this.t * 2)) : 0, 5, dt);
       this.phase += this.speed * dt * 3;
     }
@@ -354,6 +355,72 @@
       const m = ctx.getTransform(), hp = m.transformPoint(new DOMPoint(0, -200 + by));
       ctx.restore();
       return { x: hp.x, y: hp.y };
+    }
+
+    // policial militar de frente (blitz): pose 'stop' = mão espalmada, 'doc' = conferindo o documento, 'go' = libera
+    static cop(ctx, x, y, s, t, st) {
+      const k = s / 100, walk = st.pose === 'walk' ? Math.sin(t * 10) : 0;
+      ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, 32, 8, 0, 0, 7); ctx.fill();
+      const farda = '#4b5563', fardaD = '#374151', skin = '#a8714c';
+      // pernas e coturno
+      ctx.strokeStyle = fardaD; ctx.lineWidth = 14; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-9, -90); ctx.lineTo(-10 + walk * 8, -10); ctx.moveTo(9, -90); ctx.lineTo(10 - walk * 8, -10); ctx.stroke();
+      ctx.fillStyle = '#111'; U.roundRect(ctx, -21 + walk * 8, -14, 20, 13, 4); ctx.fill(); U.roundRect(ctx, 1 - walk * 8, -14, 20, 13, 4); ctx.fill();
+      // cinto com coldre
+      ctx.fillStyle = '#18181b'; ctx.fillRect(-24, -98, 48, 9); ctx.fillStyle = '#9ca3af'; ctx.fillRect(-4, -97, 8, 7);
+      ctx.fillStyle = '#18181b'; U.roundRect(ctx, 20, -100, 12, 26, 3); ctx.fill();
+      // tronco: farda cinza + colete preto escrito POLÍCIA
+      ctx.fillStyle = farda; U.roundRect(ctx, -25, -162, 50, 70, 14); ctx.fill();
+      ctx.fillStyle = '#1f2125'; U.roundRect(ctx, -21, -156, 42, 58, 9); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(-21, -148, 42, 3); ctx.fillRect(-21, -112, 42, 3);
+      ctx.fillStyle = '#f5f5f5'; ctx.font = `900 10px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('POLÍCIA', 0, -126);
+      ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.arc(-11, -142, 3.2, 0, 7); ctx.fill();          // brasão
+      ctx.fillStyle = '#111'; U.roundRect(ctx, 8, -150, 9, 14, 2); ctx.fill();                          // rádio no peito
+      // braços
+      ctx.strokeStyle = farda; ctx.lineWidth = 11;
+      const arm = (sx, ex, ey) => { ctx.beginPath(); ctx.moveTo(sx, -152); ctx.lineTo(ex, ey); ctx.stroke(); ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(ex, ey, 6.5, 0, 7); ctx.fill(); };
+      if (st.pose === 'stop') {
+        arm(-20, -26, -98); arm(20, 34, -214);
+        ctx.fillStyle = skin; U.roundRect(ctx, 26, -236, 17, 22, 6); ctx.fill();                       // mão espalmada: PARE
+      } else if (st.pose === 'doc') {
+        arm(-20, -10, -120); arm(20, 10, -122);
+        ctx.fillStyle = '#2f6b3a'; U.roundRect(ctx, -16, -140, 32, 22, 3); ctx.fill();                 // CNH verde
+        ctx.fillStyle = '#e8f5e9'; ctx.fillRect(-12, -136, 12, 14); ctx.fillStyle = '#a7d3ae'; ctx.fillRect(2, -134, 11, 3); ctx.fillRect(2, -128, 11, 3);
+      } else if (st.pose === 'go') {
+        const w = Math.sin(t * 8) * 14;
+        arm(-20, -26, -98); arm(20, 46 + w, -150 - Math.abs(w) * 0.6);                                 // acenando: pode ir
+      } else { arm(-20, -26 - walk * 6, -100); arm(20, 26 + walk * 6, -100); }
+      // pescoço, cabeça e quepe
+      ctx.fillStyle = skin; ctx.fillRect(-5, -170, 10, 10);
+      ctx.beginPath(); ctx.arc(0, -182, 15, 0, 7); ctx.fill();
+      ctx.fillStyle = '#1b1410'; ctx.beginPath(); ctx.arc(-5, -182, 1.8, 0, 7); ctx.arc(5, -182, 1.8, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#1b1410'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-9, -188); ctx.lineTo(-2, -187); ctx.moveTo(2, -187); ctx.lineTo(9, -188); ctx.stroke();   // cara séria
+      ctx.beginPath(); ctx.moveTo(-5, -174); ctx.lineTo(5, -174); ctx.stroke();
+      ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.ellipse(0, -196, 19, 7, 0, 0, 7); ctx.fill(); U.roundRect(ctx, -15, -212, 30, 16, 5); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(0, -194, 17, 4, 0, 0, Math.PI); ctx.fill();   // aba
+      ctx.fillStyle = '#d4a017'; ctx.fillRect(-4, -209, 8, 7);
+      const m = ctx.getTransform(), hp = m.transformPoint(new DOMPoint(0, -222));
+      ctx.restore();
+      return { x: hp.x, y: hp.y };
+    }
+
+    // viatura parada no acostamento (vista de trás) com giroflex
+    static copCar(ctx, x, y, s, t) {
+      const F = (c) => c, w = 1.75 * s;
+      CNB.City.carRear(ctx, x, y, s, '#f4f4f5', F, true);
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = '#111827'; ctx.fillRect(-w / 2, -s * 0.74, w, s * 0.1);                         // faixa preta
+      ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.max(6, s * 0.11)}px ${U.FONT_UI}`; ctx.textAlign = 'center'; ctx.fillText('POLÍCIA', 0, -s * 0.66);
+      const on = Math.floor(t * 6) % 2;
+      ctx.fillStyle = '#1f2937'; ctx.fillRect(-w * 0.26, -s * 1.52, w * 0.52, s * 0.1);
+      ctx.fillStyle = on ? '#ff1f3d' : '#5a1220'; ctx.fillRect(-w * 0.25, -s * 1.51, w * 0.24, s * 0.08);
+      ctx.fillStyle = on ? '#14204a' : '#2f6bff'; ctx.fillRect(w * 0.01, -s * 1.51, w * 0.24, s * 0.08);
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(on ? -w * 0.13 : w * 0.13, -s * 1.47, 0, on ? -w * 0.13 : w * 0.13, -s * 1.47, s * 1.3);
+      g.addColorStop(0, on ? 'rgba(255,40,60,0.55)' : 'rgba(60,110,255,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(on ? -w * 0.13 : w * 0.13, -s * 1.47, s * 1.3, 0, 7); ctx.fill();
+      ctx.restore();
     }
 
     // caramelo correndo atrás da moto (visto de trás)

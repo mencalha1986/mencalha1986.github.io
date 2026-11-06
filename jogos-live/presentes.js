@@ -45,7 +45,7 @@
   const esc = (s) => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // equipe: VILÃO atrapalha o personagem, HERÓI ajuda
-  const VILAO = ['back', 'wind', 'engine', 'birds', 'gameover', 'slip', 'trip', 'dog', 'flat', 'follow'];
+  const VILAO = ['back', 'wind', 'engine', 'birds', 'gameover', 'slip', 'trip', 'dog', 'flat', 'follow', 'blitz'];
   const team = (def) => def.team || (VILAO.includes(def.action) ? 'vilao' : 'heroi');
 
   // ------------------------------------------------------------ mapeamento salvo

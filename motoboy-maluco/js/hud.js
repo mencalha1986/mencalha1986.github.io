@@ -153,8 +153,8 @@
       ctx.font = `600 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.55)';
       ctx.fillText(`RODADA ${g.roundNo}  •  ${U.fmtTime(g.roundTime)}`, 400, top + 52);
       ctx.textAlign = 'right'; ctx.font = `600 22px ${FU}`; ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.fillText(stop ? `ENTREGA ${stop.k + 1} DE ${c.stops.length}` : 'ENTREGAS', 1012, top + 30);
-      const left = stop ? Math.max(0, Math.ceil(stop.z - d.z)) : 0;
+      ctx.fillText(stop ? `ENTREGA ${stop.k + 1} DE ${c.stops.length}` : g.returning ? 'VOLTA PRO GALPÃO' : 'ENTREGAS', 1012, top + 30);
+      const left = stop ? Math.max(0, Math.ceil(stop.z - d.z)) : g.returning && c.wh2 ? Math.max(0, Math.ceil(c.wh2 + CNB.City.PARK - d.z)) : 0;
       ctx.font = `64px ${FT}`; ctx.fillStyle = left < 40 ? '#82e8cc' : '#fff'; ctx.fillText(`${left} m`, 1012, top + 86);
       // trilha com as casas
       const x0 = 70, x1 = 905, y = top + 116, L = c.length;
@@ -179,7 +179,7 @@
         arrow(ctx, 70, sy + 34, 30, man.type);
         const dist = Math.max(0, Math.round(man.z - d.z));
         ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `800 23px ${FU}`;
-        const txt = man.type === 'dest' ? `Entrega no nº ${man.num}` : man.type === 'right' ? `Vire à direita · ${man.name}` : 'Vire à esquerda · Avenida';
+        const txt = man.home ? 'Volte pro galpão' : man.type === 'dest' ? `Entrega no nº ${man.num}` : man.type === 'right' ? `Vire à direita · ${man.name}` : 'Vire à esquerda · Avenida';
         ctx.fillText(U.truncate(txt, 30), 108, sy + 28);
         ctx.font = `600 19px ${FU}`; ctx.fillStyle = '#82e8cc'; ctx.fillText(dist > 5 ? `em ${dist} m` : 'agora', 108, sy + 52);
       }
@@ -222,6 +222,7 @@
         case 'dog': return 'cachorro corre atrás!';
         case 'back': return `volta ${def.amount} m`;
         case 'flat': return 'fura o pneu';
+        case 'blitz': return 'parado na blitz!';
         case 'gameover': return 'GAME OVER';
         case 'follow': return `moto volta ${def.back} m`;
         case 'horn': return 'BI-BI! abre caminho';
@@ -309,12 +310,12 @@
 
     drawBubbles(ctx, t) {
       for (const b of this.bubbles) {
-        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : b.who === 'policia' ? (g.city && g.city.policeHead) : (g.courier && g.courierHead) || g.rider.headScreen;
+        const g = this.g, anchor = b.who === 'cliente' ? g.customerHead : b.who === 'borr' ? g.borrHead : b.who === 'policia' ? ((g.cop && g.copHead) || (g.city && g.city.policeHead)) : (g.courier && g.courierHead) || g.rider.headScreen;
         if (!anchor) continue;
         const pop = U.easeOutBack(U.clamp(b.age * 5, 0, 1)), fade = U.clamp((b.dur - b.age) / 0.3, 0, 1);
         ctx.font = `800 30px ${FU}`;
         const lines = wrap(ctx, b.text, 520), lh = 36, bw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 44, bh = lines.length * lh + 26;
-        const bx = U.clamp(anchor.x - bw / 2, 30, W - bw - 30), by = U.clamp(anchor.y - bh - 30, 420, 1600);
+        const bx = U.clamp(anchor.x - bw / 2, 30, (g.cfg.ui.giftGuide === false ? W - 30 : 708) - bw), by = U.clamp(anchor.y - bh - 30, 420, 1600);
         ctx.save(); ctx.globalAlpha = fade; ctx.translate(anchor.x, by + bh); ctx.scale(pop, pop); ctx.translate(-anchor.x, -(by + bh));
         ctx.fillStyle = b.who === 'cliente' ? '#e6fff7' : b.who === 'borr' ? '#fff4d6' : b.who === 'policia' ? '#e3ecff' : '#ffffff';
         U.roundRect(ctx, bx, by, bw, bh, 22); ctx.fill();

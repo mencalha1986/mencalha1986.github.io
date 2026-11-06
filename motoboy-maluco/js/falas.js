@@ -389,5 +389,21 @@ CNB.FALAS = {
    "dur": 1.87,
    "who": "p"
   }
+ ],
+ "blitz": [
+  { "text": "Encosta aí! Documento da moto e habilitação.", "dur": 2.4, "who": "p" },
+  { "text": "Tá aqui, seu guarda... tudo certinho!", "dur": 2.0, "who": "m" },
+  { "text": "Hmm... essa foto aqui é sua mesmo?", "dur": 2.0, "who": "p" },
+  { "text": "Tá com pressa por quê, hein?", "dur": 1.8, "who": "p" },
+  { "text": "Tá liberado. Vai devagar, motoboy!", "dur": 2.0, "who": "p" },
+  { "text": "Ufa... perdi um tempão!", "dur": 1.6, "who": "m" }
+ ],
+ "voltar": [
+  { "text": "Entregou tudo! Bora voltar pro galpão.", "dur": 2.2, "who": "m" },
+  { "text": "Missão cumprida! Partiu galpão!", "dur": 2.0, "who": "m" }
+ ],
+ "galpao": [
+  { "text": "Cheguei, chefe! Tudo entregue!", "dur": 2.0, "who": "m" },
+  { "text": "Moto na garagem. Bora pra próxima!", "dur": 2.0, "who": "m" }
  ]
 };

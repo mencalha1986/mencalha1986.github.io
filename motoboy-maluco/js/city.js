@@ -77,9 +77,15 @@
         this.stops.push({ z: hz, num, street: streetName, done: false, k, side: r() < 0.62 ? 1 : -1, theme: ruT });
         this.maneuvers.push({ z: hz, type: 'dest', num, name: streetName });
         const last = k === cfg.deliveries - 1;
-        const ze = last ? hz + 40 : hz + U.lerp(18, 34, r()), dirT = r() < 0.5 ? 1 : -1;
+        const ze = last ? hz + 34 : hz + U.lerp(18, 34, r()), dirT = r() < 0.5 ? 1 : -1;
         const cL = last ? null : Object.assign({ zc: ze, cw: CWA, dir: dirT, kind: 'T', name: 'AVENIDA' }, ctl());
-        this.zones.push({ type: 'rua', theme: ruT, z0: zs, z1: last ? ze : ze + CWA, stopAt: last ? ze - 8 : Infinity, corner: cL });
+        this.zones.push({ type: 'rua', theme: ruT, z0: zs, z1: last ? ze : ze + CWA, stopAt: last ? ze - 4 : Infinity, corner: cL });
+        if (last) {
+          // VOLTA PRO GALPÃO: a última rua termina na portaria da empresa, pátio e o galpão
+          this.gateIn = ze; this.wh2 = ze + City.YARD2;
+          this.zones.push({ type: 'rua', theme: 'patio', z0: ze, z1: this.wh2 + 60, stopAt: this.wh2 - 2, corner: null });
+          this.maneuvers.push({ z: this.wh2 + City.PARK, type: 'dest', home: true, name: 'GALPÃO' });
+        }
         if (!last) {
           this.corners.push(cL);
           this.curves.push({ z0: ze, z1: ze + CWA, dir: dirT });
@@ -87,11 +93,11 @@
         }
         z = ze + (last ? 0 : CWA);
       }
-      this.length = z;
+      this.length = this.wh2 + City.WH_END;
       this._buildCurve();
       // obstáculos (fora das curvas e longe das casas de entrega)
       this.obstacles = [];
-      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > this.startZ + 10;
+      const freeAt = (zz) => !this.curves.some((c) => zz > c.z0 - 8 && zz < c.z1 + 8) && !this.stops.some((s) => Math.abs(zz - s.z) < 16) && zz > this.startZ + 10 && zz < this.gateIn - 14;
       let oz = 22, lastT = '';
       while (oz < this.length - 10) {
         if (freeAt(oz)) {
@@ -111,7 +117,7 @@
       // TRÂNSITO: carros e ônibus na avenida; na rua, carro lento na mão e carro vindo na contramão
       const curveAt = (zz) => this.curves.some((c) => zz > c.z0 - 6 && zz < c.z1 + 6);
       let tz = this.startZ + 12;   // nada de trânsito dentro do galpão nem no pátio
-      while (tz < this.length - 15) {
+      while (tz < this.gateIn - 16) {
         if (!curveAt(tz) && !this.stops.some((st) => Math.abs(tz - st.z) < 14)) {
           const zone = this.zoneAt(tz), R = ZONE[zone.type].road;
           let type, x, v;
@@ -130,7 +136,7 @@
 
       // árvores, postes e placas
       this.props = [];
-      for (let pz = this.startZ + 6; pz < this.length; pz += 9 + r() * 10) {
+      for (let pz = this.startZ + 6; pz < this.gateIn - 2; pz += 9 + r() * 10) {
         const side = r() < 0.5 ? -1 : 1, zn = this.zoneAt(pz), zt = zn.type;
         if (this.stops.some((st) => st.side === side && Math.abs(st.z - pz) < 12)) continue;   // nada na frente da casa do cliente
         if (zn.beach && side === zn.beach) { this.props.push({ z: pz, side, kind: 'palm', seed: r() }); continue; }
@@ -375,7 +381,7 @@
       const P = (x, y, z) => this.proj(cam, x, y, z), G = part !== 'walls', Wl = part !== 'ground', turnMode = !!cam.turn;
       const zm = (zn + zf) / 2, dz = zm - cam.z, K = this.nextCorner, L = this.lastCorner, F = (c) => this._fog(c, dz);
       // na curva, a via nova (frame B) antes do seu começo: no "T" é o outro braço da avenida; na direita não existe
-      if (this.frame !== 'B' && zm < City.WH_END) { this._warehouse(ctx, P, zn, zf, zm, F, G, Wl, only); return; }   // galpão de saída
+      if (this.frame !== 'B' && (zm < City.WH_END || (this.wh2 && zm >= this.wh2))) { this._warehouse(ctx, P, zn, zf, zm, F, G, Wl, only); return; }   // galpão de saída
       let skipSide = 0, forceAv = false;
       if (turnMode && this.frame === 'B' && this.turnK && zm < this.turnK.zc + this.turnK.cw) {
         if (this.turnK.kind === 'side') return;
@@ -436,8 +442,8 @@
       if (idx % 4 === 0) [-3, 3].forEach((lx) => this._quad(ctx, P(lx - 0.6, HH - 0.02, zn), P(lx + 0.6, HH - 0.02, zn), P(lx + 0.6, HH - 0.02, zn + 0.4), P(lx - 0.6, HH - 0.02, zn + 0.4), '#fffbe6'));
     }
     // portão do galpão (parede da frente com a abertura para a avenida) e o caminhão estacionado
-    _whPortal(ctx, cam) {
-      const P = (x, y, z) => this.proj(cam, x, y, z), z = City.WH_END, WX = 6.2, HH = 5.6, OX = 4.0, OY = 4.0;
+    _whPortal(ctx, cam, z = City.WH_END) {
+      const P = (x, y, z) => this.proj(cam, x, y, z), WX = 6.2, HH = 5.6, OX = 4.0, OY = 4.0;
       const col = '#9aa0a6';
       this._quad(ctx, P(-WX, 0, z), P(-OX, 0, z), P(-OX, HH, z), P(-WX, HH, z), col);
       this._quad(ctx, P(OX, 0, z), P(WX, 0, z), P(WX, HH, z), P(OX, HH, z), col);
@@ -482,8 +488,17 @@
       for (let r = 0; r < 2 + k % 2; r++) for (let c = 0; c < 2; c++) { const bx = p.x - w / 2 + c * w / 2, by = p.y - s * 0.15 - (r + 1) * s * 0.42;
         ctx.fillStyle = ['#c69c6d', '#d4ab7c'][(r + c) % 2]; ctx.fillRect(bx + 1, by, w / 2 - 2, s * 0.4); ctx.fillStyle = '#82e8cc'; ctx.fillRect(bx + w * 0.2, by, w * 0.08, s * 0.4); }
     }
-    _whTruck(ctx, cam) {
-      const p = this.proj(cam, -3.7, 0, 13); if (!p) return;
+    // parede do fundo do galpão (na volta)
+    _whBack(ctx, cam, z) {
+      const P = (x, y, zz) => this.proj(cam, x, y, zz), WX = 6.2, HH = 5.6;
+      this._quad(ctx, P(-WX, 0, z), P(WX, 0, z), P(WX, HH, z), P(-WX, HH, z), '#a3a8ad');
+      this._quad(ctx, P(-2.2, 0, z - 0.01), P(2.2, 0, z - 0.01), P(2.2, 3.2, z - 0.01), P(-2.2, 3.2, z - 0.01), '#6b7177');
+      for (let y = 0.4; y < 3.2; y += 0.4) this._quad(ctx, P(-2.2, y, z - 0.02), P(2.2, y, z - 0.02), P(2.2, y + 0.05, z - 0.02), P(-2.2, y + 0.05, z - 0.02), '#5b6167');
+      const a = P(-3.2, 3.7, z - 0.02), b = P(3.2, 4.5, z - 0.02);
+      if (a && b) { ctx.fillStyle = '#0e3a4a'; ctx.fillRect(a.x, b.y, b.x - a.x, a.y - b.y); const hh = a.y - b.y; if (hh > 8) { ctx.fillStyle = '#82e8cc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(hh * 0.62)}px ${U.FONT_TITLE}`; ctx.fillText('ESTACIONAMENTO DAS MOTOS', (a.x + b.x) / 2, (a.y + b.y) / 2); ctx.textBaseline = 'alphabetic'; } }
+    }
+    _whTruck(ctx, cam, z = 13) {
+      const p = this.proj(cam, -3.7, 0, z); if (!p) return;
       City.truckRear(ctx, p.x, p.y, p.s);
     }
 
@@ -677,6 +692,16 @@
         if (City.WH_END - cam.z > 0.6) L.push({ z: City.WH_END, x: 0, draw: (c) => this._whPortal(c, cam) });
         if (13 - cam.z > 0.6) L.push({ z: 13, x: -3.7, draw: (c) => this._whTruck(c, cam) });
         for (const [px, pz, k] of [[3.9, 9, 0], [4.2, 19, 1], [-4.3, 23, 2]]) if (pz - cam.z > 0.6) L.push({ z: pz, x: px, draw: (c) => this._pallet(c, cam, px, pz, k) });
+        const w2 = this.wh2;
+        if (w2 && w2 - cam.z < 230) {   // volta: portaria, galpão, caminhão e paletes
+          const gz = this.gateIn + 1.5;
+          if (gz - cam.z > 0.6) L.push({ z: gz - 1.5, x: 0, draw: (c) => this._gate(c, cam, { zc: gz }, t) });
+          if (w2 - cam.z > 0.6) L.push({ z: w2, x: 0, draw: (c) => this._whPortal(c, cam, w2) });
+          const bz = w2 + City.WH_END - 2;
+          L.push({ z: bz, x: 0, draw: (c) => this._whBack(c, cam, bz) });
+          if (w2 + 16 - cam.z > 0.6) L.push({ z: w2 + 16, x: -3.7, draw: (c) => this._whTruck(c, cam, w2 + 16) });
+          for (const [px, pz, k] of [[4.0, w2 + 6, 1], [-4.2, w2 + 9, 0], [4.2, w2 + 22, 2]]) if (pz - cam.z > 0.6) L.push({ z: pz, x: px, draw: (c) => this._pallet(c, cam, px, pz, k) });
+        }
       }
       const KC = this.nextCorner;
       if (KC && KC.zc - cam.z < 200 && KC.zc - cam.z > -60) {
@@ -1005,6 +1030,8 @@
   }
 
   City.WH_END = 30;
+  City.YARD2 = 22;   // pátio da volta (portaria → galpão)
+  City.PARK = 13;    // onde a moto estaciona dentro do galpão na volta
   City.YARD = 26;   // pátio entre o portão do galpão e a saída para a avenida   // fim do galpão (o motoboy sai pela porta)
   City.ZONE = ZONE; City.OB = OB; City.CARS = CARS;
   CNB.City = City; CNB.W = W; CNB.H = H;

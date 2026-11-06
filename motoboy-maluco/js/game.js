@@ -26,7 +26,7 @@
       this.cam = { x: 0, y: 2.5, z: -5, F: 1380, horizon: 760, sx: 0, sy: 0 };
       this.mode = 'loading'; this.time = 0; this.roundNo = 0; this.roundTime = 0; this.shake = 0;
       this.seed = Math.floor(Math.random() * 1000);
-      this.timers = []; this.followQueue = []; this.borr = null; this.borrHead = null; this.followClients = []; this.delivered = [];
+      this.timers = []; this.followQueue = []; this.borr = null; this.borrHead = null; this.cop = null; this.copHead = null; this.copCarO = null; this.blitzWait = null; this.returning = false; this.followClients = []; this.delivered = [];
       // vozes (áudios gerados)
       this.voiceEls = {}; this.lastLine = {};
       for (const cat in CNB.FALAS || {}) CNB.FALAS[cat].forEach((l) => { const a = new Audio(l.src); a.preload = 'auto'; this.voiceEls[l.src] = a; });
@@ -54,7 +54,7 @@
         if (ev === 'land') { this.audio.thud(); this.shake = 10; }
         if (ev === 'runEnd') this.hud.banner('ACABOU O TURBO', null, '#9ae6ff', 1.2);
         if (ev === 'chaseEnd') this._dogGiveUp();
-        if (ev === 'state' && arg === S.STOP) this._deliver();
+        if (ev === 'state' && arg === S.STOP && this.stopping) this._deliver();
       };
     }
     after(sec, fn, tag) { this.timers.push({ t: sec, fn, tag }); }
@@ -68,7 +68,7 @@
       if (opts.index === undefined && list.length > 1 && pick === this.lastLine[cat]) pick = list[(list.indexOf(pick) + 1) % list.length];
       this.lastLine[cat] = pick; this.lastSay = this.time;
       if (pick.who !== 'g') this.hud.bubble(cat === 'cliente' ? 'cliente' : pick.who === 'b' ? 'borr' : pick.who === 'p' ? 'policia' : 'motoboy', pick.text, pick.dur + 0.6);
-      if (!this.cfg.voice.enabled || this.voiceMuted || this.audio.muted) return;
+      if (!pick.src || !this.cfg.voice.enabled || this.voiceMuted || this.audio.muted) return;
       const el = this.voiceEls[pick.src] || new Audio(pick.src);
       if (this.voiceNow && pick.who !== 'g' && cat !== 'cliente') this.voiceNow.pause();
       el.currentTime = 0; el.play().catch(() => {});
@@ -109,6 +109,7 @@
     cancelCurrentAction() {
       this.rider.cancelAction();
       this._repairLeave();
+      this._blitzEnd(true); this.blitzWait = null;
       if (this.chaseDog && !this.chaseDog.giveUp) this._dogGiveUp(true);
       this.timers = this.timers.filter((tm) => tm.tag !== 'gift');
       this.fx.clearTag('gift');
@@ -151,9 +152,43 @@
           this.after(2.6, () => this._callRepair(), 'gift');
           this._penalty(0.5);
           break;
+        case 'blitz': this._blitz(user, def); break;
         case 'gameover': this.gameOver(user); break;
       }
     }
+
+    // BLITZ: viatura no acostamento, o PM manda parar, confere a CNH e libera
+    _blitz(user, def) {
+      const d = this.rider, G = (t, fn) => this.after(t, fn, 'gift');
+      if (!this._blitzOk()) { this.blitzWait = [user, def]; this.hud.banner('BLITZ À FRENTE!', `${user} chamou a polícia`, def.color, 1.8); return; }   // ainda no galpão: a blitz espera na rua
+      const R = this.city.road(d.z + 6);
+      d.force(S.BLITZ); d.waitFix = true;
+      const stopZ = d.z + Math.max(1.2, d.speed * 0.32);
+      const side = d.x > 0 ? -1 : 1;   // viatura e PM do lado oposto ao da moto, para aparecerem na tela
+      this.copCarO = { x: side * (R - 0.9), z: stopZ + 7 };
+      this.cop = { x: U.clamp(d.x + side * 1.8, -R + 0.5, R - 0.5), z: stopZ + 3.4, pose: 'stop', alpha: 0, t: 0 };
+      this.audio.whistle(); this.after(0.55, () => this.audio.whistle());
+      this.hud.banner('BLITZ!', `${user} chamou a polícia`, def.color, 2.2);
+      this.fx.doFlash(0.2, '60,110,255');
+      G(0.4, () => this.say('policia', { index: 1, force: true }));
+      G(1.7, () => this.say('blitz', { index: 0, force: true }));
+      G(3.8, () => { if (this.cop) this.cop.pose = 'doc'; this.say('blitz', { index: 1, force: true }); });
+      G(5.6, () => this.say('blitz', { index: 2 + Math.floor(Math.random() * 2), force: true }));
+      G(7.2, () => { if (this.cop) this.cop.pose = 'go'; this.say('blitz', { index: 4, force: true }); this.audio.chime(); });
+      G(8.6, () => { this._blitzEnd(); this.after(0.5, () => this.say('blitz', { index: 5 })); });
+      this._penalty(0.5);
+    }
+    _blitzOk() {   // só em rua reta, longe do galpão e de esquina
+      const d = this.rider, m = this.nextManeuver();
+      return d.z >= CNB.City.WH_END + 24 && (!m || m.z - d.z > 22) && !d.finished;
+    }
+    _blitzEnd(silent) {
+      if (!this.cop && !this.copCarO) return;
+      const d = this.rider;
+      if (d.state === S.BLITZ) { d.waitFix = false; }
+      if (this.cop) this.cop.leaving = true;
+    }
+
     // borracheiro vem da calçada, troca o pneu e vai embora
     _callRepair() {
       const d = this.rider, R = this.city.road(d.z), G = (t, fn) => this.after(t, fn, 'gift');
@@ -290,10 +325,32 @@
       T(6.3, () => {
         this.cust.walking = true; this.cust.tx = FX + 0.6 * sd; this.cust.leaving = true; this.cust.box = true;
         this.stopping = null;
-        if (this.city.stops.every((x) => x.done)) { this._endRound(); return; }
+        if (this.city.stops.every((x) => x.done)) { this._goHome(); return; }
         d.force(S.RIDE); this.audio.whoosh(true);
         this._applyPending();
       });
+    }
+
+    // depois da última entrega: volta pro galpão pilotando
+    _goHome() {
+      const d = this.rider;
+      this.returning = true;
+      d.force(S.RIDE); this.audio.whoosh(true);
+      this.hud.banner('ENTREGAS FEITAS!', 'agora é voltar pro galpão', '#82e8cc', 2.4);
+      this.after(0.8, () => this.say('voltar', { force: true }));
+      this._applyPending();
+    }
+    _checkHome() {
+      const d = this.rider, c = this.city;
+      if (!this.returning || d.busy || d.state === S.BACK) return;
+      if (d.finished) { if (d.state === S.STOP) { this.returning = false; this.say('galpao', { force: true }); this.audio.honk(); this._endRound(); } return; }
+      if (d.z >= c.wh2 + CNB.City.PARK - 12) {
+        d.turbo = 0; d.impulse = 0; d.retreat = 0;
+        if (d.chase > 0) { d.chase = 0; this._dogGiveUp(); }
+        this._blitzEnd(true); this.blitzWait = null;
+        d.stopZ = c.wh2 + CNB.City.PARK; d.stopSide = 1; d.force(S.ARRIVE);
+        this.hud.banner('DE VOLTA AO GALPÃO!', 'moto estacionada', '#82e8cc', 2);
+      }
     }
 
     _endRound() {
@@ -499,7 +556,7 @@
         const prevZ = d.z;
         d.update(dt, c);
         if (this.turning) this._turnStep(prevZ);
-        else { this._collide(prevZ); this._checkArrive(); }
+        else { this._collide(prevZ); this._checkArrive(); this._checkHome(); }
         this._updateDog(dt);
         this._corners(dt, prevZ);
         // GPS fala as curvas
@@ -545,6 +602,14 @@
         bo.alpha = U.damp(bo.alpha, bo.leaving && Math.abs(bo.tx - bo.x) < 0.3 ? 0 : 1, 5, dt);
         if ((bo.leaving && bo.alpha < 0.03) || bo.z < this.cam.z + 0.5) { this.borr = null; this.borrHead = null; }
       }
+      if (this.blitzWait && this.mode === 'playing' && !this.rider.finished && this._blitzOk()) { const bw = this.blitzWait; this.blitzWait = null; this._blitz(...bw); }
+      const cp = this.cop;
+      if (cp) {
+        cp.t += dt; cp.alpha = U.damp(cp.alpha, cp.leaving ? 0 : 1, cp.leaving ? 3 : 6, dt);
+        if (cp.leaving) { cp.x = U.damp(cp.x, this.copCarO ? this.copCarO.x - 0.9 : cp.x, 2, dt); cp.pose = 'walk'; }
+        if ((cp.leaving && cp.alpha < 0.03) || cp.z < this.cam.z + 0.5) { this.cop = null; this.copHead = null; }
+      }
+      if (this.copCarO && this.copCarO.z < this.cam.z + 0.6) this.copCarO = null;
       const cr = this.courier;
       if (cr && cr.walking && cr.tx !== undefined) {
         const dx = cr.tx - cr.x, dz = cr.tz - cr.z, dist = Math.hypot(dx, dz), st = Math.min(dist, 1.4 * dt);
@@ -615,6 +680,13 @@
       if (bo && bo.alpha > 0.02) sprites.push({ z: bo.z, draw: (cx) => {
         const p = city.proj(c, bo.x, 0, bo.z); if (!p) return;
         cx.save(); cx.globalAlpha = bo.alpha; this.borrHead = CNB.Rider.repairman(cx, p.x, p.y, p.s, t, bo); cx.restore();
+      } });
+      const cc = this.copCarO;
+      if (cc) sprites.push({ z: cc.z, draw: (cx) => { const p = city.proj(c, cc.x, 0, cc.z); if (p) CNB.Rider.copCar(cx, p.x, p.y, p.s, t); } });
+      const cop = this.cop;
+      if (cop && cop.alpha > 0.02) sprites.push({ z: cop.z, draw: (cx) => {
+        const p = city.proj(c, cop.x, 0, cop.z); if (!p) return;
+        cx.save(); cx.globalAlpha = cop.alpha; this.copHead = CNB.Rider.cop(cx, p.x, p.y, p.s, t, cop); cx.restore();
       } });
       const dog = this.chaseDog;
       if (dog && dog.z - c.z > 0.8) sprites.push({ z: dog.z, draw: (cx) => { const p = city.proj(cr, dog.x, 0, dog.z); if (p) CNB.Rider.dogChaser(cx, p.x, p.y, p.s, dog.giveUp ? 0 : t, !dog.giveUp); } });

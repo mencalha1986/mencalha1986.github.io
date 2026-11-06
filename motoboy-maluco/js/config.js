@@ -46,6 +46,8 @@ CNB.CONFIG = {
     tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'Turbo', action: 'turbo', duration: 6, points: 10, color: '#25f4ee', icon: 'note', key: '2', demo: 20 },
     pistola:  { tiktok: 'Pistola de dinheiro', img: 'img/presentes/money-gun.png', label: 'Super turbo', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: '3', demo: 2 },
     cachorro: { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Cachorro',    action: 'dog',     duration: 9, points: 5, color: '#e0a35a', icon: 'dog',  key: '4', demo: 12 },
+    pneu:     { tiktok: 'Casquinha de sorvete', img: 'img/presentes/ice-cream-cone.webp', label: 'Pneu furado', action: 'flat', points: 5, color: '#facc15', icon: 'tire', key: '6', demo: 8 },
+    blitz:    { tiktok: 'GG', img: 'img/presentes/gg.webp', label: 'Blitz', action: 'blitz', points: 5, color: '#3b82f6', icon: 'police', key: '5', demo: 8 },   // PM para o motoboy
     gasolina: { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Sem gasolina', action: 'gameover', points: 50, color: '#e879f9', icon: 'fuel', key: '7', demo: 0 },
     seguir:   { tiktok: 'Seguir (grátis)', label: 'Seguidor', action: 'follow', back: 3, points: 1, color: '#fe2c55', icon: 'follow', key: '9', demo: 6, free: true }
   },
@@ -55,6 +57,8 @@ CNB.CONFIG = {
     'tiktok': 'tiktok', 'turbo': 'tiktok',
     'money gun': 'pistola', 'pistola de dinheiro': 'pistola', 'pistola': 'pistola',
     'doughnut': 'cachorro', 'donut': 'cachorro', 'rosquinha': 'cachorro', 'cachorro': 'cachorro',
+    'ice cream cone': 'pneu', 'casquinha de sorvete': 'pneu', 'casquinha': 'pneu', 'sorvete': 'pneu', 'pneu': 'pneu', 'pneu furado': 'pneu',
+    'gg': 'blitz', 'bom jogo': 'blitz', 'blitz': 'blitz', 'policia': 'blitz', 'polícia': 'blitz',
     'galaxy': 'gasolina', 'galáxia': 'gasolina', 'gasolina': 'gasolina', 'sem gasolina': 'gasolina',
     'follow': 'seguir', 'seguir': 'seguir', 'seguiu': 'seguir'
   },
