@@ -92,6 +92,7 @@ button:focus-visible{outline:3px solid var(--pkg);outline-offset:2px}
 #rank .col div span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #rank .col .none{color:var(--muted);font-weight:700}
 #rank .hg{color:var(--good)} #rank .hb{color:var(--bad)}
+#rank #rHelp,#rank #rSab{display:block;padding:0}
 
 /* gifts */
 #gifts{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);width:310px;max-height:calc(100% - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;padding:12px;z-index:6}
@@ -856,10 +857,11 @@ function update(dt){
   else if(state==="win"&&delivered) camA+=dt*.35;
   else if(state==="play") camA+=(ahead-camA)*Math.min(1,dt*3);
   const portrait=window.innerHeight>window.innerWidth;
-  const back=state==="menu"?11:(portrait?9.5:7.8), up=state==="menu"?6:(portrait?6.2:5.2);
+  const back=state==="menu"?11:(portrait?9:7.8), up=state==="menu"?6:(portrait?6.8:5.2);
   const fx=Math.sin(camA),fz=-Math.cos(camA);
   desired.set(focus.x-fx*back,focus.y+up,focus.z-fz*back);
-  lookT.set(focus.x+fx*6,focus.y+2,focus.z+fz*6);
+  const la=portrait&&state!=="menu"?2.2:6, ly=portrait&&state!=="menu"?0.6:2;   // em pé: mira mais perto para o entregador aparecer inteiro
+  lookT.set(focus.x+fx*la,focus.y+ly,focus.z+fz*la);
   const kc=snapCam?1:1-Math.exp(-dt*6);
   camera.position.lerp(desired,kc); camLook.lerp(lookT,kc); camera.lookAt(camLook);
   snapCam=false;
