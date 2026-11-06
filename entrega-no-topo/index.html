@@ -183,6 +183,13 @@ body.playing #climb{display:none}
   .fi{animation:none}
 }
 
+/* balão de fala do entregador */
+#say{position:fixed;left:0;top:0;transform:translate(-50%,-100%) scale(.7);opacity:0;pointer-events:none;z-index:6;background:#fff;color:#1d1636;font-weight:800;font-size:17px;line-height:1.2;padding:8px 13px;border-radius:16px;border:3px solid #1d1636;max-width:250px;width:max-content;text-align:center;transition:opacity .2s,transform .25s cubic-bezier(.3,1.5,.6,1)}
+#say.show{opacity:1;transform:translate(-50%,-100%) scale(1)}
+#say::after{content:"";position:absolute;left:50%;top:100%;margin-left:-9px;border:9px solid transparent;border-top-color:#1d1636}
+#tapSound{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:#ffb703;color:#1d1636;font-weight:800;font-size:18px;padding:9px 16px;border-radius:999px;z-index:30;cursor:pointer;display:none;white-space:nowrap}
+#tapSound.show{display:block}
+
 /* ícones oficiais dos presentes */
 img.li{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
 span.li.emo{font-size:52px}
@@ -301,6 +308,8 @@ span.li.emo{font-size:52px}
 <div id="legGood" class="legend" aria-label="Presentes que fazem subir"></div>
 
 <button id="climb" aria-label="Subir um degrau"><span>⬆</span>SUBIR</button>
+<div id="say"></div>
+<div id="tapSound">🔊 Clique aqui para ligar o som</div>
 <div id="banner"><div class="bt"></div><div class="bs"></div></div>
 
 <div id="corner">
@@ -501,6 +510,7 @@ function emojiSprite(e,size){
   sp.scale.set(size,size,size); return sp;
 }
 const stunSprite=emojiSprite("💫",1.1); stunSprite.position.y=2.9; courier.g.add(stunSprite);
+
 const shadow=new THREE.Mesh(new THREE.CircleGeometry(.75,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.32,depthWrite:false}));
 shadow.rotation.x=-Math.PI/2; scene.add(shadow);
 
@@ -598,6 +608,50 @@ const sfx={
   win:()=>[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,.22,"triangle",.08,i*.12)),
   over:()=>{tone(392,.3,"triangle",.08,0);tone(330,.3,"triangle",.08,.3);tone(262,.9,"sawtooth",.07,.6,60);}
 };
+
+/* ---------- música de fundo (melodia original, gerada pelo jogo) ---------- */
+let musicBus=null,mNext=0,mStep=0,musicDuck=1;
+const NF=n=>{const m=/^([A-G])(#?)(\d)$/.exec(n);const i={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]?1:0);return 440*Math.pow(2,(i+(Number(m[3])-4)*12-9)/12);};
+// 8 compassos em colcheias (em Sol maior, animado)
+const TUNE=[["G4",1],["B4",1],["D5",1],["B4",1],["G5",2],["D5",2],["E5",1],["D5",1],["C5",1],["B4",1],["A4",4],
+            ["F#4",1],["A4",1],["C5",1],["A4",1],["D5",2],["C5",1],["B4",1],["A4",1],["B4",1],["C5",1],["A4",1],["G4",4],
+            ["B4",1],["C5",1],["D5",2],["G5",2],["F#5",1],["E5",1],["D5",2],["B4",1],["G4",1],["A4",4],
+            ["C5",1],["E5",1],["D5",1],["C5",1],["B4",2],["A4",2],["D5",1],["C5",1],["B4",1],["A4",1],["G4",4]];
+const TUNE_T=[];{let t=0;TUNE.forEach(([n,d])=>{TUNE_T.push([t,n,d]);t+=d;});}
+const HARM=[["G2","B3","D4"],["C3","C4","E4"],["D3","D4","F#4"],["G2","B3","D4"],["G2","B3","D4"],["C3","C4","E4"],["D3","A3","D4"],["G2","B3","D4"]];
+const M8=60/132/2;
+function mn(f,t,d,type,v){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(musicBus);o.start(t);o.stop(t+d+.04);}
+function musicLevel(f){if(!musicBus)return;const t=ac.currentTime,v=muted?0:.5*musicDuck;musicBus.gain.cancelScheduledValues(t);musicBus.gain.setValueAtTime(musicBus.gain.value,t);musicBus.gain.linearRampToValueAtTime(v,t+(f||.4));}
+function musicTick(){
+  if(!ac||ac.state!=="running")return;
+  if(!musicBus){musicBus=ac.createGain();musicBus.gain.value=0;musicBus.connect(ac.destination);mNext=ac.currentTime+.1;musicLevel(1.5);}
+  while(mNext<ac.currentTime+.25){
+    const st=mStep%64,t=mNext,ib=st%8,h=HARM[Math.floor(st/8)];
+    if(!muted){
+      TUNE_T.forEach(([t0,n,d])=>{if(t0===st){mn(NF(n),t,d*M8*.9,"square",.035);mn(NF(n),t,d*M8*.9,"triangle",.09);}});
+      if(ib%2===0) mn(NF(ib%4===0?h[0]:h[0].replace(/\d/,m=>String(Number(m)+1))),t,M8*1.6,"triangle",.17);   // baixo pulando de oitava
+      if(ib%2===1) h.slice(1).forEach(n=>mn(NF(n),t,M8*.8,"triangle",.035));                                   // acordes no contratempo
+      if(ib%4===0) mn(70,t,.18,"sine",.22);                                                                     // bumbo
+      mn(5200,t,.025,"square",ib%2?.008:.004);                                                                  // chimbal
+    }
+    mStep++;mNext+=M8;
+  }
+}
+setInterval(musicTick,60);
+function duckMusic(k){musicDuck=k;musicLevel(.6);}
+
+/* ---------- descanso a cada 100 degraus ---------- */
+const TIRED=["Ufa... {n} degraus! Tô cansado 😮‍💨","Ai, minhas pernas! Quero chegar logo! 🥵","Preciso de um ar... quero chegar logo!","Que escadaria! Só um minutinho... 😩","Tô morto de cansado... cadê esse cliente? 😫","Respira... {n} já foram! Bora chegar logo!"];
+let restT=0,lastRest=0,sayT=0;
+const sweatSprite=emojiSprite("💦",.9);
+function sayCourier(text,dur){const el=$("#say");el.textContent=text;el.classList.add("show");sayT=dur||3;}
+function placeSay(){
+  const el=$("#say");
+  if(sayT<=0){el.classList.remove("show");return;}
+  const v=courierWorld().add(new THREE.Vector3(0,2.9,0)).project(camera),vs=viewSize();
+  const x=Math.max(130,Math.min(vs.w-130,(v.x+1)/2*vs.w)),y=Math.max(150,(1-v.y)/2*vs.h);
+  el.style.left=x+"px";el.style.top=y+"px";
+}
 
 /* ---------- estado ---------- */
 let state="menu",step=0,vis=0,turboT=0,stunT=0,shield=0,climbCd=0,holding=false,tele=null,autoRate=2,autoAcc=0,autoNextT=0;
@@ -800,7 +854,7 @@ function setupWorld(n){
 }
 function startGame(){
   if(chosenN!==N) setupWorld(chosenN); else {rebuildTop(); slots.forEach(s=>s.idx=-1);}
-  step=0; vis=0; prevVis=0; turboT=0; stunT=0; shield=0; climbCd=0; tele=null; holding=false;
+  step=0; vis=0; prevVis=0; turboT=0; stunT=0; shield=0; climbCd=0; tele=null; holding=false; restT=0; lastRest=0; sayT=0;
   elapsed=0; help={}; sab={}; cntGood=0; cntBad=0; simT=2;
   orderId=1000+Math.floor(Math.random()*9000);
   $("#order").textContent="Pedido #"+orderId+" · cliente no degrau "+N;
@@ -818,7 +872,16 @@ function update(dt){
   if(state==="play"){
     elapsed+=dt;
     turboT=Math.max(0,turboT-dt); stunT=Math.max(0,stunT-dt); climbCd=Math.max(0,climbCd-dt);
-    if(!tele){autoAcc+=dt*autoRate; while(autoAcc>=1){autoAcc-=1; if(step<N) step++;}}
+    restT=Math.max(0,restT-dt);
+    if(!tele&&restT<=0){autoAcc+=dt*autoRate; while(autoAcc>=1){autoAcc-=1; if(step<N) step++;}}
+    // a cada 100 degraus ele para, respira e reclama
+    const hund=Math.floor(vis/100);
+    if(hund<lastRest) lastRest=hund;
+    else if(hund>lastRest&&!tele&&Math.abs(step-vis)<1.5&&step<N-5){
+      lastRest=hund; restT=3.2; autoAcc=0;
+      sayCourier(TIRED[Math.floor(Math.random()*TIRED.length)].replace("{n}",hund*100),3.2);
+      tone(330,.6,"sine",.07,0,190); tone(300,.5,"sine",.05,.7,170);
+    }
     if(sim){simT-=dt; if(simT<=0){randomGift(); simT=1.2+Math.random()*2.8;}}
     pumpQueue(dt);
   }
@@ -857,6 +920,9 @@ function update(dt){
     if(tumbling){courier.pivot.rotation.x+=dt*16;}
     else if(!tele){courier.pivot.rotation.x*=Math.max(0,1-dt*12); if(Math.abs(courier.pivot.rotation.x)>Math.PI*2) courier.pivot.rotation.x%=Math.PI*2;}
     courier.pivot.rotation.z=stunT>0?Math.sin(T*22)*.14:0;
+    if(!sweatSprite.parent){sweatSprite.position.set(.45,2.5,0);courier.g.add(sweatSprite);}
+    const resting=restT>0&&state==="play"&&!tele&&!tumbling;
+    sweatSprite.visible=resting; if(resting){sweatSprite.position.y=2.5+Math.sin(T*6)*.08; courier.pivot.rotation.x=.22+Math.sin(T*5)*.05;}
     shadow.visible=!tele;
     const si=Math.round(clamp(vis,0,N)); shadow.position.set(p.x,P[si].y+.02,p.z);
   }
@@ -902,6 +968,7 @@ function update(dt){
   shieldMesh.visible=shieldWire.visible=shield>0&&state==="play";
   shieldWire.rotation.y+=dt*.8; shieldWire.rotation.x+=dt*.3;
   stunSprite.visible=stunT>0&&state==="play";
+  sayT=Math.max(0,sayT-dt); placeSay();
   stunSprite.material.rotation=T*4;
   if(turboT>0&&state==="play"&&Math.abs(vis-prevVis)>1e-4&&Math.random()<dt*25){
     burst(courier.g.position.clone().setY(courier.g.position.y-.9),0xffb703,6,2.5,.5,.25);
@@ -963,7 +1030,10 @@ window.addEventListener("keyup",e=>{
 });
 window.addEventListener("blur",()=>{holding=false;climbBtn.classList.remove("press");});
 
-$("#btnSound").addEventListener("click",()=>{muted=!muted;$("#btnSound").innerHTML=muted?"🔇 <span>Mudo</span>":"🔊 <span>Som</span>";audio();});
+$("#btnSound").addEventListener("click",()=>{muted=!muted;$("#btnSound").innerHTML=muted?"🔇 <span>Mudo</span>":"🔊 <span>Som</span>";audio();musicLevel();if(bc)bc.postMessage({t:"mute",m:muted});});
+audio();
+setTimeout(()=>{if(!ac||ac.state!=="running")$("#tapSound").classList.add("show");},900);
+document.addEventListener("pointerdown",()=>{audio();setTimeout(()=>{if(ac&&ac.state==="running")$("#tapSound").classList.remove("show");},120);});
 function syncSimBtn(){$("#btnSim").classList.toggle("on",sim);$("#btnSim").innerHTML="🤖 <span>Live simulada"+(sim?": ligada":"")+"</span>";}
 $("#btnSim").addEventListener("click",()=>{sim=!sim;syncSimBtn();const o=$("#optSim");if(o)o.checked=sim;});
 
@@ -1007,7 +1077,7 @@ function connectWS(){
 
 /* ---------- janela da live: o painel manda os presentes de teste para ela ---------- */
 let bc=null; try{bc=new BroadcastChannel("topo-live");}catch(e){}
-if(bc&&LIVE) bc.onmessage=e=>{const m=e.data||{}; if(m.t==="gift"){const g=GIFTS.find(x=>x.id===m.id); if(g) giftQueue.push([g,m.user||"Você"]);}};
+if(bc&&LIVE) bc.onmessage=e=>{const m=e.data||{}; if(m.t==="mute"){muted=!!m.m;musicLevel();} if(m.t==="gift"){const g=GIFTS.find(x=>x.id===m.id); if(g) giftQueue.push([g,m.user||"Você"]);}};
 function relay(g,user){ if(bc&&!LIVE) bc.postMessage({t:"gift",id:g.id,user}); }
 $("#btnLive").addEventListener("click",()=>{
   const u=location.pathname+"?obs=1"+(PARAMS.get("ws")?"&ws="+encodeURIComponent(PARAMS.get("ws")):"");
