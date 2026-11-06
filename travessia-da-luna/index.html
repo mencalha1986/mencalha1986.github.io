@@ -266,7 +266,7 @@ body.live #startScreen .cols .box:first-child{display:none}
         <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar · arraste para olhar</li>
         <li><kbd>Espaço</kbd> pular</li>
         <li><kbd>T</kbd> Luna anda sozinha (bom para live)</li>
-        <li><kbd>1</kbd>…<kbd>6</kbd> presentes · <kbd>H</kbd> esconder painel</li>
+        <li><kbd>1</kbd>…<kbd>7</kbd> presentes · <kbd>H</kbd> esconder painel</li>
       </ul></div>
       <div class="box"><h3>Segredos</h3><ul>
         <li><b>Galáxia chama o dragão:</b> ele agarra a Luna, leva embora e o jogo acaba.</li>
@@ -754,6 +754,7 @@ const LINES={
   jetpack:["UHUUUL! Eu tô voando!","Foguete! Segura essa, abismo!"],
   terremoto:["O chão tá tremendo!!","Terremoto?! Vocês são do mal!","Quem mandou o Leão?! Aparece!"],
   teleporte:["Uau, onde eu tô? Pulei um pedaço!","Teletransporte! Muito obrigada!"],
+  voltar:["Ei! Quem me mandou pra trás?!","Não acredito, cinco casas pra trás!","Sério, chat? Tudo de novo!"],
   queda:["Nãããão! Caí!","Quem empurrou? Eu sei que foi alguém do chat.","De novo não...","Tá bom, tá bom, volto da bandeira."],
   checkpoint:["Bandeira! Daqui eu não volto mais.","Ufa, ponto salvo!"],
   stuck:["Não consigo pular com essa neve! Alguém manda sol?","As pernas não respondem... esse pulo tá longe."],
@@ -819,6 +820,7 @@ const GIFTS=[
   {key:'3',gift:'Coração c/ dedos',img:'img/presentes/finger-heart.webp',coins:5,icon:'🫰',fx:'escudo',label:'Escudo',team:'help'},
   {key:'4',gift:'Pistola de dinheiro',img:'img/presentes/money-gun.png',coins:500,icon:'💸',fx:'teleporte',label:'Teleporte',team:'help'},
   {key:'5',gift:'Rosquinha',img:'img/presentes/doughnut.webp',coins:30,icon:'🍩',fx:'chuva',label:'Chuva',team:'sab'},
+  {key:'7',gift:'GG',img:'img/presentes/gg.webp',coins:1,icon:'🔙',fx:'voltar',label:'Volta 5 casas',team:'sab'},
   {key:'6',gift:'Galáxia',img:'img/presentes/galaxy.webp',coins:1000,icon:'🌌',fx:'dragao',label:'Dragão (fim)',team:'sab'},
 ];
 const FAKE=['@biazinha.gamer','@pedrao_lives','@ju.mendes','@kaique77','@lari_sz','@dudu.fps','@mari.bolo','@tio_nando','@gabi.rj','@caio.zn'];
@@ -884,6 +886,7 @@ function applyFx(g){
     case 'jetpack':startFly();say('jetpack','🤩');break;
     case 'terremoto':ext('quake',5);say('terremoto','😱');break;
     case 'teleporte':teleportNext();say('teleporte','🤩');break;
+    case 'voltar':backSegs(5);say('voltar','😤');break;
   }
   return special;
 }
@@ -895,6 +898,15 @@ function startFly(){
   if(s.kind==='end')target=Math.min(Math.max(target,s.p0+2),FINISH-1);
   P.fly={t:0,dur:2.4,from:P.pos.clone(),seg:s,d:target};P.vel.set(0,0,0);
   sweep(200,900,1.2,.12);
+}
+// GG: Luna volta 5 plataformas (casas)
+function backSegs(n){
+  const d=progress();let i=segs.findIndex(sg=>d>=sg.p0-.3&&d<=sg.p1+.3);
+  if(i<0){i=0;for(let k=0;k<segs.length;k++)if(segs[k].p0<=d)i=k;}
+  const t=segs[Math.max(0,i-n)],p=Math.min(t.p1-.5,t.p0+Math.min(2,(t.p1-t.p0)/2));
+  P.pos.set(t.x,t.y+.05,-p);P.vel.set(0,0,0);P.fly=null;P.seg=null;P.backup=false;
+  let c=0;cps.forEach((cp,k)=>{if(cp.p<=p+.5)c=k;});P.cp=Math.min(P.cp,c);
+  flash(.7);sweep(700,160,.5,.12);
 }
 function teleportNext(){
   const d=progress();const nx=cps.find(c=>c.p>d+2);
@@ -1314,7 +1326,7 @@ const ALIASES={
   jetpack:{ids:[5269],names:['tiktok']},
   escudo:{ids:[],names:['finger heart','coração com os dedos','coracao com os dedos']},
   teleporte:{ids:[7168],names:['money gun','pistola de dinheiro']},
-  vento:{ids:[],names:['gg']},
+  voltar:{ids:[],names:['gg']},
   neve:{ids:[],names:['ice cream cone','casquinha','casquinha de sorvete','sorvete']},
   raio:{ids:[],names:['perfume']},
   chuva:{ids:[5879],names:['doughnut','donut','rosquinha']},
