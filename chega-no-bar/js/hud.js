@@ -311,12 +311,12 @@
       ctx.font = `${shout ? 900 : 700} ${shout ? 38 : 34}px ${FU}`;
       const words = b.text.split(' ');
       const lines = []; let cur = '';
-      words.forEach((w) => { const tst = cur ? cur + ' ' + w : w; if (ctx.measureText(tst).width > 600 && cur) { lines.push(cur); cur = w; } else cur = tst; });
+      words.forEach((w) => { const tst = cur ? cur + ' ' + w : w; if (ctx.measureText(tst).width > 580 && cur) { lines.push(cur); cur = w; } else cur = tst; });
       lines.push(cur);
       const lh = shout ? 46 : 42;
       const bw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 56;
       const bh = lines.length * lh + 34;
-      let bx = U.clamp(hp.x - bw / 2 + 60, 30, W - bw - 30);
+      let bx = U.clamp(hp.x - bw / 2 + 60, 30, (g.cfg.ui.giftGuide ? 708 : W - 30) - bw);   // não cobre a lista de presentes
       const by = U.clamp(hp.y - bh - 46, 420, 1500);
       ctx.save();
       ctx.globalAlpha = fade;

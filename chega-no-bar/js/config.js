@@ -69,6 +69,7 @@ CNB.CONFIG = {
     rosa:     { tiktok: 'Rosa', img: 'img/presentes/rose.webp', label: 'Rosa', action: 'advance', amount: 3, points: 1, color: '#ff4d6d', icon: 'rose', key: '1' },
     tiktok:   { tiktok: 'TikTok', img: 'img/presentes/tiktok.webp', label: 'Turbo', action: 'turbo', duration: 6, points: 10, color: '#25f4ee', icon: 'note', key: '2' },
     pistola:  { tiktok: 'Pistola de dinheiro', img: 'img/presentes/money-gun.png', label: 'Super turbo', action: 'turbo', duration: 15, points: 500, color: '#4ade80', icon: 'moneygun', key: '3' },
+    cerveja:  { tiktok: 'Cogumelo', img: 'img/presentes/mushroom.webp', label: 'Cerveja', action: 'beer', amount: 14, drunk: 0.14, points: 5, color: '#f5a623', icon: 'beer', key: '5' },   // mais uma dose: anda e fica mais bêbado
     voltar:   { tiktok: 'Rosquinha', img: 'img/presentes/doughnut.webp', label: 'Voltar', action: 'back', amount: 14, points: 5, color: '#a78bfa', icon: 'back', key: '4' },
     cachorro: { tiktok: 'Corgi', img: 'img/presentes/corgi.webp', label: 'Cachorro', action: 'dog', points: 5, color: '#e0a35a', icon: 'dog', key: '8' },   // xixi na perna (para ~5s)
     especial: { tiktok: 'Galáxia', img: 'img/presentes/galaxy.webp', label: 'Especial',action: 'gameover', event: 'dormiu', points: 50, color: '#e879f9', icon: 'moon', key: '7' },
@@ -82,6 +83,7 @@ CNB.CONFIG = {
     'rose': 'rosa', 'rosa': 'rosa',
     'tiktok': 'tiktok', 'turbo': 'tiktok',
     'money gun': 'pistola', 'pistola de dinheiro': 'pistola', 'pistola': 'pistola',
+    'cerveja': 'cerveja', 'beer': 'cerveja', 'cheers': 'cerveja', 'mushroom': 'cerveja', 'cogumelo': 'cerveja',
     'doughnut': 'voltar', 'donut': 'voltar', 'rosquinha': 'voltar', 'voltar': 'voltar',
     'cachorro': 'cachorro', 'dog': 'cachorro', 'doggo': 'cachorro', 'puppy': 'cachorro', 'corgi': 'cachorro',
     'especial': 'especial', 'galaxy': 'especial', 'galáxia': 'especial',
