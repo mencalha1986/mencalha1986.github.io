@@ -6,12 +6,12 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2027-01-06",
-  "atualizado": "2026-11-06T11:03:19.198Z",
+  "atualizado": "2026-11-06T18:06:29.026Z",
   "erro": null,
-  "brl": 9792,
+  "brl": 9750,
   "eur": 1592,
-  "direto": 14061,
-  "variacao": -59,
+  "direto": 13999,
+  "variacao": -42,
   "minimo": 9509
  },
  {
@@ -36,12 +36,12 @@
   "destino": "RIO",
   "ida": "2026-12-17",
   "volta": "2027-01-02",
-  "atualizado": "2026-11-06T02:33:21.355Z",
-  "erro": "Nenhum voo encontrado.",
-  "brl": 10671,
-  "eur": 1730,
-  "direto": 14246,
-  "variacao": 1,
+  "atualizado": "2026-11-06T18:06:47.310Z",
+  "erro": null,
+  "brl": 10516,
+  "eur": 1717,
+  "direto": 14140,
+  "variacao": -155,
   "minimo": 10277
  },
  {
@@ -51,13 +51,13 @@
   "destino": "RIO",
   "ida": "2027-01-15",
   "volta": "2027-02-20",
-  "atualizado": "2026-11-06T02:32:47.567Z",
-  "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
-  "brl": 5543,
-  "eur": 899,
-  "direto": 7928,
-  "variacao": 0,
-  "minimo": 5543
+  "atualizado": "2026-11-06T18:06:07.893Z",
+  "erro": null,
+  "brl": 5502,
+  "eur": null,
+  "direto": 7869,
+  "variacao": -41,
+  "minimo": 5502
  },
  {
   "slug": "LIS-RIO-2027-01-15-2027-02-20",
@@ -66,12 +66,12 @@
   "destino": "RIO",
   "ida": "2027-01-15",
   "volta": "2027-02-20",
-  "atualizado": "2026-11-06T02:32:47.567Z",
-  "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
-  "brl": 5543,
-  "eur": 899,
-  "direto": 7928,
-  "variacao": 0,
-  "minimo": 5543
+  "atualizado": "2026-11-06T18:06:07.893Z",
+  "erro": "Nenhum voo encontrado.",
+  "brl": 5502,
+  "eur": null,
+  "direto": 7869,
+  "variacao": -41,
+  "minimo": 5502
  }
 ]
