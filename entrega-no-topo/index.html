@@ -606,6 +606,7 @@ const sfx={
   block:()=>[880,660,990].forEach((f,i)=>tone(f,.12,"square",.04,i*.07)),
   bark:()=>{tone(420,.09,"sawtooth",.09,0,250);tone(420,.09,"sawtooth",.09,.16,240);},
   win:()=>[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,.22,"triangle",.08,i*.12)),
+  crash:()=>{tone(90,.5,"sawtooth",.12,0,40);tone(200,.25,"square",.06,0,60);tone(1200,.15,"triangle",.03,.02,300);},
   over:()=>{tone(392,.3,"triangle",.08,0);tone(330,.3,"triangle",.08,.3);tone(262,.9,"sawtooth",.07,.6,60);}
 };
 
@@ -738,6 +739,53 @@ function tryClimb(){
 }
 function courierWorld(){const p=posAt(vis);return new THREE.Vector3(p.x,p.y,p.z);}
 
+/* ---------- PEDRA ROLANDO (presentes de descer): estilo filme de aventura ---------- */
+const boulder=(()=>{
+  const geo=new THREE.IcosahedronGeometry(1.25,2), pa=geo.attributes.position, v=new THREE.Vector3();
+  for(let i=0;i<pa.count;i++){v.fromBufferAttribute(pa,i);const n=1+.09*Math.sin(v.x*3.1+v.y*1.7)+.07*Math.cos(v.z*2.6-v.x*1.3)+.04*Math.sin(v.y*5.3+v.z*4.1);v.multiplyScalar(n);pa.setXYZ(i,v.x,v.y,v.z);}
+  geo.computeVertexNormals();
+  const col=[], c=new THREE.Color();
+  for(let i=0;i<pa.count;i+=3){ const k=.55+Math.random()*.25; c.setRGB(.48*k,.40*k,.32*k); for(let j=0;j<3;j++) col.push(c.r,c.g,c.b); }   // pedra com manchas
+  geo.setAttribute("color",new THREE.Float32BufferAttribute(col,3));
+  const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,flatShading:true}));
+  m.visible=false; scene.add(m); return m;
+})();
+let rock=null, camShake=0;   // rock: {pos, phase:'in'|'push'|'out', target, delta, t}
+function rockPoint(idx){const p=posAt(idx);return new THREE.Vector3(p.x,p.y+1.25,p.z);}
+function rumble(){ if(!ac||muted) return; tone(55,1.4,"sawtooth",.05,0,40); tone(80,1.2,"triangle",.07,.1,45); }
+function launchRock(delta,zero){
+  if(rock&&rock.phase!=="out"){ rock.delta+=delta; if(zero) rock.zero=true; if(rock.phase==="push") applyRockHit(); return; }
+  const from=Math.min(N,vis+14);
+  rock={pos:from,phase:"in",delta,zero:!!zero,t:0,big:zero||Math.abs(delta)>=100};
+  boulder.scale.setScalar(rock.big?1.25:1); boulder.visible=true; boulder.position.copy(rockPoint(from)); rumble();
+}
+function applyRockHit(){
+  step=rock.zero?0:clamp(step+rock.delta,0,N); rock.delta=0; rock.zero=false;
+}
+function updateRock(dt){
+  if(camShake>0) camShake=Math.max(0,camShake-dt*2.2);
+  if(!rock) return;
+  rock.t+=dt; const prev=boulder.position.clone();
+  if(rock.phase==="in"){
+    rock.pos-=dt*(9+rock.t*10);
+    if(rock.pos<=vis+.9){   // bateu!
+      rock.pos=vis+.9; rock.phase="push"; applyRockHit(); camShake=1; sfx.crash();
+      burst(courierWorld(),0x9c8466,90,8,1.1,.35);
+    }
+  } else if(rock.phase==="push"){
+    rock.pos=vis+.9;
+    if(Math.abs(step-vis)<.6){ rock.phase="out"; rock.t=0; }
+  } else {
+    rock.pos-=dt*14; boulder.scale.multiplyScalar(Math.max(.2,1-dt*1.6));
+    if(rock.t>.8||rock.pos<0){ burst(boulder.position.clone(),0x9c8466,50,6,.9,.3); boulder.visible=false; rock=null; return; }
+  }
+  const sc=boulder.scale.x;
+  const np=rockPoint(Math.max(0,rock.pos)); np.y+=(sc-1)*1.25;
+  boulder.position.copy(np);
+  const mv=np.clone().sub(prev), dist=mv.length();
+  if(dist>1e-4){ const axis=new THREE.Vector3(0,1,0).cross(mv).normalize(); boulder.rotateOnWorldAxis(axis,dist/(1.25*sc)); }
+}
+
 function applyGift(g,user){
   if(state!=="play") return;
   const pos=courierWorld();
@@ -753,6 +801,11 @@ function applyGift(g,user){
   const tally=()=>{const d=step-before; if(d>0) help[user]=(help[user]||0)+d; else if(d<0) sab[user]=(sab[user]||0)-d; renderRank();};
   switch(g.kind){
     case "move":{
+      if(g.n<0){   // pedra rolando leva o entregador escada abaixo
+        const d=Math.max(-step,g.n); sab[user]=(sab[user]||0)-d; renderRank();
+        showBanner("−"+Math.abs(d),user+" mandou "+g.name,g.type,g);
+        launchRock(g.n,false); break;
+      }
       step=clamp(step+g.n,0,N); const d=step-before, big=Math.abs(g.n)>=100; tally();
       showBanner((d>=0?"+":"−")+Math.abs(d),user+" mandou "+g.name,g.type,g);
       burst(pos,g.type==="good"?0x3ff5a6:0xff5a7d,big?120:55,big?9:6);
@@ -777,7 +830,8 @@ function applyGift(g,user){
     case "stun":
       stunT=Math.max(stunT,g.s); showBanner("🐕 AU AU!",user+" soltou o cachorro","bad"); burst(pos,0xff5a7d,40,5); sfx.bark(); break;
     case "zero":
-      step=0; tally(); showBanner("VOLTA TUDO!",user+" mandou de volta ao degrau 0","bad",g); burst(pos,0x222222,120,9,1.4,.45); sfx.bad(); break;
+      sab[user]=(sab[user]||0)+step; renderRank();
+      showBanner("VOLTA TUDO!",user+" mandou de volta ao degrau 0","bad",g); launchRock(0,true); break;
     case "cancel":
       gameOver(user); break;
   }
@@ -854,7 +908,7 @@ function setupWorld(n){
 }
 function startGame(){
   if(chosenN!==N) setupWorld(chosenN); else {rebuildTop(); slots.forEach(s=>s.idx=-1);}
-  step=0; vis=0; prevVis=0; turboT=0; stunT=0; shield=0; climbCd=0; tele=null; holding=false; restT=0; lastRest=0; sayT=0;
+  step=0; vis=0; prevVis=0; turboT=0; stunT=0; shield=0; climbCd=0; tele=null; holding=false; restT=0; lastRest=0; sayT=0; rock=null; boulder.visible=false; camShake=0;
   elapsed=0; help={}; sab={}; cntGood=0; cntBad=0; simT=2;
   orderId=1000+Math.floor(Math.random()*9000);
   $("#order").textContent="Pedido #"+orderId+" · cliente no degrau "+N;
@@ -885,6 +939,7 @@ function update(dt){
     if(sim){simT-=dt; if(simT<=0){randomGift(); simT=1.2+Math.random()*2.8;}}
     pumpQueue(dt);
   }
+  updateRock(dt);
   prevVis=vis;
   if(state==="play"||state==="menu"){
     if(tele){
@@ -898,7 +953,7 @@ function update(dt){
     } else {
       const diff=step-vis;
       if(Math.abs(diff)>1e-4){
-        const sp=Math.max(turboT>0?13:7.5,Math.abs(diff)*3.2),mv=Math.min(Math.abs(diff),sp*dt);
+        const sp=rock&&rock.phase==="push"?Math.max(18,Math.abs(diff)*2):Math.max(turboT>0?13:7.5,Math.abs(diff)*3.2),mv=Math.min(Math.abs(diff),sp*dt);
         vis+=Math.sign(diff)*mv; if(Math.abs(step-vis)<1e-4) vis=step;
         if(Math.floor(vis)!==Math.floor(prevVis)&&Math.abs(diff)<8) sfx.step();
       }
@@ -987,8 +1042,10 @@ function update(dt){
   desired.set(focus.x-fx*back,focus.y+up,focus.z-fz*back);
   const la=portrait&&state!=="menu"?2.2:6, ly=portrait&&state!=="menu"?0.6:2;   // em pé: mira mais perto para o entregador aparecer inteiro
   lookT.set(focus.x+fx*la,focus.y+ly,focus.z+fz*la);
-  const kc=snapCam?1:1-Math.exp(-dt*6);
-  camera.position.lerp(desired,kc); camLook.lerp(lookT,kc); camera.lookAt(camLook);
+  const kc=snapCam||(rock&&rock.phase==="push")?1:1-Math.exp(-dt*6);
+  camera.position.lerp(desired,kc); camLook.lerp(lookT,kc);
+  if(camShake>0){camera.position.x+=(Math.random()-.5)*camShake*.5;camera.position.y+=(Math.random()-.5)*camShake*.4;}
+  camera.lookAt(camLook);
   snapCam=false;
   stars.position.copy(camera.position);
   sun.position.set(focus.x+12,focus.y+22,focus.z+8); sun.target.position.copy(focus);
