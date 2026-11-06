@@ -232,6 +232,7 @@ body.obs #card{top:392px}
     <button data-g="Lion" data-i="lion" class="wide">Leão</button>
   </div>
   <div id="status">TikFinity: <b id="wsState">conectando…</b><br>Na fila: <b id="qCount">0</b></div>
+  <button class="small" id="openLive" style="width:100%;margin-top:12px;border-color:var(--accent)">📺 Abrir janela da live</button>
   <button class="small" id="rankReset" style="width:100%;margin-top:10px">Zerar ranking</button>
   <div class="tip">No OBS, adicione uma fonte de navegador com este arquivo e coloque <code>?obs=1</code> no fim do endereço para esconder este painel. Tamanho ideal: 540 × 960.</div>
 </aside>
@@ -927,9 +928,18 @@ function connectWS() {
 }
 
 /* ===== Painel e tamanho do palco ===== */
+/* janela da live: os botões de teste também mandam o presente para ela */
+let bc = null; try { bc = new BroadcastChannel('pipo-live'); } catch (e) {}
+const IS_LIVE = document.body.classList.contains('obs');
+if (bc && IS_LIVE) bc.onmessage = e => { const m = e.data || {}; if (m.t === 'gift') sendGift(m.g, m.user, m.id, '', m.coins, 1); };
+document.getElementById('openLive').addEventListener('click', () => {
+  window.open(location.pathname + '?obs=1', 'pipo-live', 'width=540,height=960');
+});
 document.querySelectorAll('.gifts button').forEach(b => b.addEventListener('click', () => {
   audio();
-  sendGift(b.dataset.g, document.getElementById('nameIn').value);
+  const user = document.getElementById('nameIn').value;
+  sendGift(b.dataset.g, user);
+  if (bc) bc.postMessage({t: 'gift', g: b.dataset.g, user});
 }));
 document.getElementById('rankReset').addEventListener('click', () => window.resetRanking());
 function fit() {
