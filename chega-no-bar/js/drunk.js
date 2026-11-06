@@ -620,16 +620,22 @@
     }
 
     _bottle(ctx) {
-      // garrafa long neck de vidro verde, quase vazia
-      ctx.save(); ctx.translate(0, 9); ctx.rotate(0.35);
-      const g = ctx.createLinearGradient(-4.5, 0, 4.5, 0);
-      g.addColorStop(0, C.glass.d); g.addColorStop(0.35, C.glass.l); g.addColorStop(0.6, C.glass.b); g.addColorStop(1, C.glass.d);
+      // long neck de vidro verde segurada PELO GARGALO: o punho fecha no gargalo e o corpo pende para baixo
+      ctx.save(); ctx.translate(0.3, 7); ctx.rotate(0.12 + Math.sin(this.t * 3.1) * 0.06);
+      const g = ctx.createLinearGradient(-3.6, 0, 3.6, 0);
+      g.addColorStop(0, C.glass.d); g.addColorStop(0.3, C.glass.l); g.addColorStop(0.55, C.glass.b); g.addColorStop(1, C.glass.d);
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.moveTo(-4.5, -4); ctx.lineTo(4.5, -4); ctx.lineTo(4.5, 18); ctx.quadraticCurveTo(4.5, 22, 2, 25); ctx.lineTo(2, 33); ctx.lineTo(-2, 33); ctx.lineTo(-2, 25); ctx.quadraticCurveTo(-4.5, 22, -4.5, 18); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = 'rgba(200,150,50,0.55)'; ctx.fillRect(-4.2, -4, 8.4, 5); // resto de cerveja
-      ctx.fillStyle = 'rgba(232,220,190,0.85)'; ctx.fillRect(-4.5, 5, 9, 7);   // rótulo rasgado
-      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(-3, -2, 1.1, 22);
-      ctx.fillStyle = '#9a8f80'; ctx.fillRect(-2.2, 32, 4.4, 2);
+      ctx.beginPath();
+      ctx.moveTo(-1.5, -6); ctx.lineTo(1.5, -6);                      // boca
+      ctx.lineTo(1.6, 9); ctx.quadraticCurveTo(3.6, 11.5, 3.6, 16);   // ombro
+      ctx.lineTo(3.6, 31); ctx.quadraticCurveTo(3.6, 33, 0, 33); ctx.quadraticCurveTo(-3.6, 33, -3.6, 31);
+      ctx.lineTo(-3.6, 16); ctx.quadraticCurveTo(-3.6, 11.5, -1.6, 9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(200,150,50,0.55)'; ctx.fillRect(-3.4, 28, 6.8, 4.5);             // restinho de cerveja no fundo
+      ctx.fillStyle = 'rgba(232,220,190,0.9)'; ctx.fillRect(-3.6, 18, 7.2, 7);               // rótulo
+      ctx.fillStyle = 'rgba(180,40,40,0.8)'; ctx.fillRect(-3.6, 20, 7.2, 1.6);
+      ctx.fillStyle = 'rgba(232,220,190,0.9)'; ctx.fillRect(-1.6, 10.5, 3.2, 2.2);           // gargantilha
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(-2.4, 15, 0.9, 13); ctx.fillRect(-0.9, -4, 0.6, 12);
+      ctx.fillStyle = '#7a6f62'; ctx.fillRect(-1.7, -7, 3.4, 1.4);                            // boca sem tampa
       ctx.restore();
     }
 
@@ -871,37 +877,42 @@
     }
 
     _heels(ctx) {
-      // par de sandálias de salto fino penduradas pelas tiras do tornozelo
-      const t = this.t, sw = Math.sin(t * 4.2) * 0.22 + this.pose.lean * -0.6;
-      ctx.save(); ctx.scale(1.55, 1.55);
-      const one = (dx, ph, flipSide) => {
-        ctx.save(); ctx.translate(dx, 4); ctx.rotate(sw * ph);
-        // tira do tornozelo presa nos dedos
-        ctx.strokeStyle = '#d9a641'; ctx.lineWidth = 1.1;
-        ctx.beginPath(); ctx.ellipse(0, 3.5, 2.6, 3.5, 0, 0, 7); ctx.stroke();
-        ctx.save(); ctx.scale(flipSide, 1);
-        // sola (vista de lado, pendurada de ponta-cabeça: salto em cima, bico embaixo)
-        const g = ctx.createLinearGradient(-3, 0, 4, 0);
-        g.addColorStop(0, C.heel.d); g.addColorStop(0.5, C.heel.l); g.addColorStop(1, C.heel.b);
+      // par de scarpins de verniz vermelho pendurados pelo calcanhar entre os dedos (bico para baixo)
+      const t = this.t, sw = Math.sin(t * 4.2) * 0.16 + this.pose.lean * -0.5;
+      const one = (dx, ph, back) => {
+        ctx.save(); ctx.translate(dx, 5); ctx.rotate(sw * ph + (back ? 0.18 : -0.05)); ctx.scale(1.15, 1.15);
+        // desenhado "em pé" (x = bico, y = para cima) e girado ~100° para pendurar pelo calcanhar
+        ctx.rotate(Math.PI / 2 + 0.12); ctx.translate(0, 15);   // calcanhar (0,-15) fica nos dedos
+        const Y = (y) => -y;
+        // salto agulha (fino, saindo do calcanhar)
+        ctx.fillStyle = back ? '#3a0710' : '#5a0b18';
+        ctx.beginPath(); ctx.moveTo(-0.4, Y(9.5)); ctx.lineTo(3.4, Y(9)); ctx.lineTo(2.1, Y(0.6)); ctx.lineTo(1.3, Y(0.6)); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.fillRect(1.1, Y(0.7), 1.2, 1);
+        // sola
+        ctx.fillStyle = '#2a1a14';
+        ctx.beginPath(); ctx.moveTo(-0.6, Y(9.8)); ctx.quadraticCurveTo(9, Y(6.5), 15, Y(1.2)); ctx.quadraticCurveTo(20, Y(-0.4), 24.6, Y(0.6)); ctx.lineTo(24.4, Y(1.8)); ctx.quadraticCurveTo(19, Y(1.1), 15, Y(2.4)); ctx.quadraticCurveTo(9, Y(7.8), -0.4, Y(11)); ctx.closePath(); ctx.fill();
+        // corpo de verniz
+        const g = ctx.createLinearGradient(0, Y(16), 0, Y(0));
+        g.addColorStop(0, back ? '#8e0c22' : '#c3142f'); g.addColorStop(0.55, back ? '#6d0918' : '#9c0e25'); g.addColorStop(1, back ? '#4a0610' : '#6a0818');
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.moveTo(-1.5, 6); ctx.quadraticCurveTo(3.5, 9, 3.2, 17); ctx.quadraticCurveTo(2.8, 24, 4.2, 30);
-        ctx.quadraticCurveTo(2, 33, -0.8, 30.5); ctx.quadraticCurveTo(-0.4, 22, -1.8, 13); ctx.closePath(); ctx.fill();
-        // palmilha clara
-        ctx.strokeStyle = 'rgba(245,215,185,0.85)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(-1.2, 8); ctx.quadraticCurveTo(-0.4, 20, 0.4, 30); ctx.stroke();
-        // salto fino
-        ctx.fillStyle = C.heel.d;
-        ctx.beginPath(); ctx.moveTo(1.8, 7); ctx.lineTo(9.5, 4.5); ctx.lineTo(10, 6); ctx.lineTo(3, 10); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#1a0a0e'; ctx.fillRect(9.2, 4.2, 1.6, 2.2);
-        // tiras douradas cruzando o peito do pé
-        ctx.strokeStyle = '#e7b94d'; ctx.lineWidth = 1.1;
-        [[18, 24], [22, 28], [26, 31]].forEach(([y0, y1]) => { ctx.beginPath(); ctx.moveTo(-1.4, y0); ctx.lineTo(4, y1 - 3); ctx.stroke(); });
-        ctx.restore(); ctx.restore();
+        ctx.moveTo(-0.6, Y(10.6)); ctx.lineTo(-0.4, Y(15)); ctx.quadraticCurveTo(1, Y(16.2), 3, Y(15.6));     // contraforte do calcanhar
+        ctx.quadraticCurveTo(9, Y(10.2), 15, Y(8.2));                                                     // linha da boca do sapato
+        ctx.quadraticCurveTo(22, Y(6.4), 25, Y(2.6)); ctx.quadraticCurveTo(25.6, Y(1), 24.4, Y(1.4));     // bico fino
+        ctx.quadraticCurveTo(19, Y(1.4), 15, Y(2.6)); ctx.quadraticCurveTo(8.5, Y(7.6), -0.6, Y(10.6)); ctx.closePath(); ctx.fill();
+        // forro claro aparecendo pela boca do sapato
+        ctx.fillStyle = back ? '#b99a84' : '#e6cbb3';
+        ctx.beginPath(); ctx.moveTo(1, Y(15.2)); ctx.quadraticCurveTo(2.6, Y(15.4), 3.4, Y(14.9)); ctx.quadraticCurveTo(9, Y(10), 14.6, Y(8.1));
+        ctx.quadraticCurveTo(9, Y(8.9), 3, Y(13)); ctx.closePath(); ctx.fill();
+        // brilho do verniz
+        ctx.strokeStyle = 'rgba(255,235,235,0.7)'; ctx.lineWidth = 0.8; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(16, Y(6.6)); ctx.quadraticCurveTo(20.5, Y(5.2), 23.4, Y(2.8)); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,235,235,0.35)';
+        ctx.beginPath(); ctx.moveTo(0.4, Y(11.5)); ctx.lineTo(0.6, Y(14.4)); ctx.stroke();
+        ctx.restore();
       };
-      one(-3.6, 1, 1);
-      one(3.8, -0.8, -1);
-      ctx.restore();
+      one(2.2, -0.8, true);
+      one(-1.2, 1, false);
     }
 
     _torsoF(ctx, R, front) {
