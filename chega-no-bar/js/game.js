@@ -497,6 +497,25 @@
         ctx.restore();
       }
 
+      // gradação de cor (sombras azuladas, luzes quentes) + granulação de filme
+      ctx.save();
+      ctx.globalCompositeOperation = 'soft-light';
+      const cg = ctx.createLinearGradient(0, 0, 0, H);
+      cg.addColorStop(0, 'rgba(40,70,120,0.35)'); cg.addColorStop(0.55, 'rgba(255,170,90,0.18)'); cg.addColorStop(1, 'rgba(30,40,80,0.35)');
+      ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      if (!this.grain) {
+        const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+        const gx = gc.getContext('2d'), id = gx.createImageData(256, 256);
+        for (let i = 0; i < id.data.length; i += 4) { const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; }
+        gx.putImageData(id, 0, 0); this.grain = ctx.createPattern(gc, 'repeat');
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.055; ctx.globalCompositeOperation = 'overlay';
+      ctx.translate(Math.random() * 256, Math.random() * 256);
+      ctx.fillStyle = this.grain; ctx.fillRect(-256, -256, W + 512, H + 512);
+      ctx.restore();
+
       this.fx.draw(ctx);
       this.hud.draw(ctx, t);
     }

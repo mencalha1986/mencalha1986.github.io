@@ -13,6 +13,17 @@
   const FOG = '#0a0912';
   const WALL_COLORS = ['#8c6f5a', '#6f7d6a', '#7a6a86', '#9a8a5e', '#6b7f8c', '#8a5f55', '#7f7466', '#5f7a73'];
   const POSTER_COLORS = ['#d94f3d', '#f2c14e', '#3d8bd9', '#f2f2f2', '#e86fa8', '#5fbf7a'];
+  // fachadas realistas de bairro: reboco em tons gastos
+  const FACADE = ['#b7a58c', '#a9b3a1', '#c2b49a', '#9fa8ad', '#b59a86', '#8f9a8a', '#c9bfae', '#a58f7c', '#b9aa95', '#97a3a8'];
+  const SHOPS = [['MERCADINHO', '#c0392b'], ['FARMÁCIA', '#1f7a4d'], ['AÇOUGUE', '#8e1b1b'], ['SALÃO DA NEIDE', '#7b3fa0'], ['LANCHES', '#d35400'],
+                 ['PADARIA', '#9a6a1f'], ['OFICINA', '#2c3e50'], ['BAZAR', '#1f5fa8'], ['DEPÓSITO', '#5d4a2f'], ['ADEGA 24H', '#6d1f3a']];
+  const CHUNK = 10;
+  function building(chunk) {
+    const h = U.hash(chunk * 1.91 + 0.3);
+    const type = h < 0.34 ? 'house' : h < 0.54 ? 'sobrado' : h < 0.76 ? 'shop' : 'wall';
+    const H = { house: 3.4, sobrado: 6.2, shop: 3.9, wall: WALLH }[type] + (U.hash(chunk + 2) - 0.5) * 0.4;
+    return { type, H, col: FACADE[Math.floor(U.hash(chunk + 0.5) * FACADE.length)], seed: U.hash(chunk * 3.3 + 1), shop: SHOPS[Math.floor(U.hash(chunk * 5.7) * SHOPS.length)] };
+  }
 
   const OB_TYPES = {
     hole:   { w: 1.3, weight: 3, label: 'buraco' },
@@ -186,6 +197,7 @@
         zs.push(Math.min(z, zEnd));
       }
       for (let i = zs.length - 1; i > 0; i--) this._segment(ctx, cam, zs[i - 1], zs[i], t);
+      this._facades(ctx, cam, t);
     }
 
     _segment(ctx, cam, zn, zf, t) {
@@ -237,25 +249,135 @@
           ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = Math.max(1, j1.s * 0.02);
           ctx.beginPath(); ctx.moveTo(j1.x, j1.y); ctx.lineTo(j2.x, j2.y); ctx.stroke();
         }
-        // muros baixos (casas fora de quadro — nada de prédios)
-        const chunk = Math.floor(zm / 10) + (side > 0 ? 500 : 0);
-        const hc = U.hash(chunk);
-        const isGate = hc > 0.78;
-        const wcol = isGate ? '#3b3d42' : WALL_COLORS[Math.floor(U.hash(chunk + 0.5) * WALL_COLORS.length)];
-        const wallH = WALLH + (U.hash(chunk + 2) - 0.5) * 0.5;
+        // fachada (casa, sobrado, comércio ou muro) — base; detalhes em _facades()
+        const chunk = Math.floor(zm / CHUNK) + (side > 0 ? 500 : 0);
+        const bd = building(chunk);
+        const isGate = bd.type === 'wall' && bd.seed > 0.6;
+        const wcol = isGate ? '#3b3d42' : bd.col;
+        const wallH = bd.H;
         const w0 = P(side * WALLX, 0, zn), w1 = P(side * WALLX, wallH, zn), w2 = P(side * WALLX, wallH, zf), w3 = P(side * WALLX, 0, zf);
         this._quad(ctx, w0, w1, w2, w3, this._col(wcol, zm, dz, 0.8));
-        // sujeira na base do muro
-        this._quad(ctx, w0, P(side * WALLX, 0.35, zn), P(side * WALLX, 0.35, zf), w3, 'rgba(0,0,0,0.22)');
-        // topo do muro
-        this._quad(ctx, w1, P(side * (WALLX + 0.25), wallH, zn), P(side * (WALLX + 0.25), wallH, zf), w2, this._col(U.mix(wcol, '#ffffff', 0.2).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, b) => '#' + [r, g, b].map((v) => (+v).toString(16).padStart(2, '0')).join('')), zm, dz));
-        if (dz < 90) {
+        // umidade/sujeira na base e escurecendo no alto (luz do poste vem de baixo)
+        this._quad(ctx, w0, P(side * WALLX, 0.5, zn), P(side * WALLX, 0.5, zf), w3, 'rgba(20,16,10,0.28)');
+        this._quad(ctx, P(side * WALLX, wallH * 0.62, zn), w1, w2, P(side * WALLX, wallH * 0.62, zf), 'rgba(4,4,12,0.28)');
+        // beiral / platibanda
+        const eave = bd.type === 'wall' ? 0.08 : 0.22;
+        this._quad(ctx, P(side * WALLX, wallH - eave, zn), w1, w2, P(side * WALLX, wallH - eave, zf), this._col(U.mix(wcol, '#000000', 0.35).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, b) => '#' + [r, g, b].map((v) => (+v).toString(16).padStart(2, '0')).join('')), zm, dz, 0.5));
+        this._quad(ctx, w1, P(side * (WALLX + 0.3), wallH, zn), P(side * (WALLX + 0.3), wallH, zf), w2, this._col('#3a3836', zm, dz, 0.4));
+        if (dz < 90 && bd.type === 'wall') {
           if (isGate) { // portão de grade
             ctx.strokeStyle = this._col('#202226', zm, dz); ctx.lineWidth = Math.max(1, w1.s * 0.035);
             ctx.beginPath(); ctx.moveTo(w1.x, w1.y); ctx.lineTo(w0.x, w0.y); ctx.stroke();
-          } else if (U.hash(chunk * 1.3 + idx) > 0.86) { // lambe-lambe
+          } else if (U.hash(chunk * 1.3 + idx) > 0.8) { // lambe-lambe
             const pc = POSTER_COLORS[Math.floor(U.hash(idx * 1.7) * POSTER_COLORS.length)];
             this._quad(ctx, P(side * WALLX, 0.7, zn), P(side * WALLX, 1.45, zn), P(side * WALLX, 1.45, zf), P(side * WALLX, 0.7, zf), this._col(pc, zm, dz, 0.7));
+          }
+        }
+      }
+      // marcas de pneu e sarjeta escura (asfalto mais real)
+      if (dz < 120) {
+        const tc = 'rgba(0,0,0,0.13)';
+        for (const tx of [-2.3, -1.2, 1.2, 2.3]) this._quad(ctx, P(tx - 0.22, 0, zn), P(tx + 0.22, 0, zn), P(tx + 0.22, 0, zf), P(tx - 0.22, 0, zf), tc);
+        for (const side of [-1, 1]) this._quad(ctx, P(side * (ROAD - 0.35), 0, zn), P(side * ROAD, 0, zn), P(side * ROAD, 0, zf), P(side * (ROAD - 0.35), 0, zf), 'rgba(0,0,0,0.22)');
+      }
+    }
+
+    // ---------- detalhes das fachadas: janelas, portas, portas de aço, letreiros ----------
+    _facades(ctx, cam, t) {
+      const z0 = Math.max(0, Math.floor((cam.z + 0.6) / CHUNK)), z1 = Math.floor(Math.min(this.track + 2, cam.z + 150) / CHUNK);
+      for (let ci = z1; ci >= z0; ci--) {
+        for (const side of [-1, 1]) {
+          const chunk = ci + (side > 0 ? 500 : 0), bd = building(chunk), cz = ci * CHUNK;
+          if (bd.type === 'wall') continue;
+          const dz = cz + 5 - cam.z; if (dz > 150) continue;
+          const X = side * (WALLX - 0.02);
+          const P = (y, z) => this.proj(cam, X, y, Math.min(z, this.track + 2));
+          const q = (za, zb, ya, yb, col, lit = 0.6) => {
+            if (zb <= cam.z + 2.5 || za > this.track + 2) return;   // perto demais já está fora da tela
+            za = Math.max(za, cam.z + 2.5);
+            const a = P(ya, za), b = P(yb, za), c = P(yb, zb), d = P(ya, zb);
+            if (a && b && c && d) this._quad(ctx, a, b, c, d, col.startsWith('rgba') ? col : this._col(col, (za + zb) / 2, (za + zb) / 2 - cam.z, lit));
+          };
+          const fog = 1 - this.fogT(dz);
+          const win = (za, zb, ya, yb, k) => {   // janela com moldura, vidro e grade
+            q(za - 0.08, zb + 0.08, ya - 0.1, yb + 0.06, '#5d5650');
+            const h = U.hash(chunk * 7.7 + k * 3.1), tv = h > 0.88, lit = h > 0.45;
+            if (lit) {
+              const flick = tv ? 0.55 + 0.45 * Math.sin(t * 9 + k) * Math.sin(t * 3.7 + k * 2) : 1;
+              const col = tv ? `rgba(110,160,255,${0.85 * fog * flick})` : `rgba(255,${190 + Math.floor(h * 30)},120,${0.9 * fog})`;
+              q(za, zb, ya, yb, '#2a2118');
+              q(za, zb, ya, yb, col);
+              if (!tv) q(za, za + (zb - za) * 0.3, ya, yb, `rgba(150,60,40,${0.55 * fog})`);   // cortina
+            } else {
+              q(za, zb, ya, yb, '#141a22');
+              q(za, zb, yb - (yb - ya) * 0.35, yb, 'rgba(120,140,170,0.10)');                    // reflexo
+            }
+            // grade
+            ctx.strokeStyle = `rgba(20,20,22,${0.8 * fog})`;
+            const p0 = P(ya, (za + zb) / 2), p1 = P(yb, (za + zb) / 2);
+            if (p0 && p1) { ctx.lineWidth = Math.max(1, p0.s * 0.025); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke(); }
+            q(za - 0.12, zb + 0.12, ya - 0.16, ya - 0.08, '#d8d2c6', 0.7);                      // peitoril
+          };
+          const door = (za, zb, col) => { q(za - 0.08, zb + 0.08, 0, 2.18, '#4a443e'); q(za, zb, 0, 2.1, col); q(za, zb, 1.5, 1.9, 'rgba(0,0,0,0.25)'); };
+          const shutter = (za, zb, top, open) => {   // porta de aço (de enrolar)
+            if (open) {
+              q(za, zb, 0, top, '#2b1d10');
+              q(za, zb, 0, top, `rgba(255,214,150,${0.75 * fog})`);
+              for (let y = 0.5; y < top - 0.3; y += 0.55) q(za + 0.15, zb - 0.15, y, y + 0.08, '#6b4a2a', 0.3);  // prateleiras
+            } else {
+              q(za, zb, 0, top, '#7b8086', 0.7);
+              const p = P(top / 2, (za + zb) / 2);
+              if (p && p.s > 7) for (let y = 0.12; y < top; y += 0.16) q(za, zb, y, y + 0.03, 'rgba(0,0,0,0.22)');
+            }
+            q(za - 0.1, zb + 0.1, top, top + 0.22, '#55595e', 0.6);   // caixa da porta
+          };
+          const r = (k) => U.hash(chunk * 2.3 + k);
+          if (bd.type === 'house') {
+            door(cz + 1.2, cz + 2.1, r(1) > 0.5 ? '#5a3b26' : '#3c4a52');
+            win(cz + 3.4, cz + 4.9, 1.0, 2.1, 1);
+            win(cz + 6.4, cz + 7.9, 1.0, 2.1, 2);
+            if (r(4) > 0.6) q(cz + 8.6, cz + 9.3, 2.35, 2.75, '#d9d9d6', 0.5);    // ar-condicionado
+          } else if (bd.type === 'sobrado') {
+            shutter(cz + 0.9, cz + 3.9, 2.4, false);
+            win(cz + 5.6, cz + 7.1, 1.0, 2.1, 1);
+            door(cz + 8.0, cz + 8.9, '#4b3424');
+            q(cz + 0.4, cz + 9.6, 2.85, 3.05, '#8c867d', 0.6);                   // laje
+            win(cz + 1.4, cz + 2.9, 3.6, 4.8, 2);
+            win(cz + 4.6, cz + 6.1, 3.6, 4.8, 3);
+            win(cz + 7.4, cz + 8.9, 3.6, 4.8, 4);
+            if (r(5) > 0.5) q(cz + 2.0, cz + 2.7, 5.1, 5.5, '#d9d9d6', 0.5);
+          } else if (bd.type === 'shop') {
+            const open = r(6) > 0.45;
+            shutter(cz + 0.8, cz + 6.2, 2.7, !open ? false : true);
+            door(cz + 7.2, cz + 8.3, '#3c3a38');
+            // letreiro
+            const [name, col] = bd.shop;
+            q(cz + 0.5, cz + 9.5, 2.95, 3.65, col, 0.9);
+            const zA = side < 0 ? cz + 0.8 : cz + 9.2, zB = side < 0 ? cz + 9.2 : cz + 0.8;
+            const a = P(2.98, zA), b = P(2.98, zB), c = P(3.62, zA);
+            if (a && b && c && a.s > 5 && Math.min(zA, zB) > cam.z + 0.6) {
+              // texto em perspectiva (transformação afim sobre o plano da fachada)
+              ctx.save();
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
+              const base = ctx.getTransform ? null : null;
+              ctx.restore();
+              ctx.save();
+              ctx.transform((b.x - a.x) / 100, (b.y - a.y) / 100, (c.x - a.x) / 20, (c.y - a.y) / 20, a.x, a.y);
+              ctx.fillStyle = `rgba(255,248,230,${0.95 * fog})`;
+              ctx.font = '900 15px Rubik, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.scale(1, -1); ctx.fillText(name, 50, -10, 96);
+              ctx.restore();
+            }
+            if (open) {   // luz da loja aberta derramando na calçada
+              const g = this.proj(cam, side * (WALLX - 1.2), CURB, cz + 3.5);
+              if (g && cz + 3.5 > cam.z + 1) {
+                ctx.save(); ctx.globalCompositeOperation = 'lighter';
+                ctx.translate(g.x, g.y); ctx.scale(1, U.clamp(cam.y / (cz + 3.5 - cam.z) * 1.1, 0.05, 0.5));
+                const R = g.s * 3, gr = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+                gr.addColorStop(0, `rgba(255,200,130,${0.22 * fog})`); gr.addColorStop(1, 'rgba(255,200,130,0)');
+                ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill(); ctx.restore();
+              }
+            }
           }
         }
       }
@@ -314,6 +436,17 @@
         g.addColorStop(0, `rgba(255,190,110,${a})`); g.addColorStop(1, 'rgba(255,190,110,0)');
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill();
         ctx.restore();
+        // reflexo comprido no asfalto úmido (efeito de chão molhado)
+        if (lp.flickOn !== false) {
+          const rp = this.proj(cam, lp.side * (ROAD - 1.15), 0, lp.z);
+          if (rp) {
+            const L = rp.s * 6, wv = rp.s * 0.35, a2 = 0.16 * (1 - this.fogT(dz));
+            const rg = ctx.createLinearGradient(0, rp.y, 0, rp.y + L);
+            rg.addColorStop(0, `rgba(255,200,130,${a2})`); rg.addColorStop(1, 'rgba(255,200,130,0)');
+            ctx.fillStyle = rg;
+            ctx.beginPath(); ctx.moveTo(rp.x - wv * 0.4, rp.y); ctx.lineTo(rp.x + wv * 0.4, rp.y); ctx.lineTo(rp.x + wv, rp.y + L); ctx.lineTo(rp.x - wv, rp.y + L); ctx.closePath(); ctx.fill();
+          }
+        }
       }
       ctx.restore();
     }
@@ -391,11 +524,21 @@
       ctx.lineWidth = s * 0.22;
       ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.quadraticCurveTo(b.x + s * 0.2, b.y - s * 1.6, b.x - s * 0.1, b.y - s * 2.8); ctx.stroke();
       const sway = Math.sin(t * 0.8 + tr.seed * 10) * s * 0.05;
-      const blobs = [[0, -3.6, 1.4], [-0.9, -3.1, 1.0], [0.9, -3.2, 1.1], [0.2, -4.4, 1.0], [-0.5, -4.0, 0.9]];
-      blobs.forEach(([bx, by, br], k) => {
-        const col = U.mix('#15281b', '#3d5a2c', U.clamp(lit * 0.7 + k * 0.05, 0, 1));
-        ctx.fillStyle = this._fog(col, dz);
-        ctx.beginPath(); ctx.arc(b.x + bx * s + sway, b.y + by * s, br * s, 0, 7); ctx.fill();
+      // galhos
+      ctx.lineWidth = s * 0.09;
+      ctx.beginPath(); ctx.moveTo(b.x + s * 0.05, b.y - s * 2.2); ctx.lineTo(b.x - s * 0.8, b.y - s * 3.0); ctx.moveTo(b.x, b.y - s * 2.5); ctx.lineTo(b.x + s * 0.9, b.y - s * 3.2); ctx.stroke();
+      // copa em vários tufos: escuro embaixo, iluminado pelo poste por baixo/na lateral
+      if (!tr.tufts) { const rr = U.mulberry32(Math.floor(tr.seed * 1e6)); tr.tufts = []; for (let k = 0; k < 16; k++) { const a = rr() * Math.PI * 2, d = Math.sqrt(rr()); tr.tufts.push([Math.cos(a) * d * 1.5, -3.7 + Math.sin(a) * d * 1.0 - rr() * 0.3, 0.45 + rr() * 0.45, rr()]); } tr.tufts.sort((p, q) => p[1] - q[1]); }
+      const dark = this._fog('rgb(14,26,17)', dz);
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.ellipse(b.x + sway, b.y - s * 3.6, s * 1.9, s * 1.35, 0, 0, 7); ctx.fill();
+      tr.tufts.forEach(([bx, by, br, v]) => {
+        const light = U.clamp(lit * 0.75 * (0.5 + (by + 3.7) * 0.5) + v * 0.12, 0, 1);
+        const col = U.mix('#13261a', '#4f6e33', light);
+        const cx = b.x + bx * s + sway * (1 + (-by - 3) * 0.4), cy = b.y + by * s;
+        const gr = ctx.createRadialGradient(cx - br * s * 0.3, cy + br * s * 0.3, 0, cx, cy, br * s);
+        gr.addColorStop(0, this._fog(U.mix(col, '#7c9a45', light * 0.4), dz)); gr.addColorStop(1, this._fog(col, dz));
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, br * s, 0, 7); ctx.fill();
       });
     }
 
@@ -701,8 +844,19 @@
       ctx.scale(s, s); // a partir daqui: unidades em METROS, y negativo = para cima
 
       // --- vizinhança (muro baixo + mata escura, sem prédios)
-      ctx.fillStyle = F('#17140f');
-      ctx.fillRect(-60, -2.3, 52.5, 2.3); ctx.fillRect(7.5, -2.3, 52.5, 2.3);
+      // casas da rua transversal (fachadas com janelas acesas)
+      for (let hx = -60, k = 0; hx < 60; hx += 6.8, k++) {
+        if (hx > -14.3 && hx < 7.5) continue;        // espaço do bar
+        const hh = 3.2 + U.hash(k * 4.1) * 2.9, col = FACADE[Math.floor(U.hash(k * 1.7) * FACADE.length)];
+        ctx.fillStyle = F(U.mix(col, '#0a0912', 0.55).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, b) => '#' + [r, g, b].map((v) => (+v).toString(16).padStart(2, '0')).join('')));
+        ctx.fillRect(hx, -hh, 6.6, hh);
+        ctx.fillStyle = F('#1c1a18'); ctx.fillRect(hx - 0.1, -hh - 0.18, 6.8, 0.22);
+        if (detail) for (let wx = 0; wx < 2; wx++) for (let wy = 0; wy < (hh > 5 ? 2 : 1); wy++) {
+          const on = U.hash(k * 9.1 + wx * 3 + wy * 7) > 0.45;
+          ctx.fillStyle = on ? `rgba(255,${200 + wx * 10},130,0.85)` : F('#141a22');
+          ctx.fillRect(hx + 1 + wx * 3.2, -1.9 - wy * 2.8, 1.4, 1.0);
+        }
+      }
       ctx.fillStyle = F('#0d140f');
       [[-11, 5.5, 2.6], [-15, 4.6, 2.2], [-20, 6.2, 3], [11.5, 5, 2.4], [16, 6.3, 3], [22, 4.8, 2.2]].forEach(([x, h, r]) => {
         ctx.beginPath(); ctx.arc(x, -h, r, 0, 7); ctx.arc(x + r * 0.6, -h + r * 0.5, r * 0.8, 0, 7); ctx.arc(x - r * 0.7, -h + r * 0.6, r * 0.7, 0, 7); ctx.fill();
