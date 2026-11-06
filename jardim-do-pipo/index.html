@@ -118,6 +118,17 @@ body.obs #panel{display:none}
 .lact{font-weight:700;font-size:13.5px;line-height:1.1}
 #legend .gico,#legend .gemo{width:24px;height:24px;font-size:19px;line-height:24px}
 .legend-off #legend{display:none}
+#rank{position:absolute;right:10px;top:186px;width:150px;background:rgba(255,255,255,.86);color:#24302a;border:3px solid #24302a;border-radius:14px;padding:4px 8px 6px;z-index:1700}
+#rank h3{margin:0 0 2px;font-size:14px;font-weight:800;text-align:center;line-height:1.2}
+.rrow{display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:700;line-height:1.2;padding:1px 0;border-top:1.5px dashed #d8e4dc}
+.rrow:first-of-type{border-top:none}
+.rrow .rpos{width:18px;text-align:center;flex-shrink:0}
+.rrow .rname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .rnum{flex-shrink:0;font-size:12.5px;color:#7a5a12}
+.rrow.bump{animation:rbump .6s}
+@keyframes rbump{0%{background:#fff3b0}100%{background:transparent}}
+#rankEmpty{font-size:12.5px;color:#5f6f66;text-align:center;line-height:1.2;padding:2px 0}
+.rank-off #rank{display:none}
 #banner{position:absolute;left:50%;top:278px;transform:translate(-50%,-20px) scale(.9);opacity:0;background:#fff;color:#24302a;border:4px solid #24302a;border-radius:22px;padding:8px 18px;font-size:22px;font-weight:800;max-width:500px;text-align:center;line-height:1.15;transition:transform .35s cubic-bezier(.3,1.5,.6,1),opacity .25s;z-index:2000}
 #banner.show{transform:translate(-50%,0);opacity:1}
 #card{position:absolute;left:50%;top:345px;width:420px;transform:translate(-50%,0) scale(.6);opacity:0;background:#fff7fb;color:#24302a;border:5px solid #24302a;border-radius:28px;padding:14px 18px 18px;text-align:center;transition:transform .4s cubic-bezier(.3,1.5,.6,1),opacity .3s;z-index:1900}
@@ -196,6 +207,7 @@ body.obs #panel{display:none}
 <div id="banner"></div>
 <div id="card"><div id="cardEmoji"></div><div id="cardTitle"></div><div id="cardName"></div></div>
 <div id="legend"><h2>🎁 Mande um presente e veja!</h2><div id="legendRows"></div></div>
+<div id="rank"><h3>👑 Top presentes</h3><div id="rankRows"></div></div>
 <div id="over"><div id="overTitle">Fim de jogo!</div><div id="overSub">Recomeçando em</div><div id="overNum">5</div></div>
 </div></div></div>
 
@@ -215,6 +227,7 @@ body.obs #panel{display:none}
     <button data-g="Lion" data-i="lion" class="wide">Leão</button>
   </div>
   <div id="status">TikFinity: <b id="wsState">conectando…</b><br>Na fila: <b id="qCount">0</b></div>
+  <button class="small" id="rankReset" style="width:100%;margin-top:10px">Zerar ranking</button>
   <div class="tip">No OBS, adicione uma fonte de navegador com este arquivo e coloque <code>?obs=1</code> no fim do endereço para esconder este painel. Tamanho ideal: 540 × 960.</div>
 </aside>
 
@@ -605,6 +618,36 @@ function song() {
   for (let b = 0; b < t; b += .6) tone([N.C3, N.F3, N.G3, N.C3][Math.floor(b / .6) % 4], b, .5, 'sine', .1);
 }
 
+/* ===== Ranking: quem mais deu presentes (soma o valor dos presentes) ===== */
+const COINS = {5655: 1, 8239: 1, 10602: 1, 6064: 1, 5879: 30, 7168: 500, 11046: 1000, 6369: 29999};
+const COINS_BY_TYPE = {redRose: 1, whiteRose: 1, friend: 1, moneyGun: 500, villain: 1, galaxy: 1000, lion: 29999};
+const RANK_KEY = 'pipoRanking-' + new Date().toISOString().slice(0, 10);   // zera a cada dia de live
+let ranking = {};
+try { ranking = JSON.parse(localStorage.getItem(RANK_KEY) || '{}'); } catch (e) {}
+if (params.get('ranking') === '0') document.body.classList.add('rank-off');
+function addToRanking(user, coins, count) {
+  const name = cleanName(user);
+  const r = ranking[name] || (ranking[name] = {coins: 0, gifts: 0});
+  r.coins += Math.max(1, coins) * count; r.gifts += count;
+  try { localStorage.setItem(RANK_KEY, JSON.stringify(ranking)); } catch (e) {}
+  renderRanking(name);
+}
+function renderRanking(bumped) {
+  const box = document.getElementById('rankRows');
+  const top = Object.entries(ranking).sort((a, b) => b[1].coins - a[1].coins || b[1].gifts - a[1].gifts).slice(0, 5);
+  box.innerHTML = '';
+  if (!top.length) { box.innerHTML = '<div id="rankEmpty">Mande um presente e apareça aqui!</div>'; return; }
+  top.forEach(([name, r], i) => {
+    const row = document.createElement('div');
+    row.className = 'rrow' + (name === bumped ? ' bump' : '');
+    row.innerHTML = '<span class="rpos"></span><span class="rname"></span><span class="rnum"></span>';
+    row.children[0].textContent = ['🥇', '🥈', '🥉', '4º', '5º'][i];
+    row.children[1].textContent = name;
+    box.appendChild(row);
+  });
+}
+window.resetRanking = () => { ranking = {}; try { localStorage.removeItem(RANK_KEY); } catch (e) {} renderRanking(); };
+
 /* ===== Fila de presentes ===== */
 const queue = [];
 let busy = false, finale = false;
@@ -621,8 +664,9 @@ function iconKey(type, giftName, giftId) {
   if (type === 'friend') return (Number(giftId) === 5879 || /donut|doughnut|rosquinha/i.test(giftName)) ? 'doughnut' : 'gg';
   return {redRose: 'rose', whiteRose: 'whiteRose', moneyGun: 'moneyGun', villain: 'villain', galaxy: 'galaxy', lion: 'lion'}[type];
 }
-function sendGift(giftName, user, giftId, pic) {
+function sendGift(giftName, user, giftId, pic, coins, count = 1) {
   const type = giftType(giftName, giftId);
+  addToRanking(user, Number(coins) || COINS[Number(giftId)] || COINS_BY_TYPE[type] || 1, Math.max(1, Number(count) || 1));
   if (type && pic) learnIcon(iconKey(type, giftName, giftId), pic);
   if (!type) return false;
   queue.push({type, name: cleanName(user), gift: String(giftName)});
@@ -871,7 +915,7 @@ function connectWS() {
       const data = d.data || d;
       if (ev !== 'gift') return;
       if (data.giftType === 1 && data.repeatEnd === false) return; // combo ainda rolando
-      sendGift(data.giftName, data.nickname || data.uniqueId, data.giftId, data.giftPictureUrl);
+      sendGift(data.giftName, data.nickname || data.uniqueId, data.giftId, data.giftPictureUrl, data.diamondCount, data.repeatCount);
     } catch (e) {}
   };
   ws.onclose = () => { wsState.textContent = 'desconectado, tentando de novo…'; setTimeout(connectWS, 5000); };
@@ -882,6 +926,7 @@ document.querySelectorAll('.gifts button').forEach(b => b.addEventListener('clic
   audio();
   sendGift(b.dataset.g, document.getElementById('nameIn').value);
 }));
+document.getElementById('rankReset').addEventListener('click', () => window.resetRanking());
 function fit() {
   const wrap = document.getElementById('stageWrap').getBoundingClientRect();
   const s = Math.min(wrap.width / W, wrap.height / H);
@@ -890,6 +935,7 @@ function fit() {
   box.style.width = W * s + 'px'; box.style.height = H * s + 'px';
 }
 window.addEventListener('resize', fit);
+renderRanking();
 fit();
 
 (async function start() {
