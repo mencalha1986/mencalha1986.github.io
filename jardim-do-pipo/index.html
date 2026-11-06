@@ -98,12 +98,15 @@ body.obs #panel{display:none}
 @keyframes tw{from{opacity:.2}to{opacity:1}}
 #fx{position:absolute;inset:0;pointer-events:none;z-index:1500}
 .fxe{position:absolute;line-height:1}
-#legend{position:absolute;left:12px;right:12px;top:10px;background:rgba(255,255,255,.93);color:#24302a;border:4px solid #24302a;border-radius:20px;padding:6px 12px 8px;z-index:1800;transition:opacity .4s}
-#legend h2{margin:0 0 2px;font-size:19px;font-weight:800;text-align:center;line-height:1.2}
-.lrow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;padding:3px 0;border-top:2px dashed #d8e4dc;font-size:15px;line-height:1.15}
+#legend{position:absolute;left:10px;right:10px;top:8px;background:rgba(255,255,255,.86);color:#24302a;border:3px solid #24302a;border-radius:16px;padding:4px 8px 6px;z-index:1800;transition:opacity .4s}
+#legendRows{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}
+#legend h2{margin:0 0 2px;font-size:15px;font-weight:800;text-align:center;line-height:1.2}
+.lrow{display:flex;align-items:center;gap:5px;padding:2px 0;border-top:1.5px dashed #d8e4dc;line-height:1.1;min-width:0}
+.lrow:nth-child(-n+2){border-top:none}
+.lrow:last-child:nth-child(odd){grid-column:span 2;justify-content:center}
 .lrow:first-of-type{border-top:none}
 .lemo{font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
-.lemo{flex-direction:column;gap:1px}
+.lemo{flex-direction:column;gap:1px;flex-shrink:0}
 .lemo .icons{display:flex;gap:4px;align-items:center;justify-content:center}
 .gico{width:34px;height:34px;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
 .gemo{font-size:28px;line-height:34px;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
@@ -112,7 +115,8 @@ body.obs #panel{display:none}
 #cardEmoji .gico,#cardEmoji .gemo{width:84px;height:84px;font-size:70px;line-height:84px}
 .gifts button{display:flex;align-items:center;justify-content:center;gap:6px}
 .gifts button .gico,.gifts button .gemo{width:26px;height:26px;font-size:20px;line-height:26px}
-.lact{font-weight:700;font-size:16px;line-height:1.15}
+.lact{font-weight:700;font-size:13.5px;line-height:1.1}
+#legend .gico,#legend .gemo{width:24px;height:24px;font-size:19px;line-height:24px}
 .legend-off #legend{display:none}
 #banner{position:absolute;left:50%;top:278px;transform:translate(-50%,-20px) scale(.9);opacity:0;background:#fff;color:#24302a;border:4px solid #24302a;border-radius:22px;padding:8px 18px;font-size:22px;font-weight:800;max-width:500px;text-align:center;line-height:1.15;transition:transform .35s cubic-bezier(.3,1.5,.6,1),opacity .25s;z-index:2000}
 #banner.show{transform:translate(-50%,0);opacity:1}
@@ -191,7 +195,7 @@ body.obs #panel{display:none}
 <div id="fx"></div>
 <div id="banner"></div>
 <div id="card"><div id="cardEmoji"></div><div id="cardTitle"></div><div id="cardName"></div></div>
-<div id="legend"><h2>🎁 Mande um presente e veja o que acontece!</h2><div id="legendRows"></div></div>
+<div id="legend"><h2>🎁 Mande um presente e veja!</h2><div id="legendRows"></div></div>
 <div id="over"><div id="overTitle">Fim de jogo!</div><div id="overSub">Recomeçando em</div><div id="overNum">5</div></div>
 </div></div></div>
 
@@ -258,13 +262,13 @@ function iconEl(key) {
   return im;
 }
 const LEGEND = [
-  [['rose'],              '',      'Pipo te dá uma rosa vermelha'],
-  [['whiteRose'],         '',      'Pipo te dá uma rosa branca'],
-  [['gg', 'doughnut'],    '', 'Bolota sai da toca pra brincar'],
-  [['moneyGun'],          '',    'Dona Coruja diz oi e se irrita'],
-  [['villain'],           '',          'Guaxi foge com a torta'],
-  [['galaxy'],            '',  'Festa final com todo mundo!'],
-  [['lion'],              '', 'Leão aparece, todos fogem e o jogo acaba!']
+  [['rose'],              '',      'Pipo te dá rosa vermelha'],
+  [['whiteRose'],         '',      'Pipo te dá rosa branca'],
+  [['gg', 'doughnut'],    '', 'Bolota vem brincar'],
+  [['moneyGun'],          '',    'Coruja se irrita'],
+  [['villain'],           '',          'Guaxi rouba a torta'],
+  [['galaxy'],            '',  'Festa final!'],
+  [['lion'],              '', 'Leão assusta todos e o jogo acaba!']
 ];
 function buildLegend() {
   const box = document.getElementById('legendRows');
