@@ -185,6 +185,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 /* cenário limpo: sem letreiro de regras e sem frase de chamada */
 #rules,#emptyMsg{display:none!important}
 #rank.vazio{display:none}
+/* live sem tempo: sem cronômetro e sem a frase "Mande um presente!" */
+#timer,#pLast{display:none!important}
 .live .pill{max-width:480px}
 </style>
 </head>
@@ -217,9 +219,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
     <h2>Ajustes</h2>
     <p>O jogo lê curtidas e presentes da live pelo TikFinity, que precisa estar aberto no mesmo computador.</p>
     <label class="fld">Endereço do TikFinity<input type="text" id="fUrl" spellcheck="false"></label>
-    <div class="row3">
+    <div class="row3" style="grid-template-columns:1fr 1fr">
       <label class="fld">Curtidas p/ pipa<input type="number" id="fThr" min="1" max="1000"></label>
-      <label class="fld">Rodada (min)<input type="number" id="fRound" min="0" max="240"></label>
+      <label class="fld" hidden>Rodada (min)<input type="number" id="fRound" min="0" max="240"></label>
       <label class="fld">Some após (min)<input type="number" id="fIdle" min="1" max="120"></label>
     </div>
     <label class="fld">Pipas da casa sempre no ar<input type="number" id="fBots" min="0" max="20"></label>
@@ -255,6 +257,7 @@ if(LIVE){
 /* ================= configurações ================= */
 const cfg={url:qs.get("ws")||"ws://localhost:21213/",thr:10,idle:5,round:10,sim:qs.has("sim"),maxKites:40,bots:6};
 try{const s=JSON.parse(localStorage.getItem("pipas-ceu-cfg")||"null");if(s){cfg.url=qs.get("ws")||s.url||cfg.url;cfg.thr=s.thr||cfg.thr;cfg.idle=s.idle||cfg.idle;cfg.round=s.round!=null?s.round:cfg.round;cfg.bots=s.bots!=null?s.bots:cfg.bots;}}catch(e){}
+cfg.round=0;   // live sem tempo: rodada contínua
 function saveCfg(){try{localStorage.setItem("pipas-ceu-cfg",JSON.stringify({url:cfg.url,thr:cfg.thr,idle:cfg.idle,round:cfg.round,bots:cfg.bots}));}catch(e){}}
 
 /* ================= cenário ================= */
@@ -903,7 +906,7 @@ $("#bSave").addEventListener("click",()=>{
   const url=$("#fUrl").value.trim()||cfg.url,oldRound=cfg.round;
   cfg.thr=clamp(parseInt($("#fThr").value,10)||10,1,1000);
   cfg.idle=clamp(parseInt($("#fIdle").value,10)||5,1,120);
-  const r=parseInt($("#fRound").value,10); cfg.round=clamp(isNaN(r)?10:r,0,240);
+  cfg.round=0;
   const nb=parseInt($("#fBots").value,10); cfg.bots=clamp(isNaN(nb)?6:nb,0,20);
   cfg.sim=$("#fSim").checked;
   const changed=url!==cfg.url; cfg.url=url;
