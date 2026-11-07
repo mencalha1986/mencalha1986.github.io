@@ -6,8 +6,8 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-07T16:34:25.143Z",
- "tentativa": "2026-11-07T16:34:25.143Z",
+ "atualizado": "2026-11-07T20:58:07.346Z",
+ "tentativa": "2026-11-07T20:58:07.346Z",
  "erro": null,
  "voos": [
   {
@@ -33,8 +33,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5320,
-   "eur": 867
+   "brl": 5541,
+   "eur": 903
   },
   {
    "saida": "08:50",
@@ -46,8 +46,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5346,
-   "eur": 872
+   "brl": 5567,
+   "eur": 908
   },
   {
    "saida": "14:35",
@@ -72,8 +72,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 6793,
-   "eur": 1107
+   "brl": 6611,
+   "eur": 1078
   },
   {
    "saida": "12:10",
@@ -185,6 +185,26 @@
   },
   {
    "quando": "2026-11-07T16:34:25.143Z",
+   "brl": 5293,
+   "eur": 863,
+   "direto": 7886,
+   "razoavelEur": 863,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-07T20:57:59.565Z",
+   "brl": 5293,
+   "eur": 863,
+   "direto": 7886,
+   "razoavelEur": 863,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-07T20:58:07.346Z",
    "brl": 5293,
    "eur": 863,
    "direto": 7886,
