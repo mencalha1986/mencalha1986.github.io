@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-06T23:15:35.815Z",
- "tentativa": "2026-11-07T10:23:06.351Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-07T16:34:25.143Z",
+ "tentativa": "2026-11-07T16:34:25.143Z",
+ "erro": null,
  "voos": [
   {
    "saida": "08:50",
@@ -20,8 +20,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 5514,
-   "eur": 899
+   "brl": 5293,
+   "eur": 863
   },
   {
    "saida": "08:50",
@@ -33,8 +33,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5541,
-   "eur": 903
+   "brl": 5320,
+   "eur": 867
   },
   {
    "saida": "08:50",
@@ -46,21 +46,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5567,
-   "eur": 907
-  },
-  {
-   "saida": "14:35",
-   "chegada": "09:00⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 1285,
-   "sai": "LIS",
-   "chega": "SDU",
-   "paradas": 1,
-   "detalhe": "Mudança de aeroporto",
-   "brl": 5567,
-   "eur": 907
+   "brl": 5346,
+   "eur": 872
   },
   {
    "saida": "14:35",
@@ -98,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min VCP",
-   "brl": 6963,
+   "brl": 6962,
    "eur": 1135
   },
   {
@@ -137,14 +124,14 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 8807,
+   "brl": 8806,
    "eur": 1435
   }
  ],
  "escolhas": {
   "barato": 0,
   "rapido": 2,
-  "direto": 8
+  "direto": 7
  },
  "historico": [
   {
@@ -192,6 +179,16 @@
    "eur": 899,
    "direto": 7886,
    "razoavelEur": 899,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-07T16:34:25.143Z",
+   "brl": 5293,
+   "eur": 863,
+   "direto": 7886,
+   "razoavelEur": 863,
    "razoavelCia": "LATAM, 4h 20 min GRU",
    "diretoEur": 1285,
    "diretoCia": "Tap Air Portugal / Gol, direto"
