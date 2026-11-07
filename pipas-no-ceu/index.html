@@ -182,6 +182,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .live #emptyMsg .big{font-size:46px}
 .live #emptyMsg .sm{font-size:17px}
 .live #corner,.live #settings{display:none!important}
+/* cenário limpo: sem letreiro de regras e sem frase de chamada */
+#rules,#emptyMsg{display:none!important}
+#rank.vazio{display:none}
 .live .pill{max-width:480px}
 </style>
 </head>
@@ -733,7 +736,7 @@ function updateHud(dt){
   const tm=$("#timer");
   if(cfg.round>0&&state==="play"){const left=roundEnd-performance.now();tm.textContent=fmtT(left);tm.classList.toggle("low",left<60000);tm.hidden=false;}
   else if(cfg.round<=0) tm.hidden=true;
-  $("#emptyMsg").hidden=kites.some(k=>k.state==="fly"&&!k.u.bot)||state!=="play";
+  $("#rank").classList.toggle("vazio",!top.length);
 }
 
 /* ================= rodada ================= */
