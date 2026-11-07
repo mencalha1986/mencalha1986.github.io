@@ -214,11 +214,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #toasts .toast.cut{border:1px solid #ff8fab}
 .live #hud{top:118px!important;left:12px!important}
 .live #hud .pill{font-size:16px;padding:6px 11px}
-.live #rank{top:118px!important;right:12px;width:170px!important}
+.live #rank{top:340px!important;right:12px;width:150px!important}
 .live #rank h2{font-size:15px!important}
 .live #rankList .rw{font-size:12px}
 /* fora da área dos comentários do TikTok (metade de baixo, à esquerda): lateral direita, no alto */
-.live #gl{top:330px!important;bottom:auto!important;left:auto!important;right:12px!important;transform:none!important;display:block;width:150px!important;padding:6px 7px!important}
+.live #gl{top:118px!important;bottom:auto!important;left:auto!important;right:12px!important;transform:none!important;display:block;width:150px!important;padding:6px 7px!important}
 .live #gl h2{font-size:13px!important;text-align:center;margin-bottom:4px!important}
 .live #glList{display:grid;grid-template-columns:1fr;gap:3px}
 .live #toasts{top:170px!important;bottom:auto!important;left:12px!important;transform:none!important;width:300px!important;align-items:flex-start}
@@ -693,7 +693,7 @@ function updateZones(dt){
   zoneT-=dt; if(zoneT>0) return; zoneT=1;
   // em coordenadas do jogo (na janela da live o palco é escalado)
   let ox=0,oy=0,k=1; if(LIVE){const sr=$("#stage").getBoundingClientRect();ox=sr.left;oy=sr.top;k=sr.width/540;}
-  zones=["#hud","#rank"].map(id=>{const b=$(id).getBoundingClientRect();return {l:(b.left-ox)/k,r:(b.right-ox)/k,b:(b.bottom-oy)/k};});
+  zones=["#hud","#rank","#gl"].map(id=>{const b=$(id).getBoundingClientRect();return {l:(b.left-ox)/k,r:(b.right-ox)/k,b:(b.bottom-oy)/k};});
 }
 function minYAt(x){let m=0;zones.forEach(z=>{if(x>z.l-S&&x<z.r+S)m=Math.max(m,z.b);});return Math.max(m,H*.08)+S*2.9;}   // espaço para a etiqueta com nome acima da pipa
 
