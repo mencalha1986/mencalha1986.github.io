@@ -2650,11 +2650,11 @@ function fitCamera() {
   const aspect = w / h;
   camera.aspect = aspect;
   const portrait = aspect < 1;
-  const halfWidth = LIVE ? 5.4 : portrait ? 6.0 : 8.6;
-  camTarget.set(0.6, LIVE ? 1.2 : 1.5, -1.4);   // na live: cena um pouco maior, deixando a parte de baixo para os painéis
+  const halfWidth = LIVE ? 9.0 : portrait ? 6.0 : 8.6;   // na live: sala inteira, com a porta de entrada e a de saída
+  camTarget.set(0.4, LIVE ? 1.2 : 1.5, -1.4);
   const vfov = THREE.MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
-  const dist = clamp(halfWidth / Math.tan(hfov / 2), 11, 26);
+  const dist = clamp(halfWidth / Math.tan(hfov / 2), 11, LIVE ? 60 : 26);
   const dir = new THREE.Vector3(0, portrait ? 0.8 : 0.5, 1).normalize();
   camBase.copy(camTarget).addScaledVector(dir, dist);
   camera.position.copy(camBase);
