@@ -1,0 +1,2821 @@
+<!--
+  FILA DO PAPAI NOEL — jogo 3D para TikTok LIVE (arquivo único)
+  Feito para TikTok LIVE Studio + TikFinity (app desktop).
+  Os presentes chegam pela Event API do TikFinity: ws://localhost:21213/
+  (para outro servidor, use ?ws=ws://endereco:porta). O áudio inicia sozinho.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fila do Papai Noel — TikTok LIVE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Three.js vem do CDN (versão fixa). Todo o jogo está neste arquivo. -->
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+
+  <script>if(/[?&](obs=1|modo=live)/.test(location.search))document.documentElement.classList.add("live");</script>
+  <style>
+    :root {
+      --pine: #1e4d3a;
+      --cranberry: #b3202a;
+      --candle: #f2c14e;
+      --snow: #fff8ee;
+      --cocoa: #3b2416;
+      --display: 'Mountains of Christmas', 'Georgia', serif;
+      --body: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #140b07; }
+    body { font-family: var(--body); color: var(--snow); }
+    #app, #app canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+    /* ---------- HUD ---------- */
+    #hud { position: fixed; inset: 0; pointer-events: none; }
+    #hud.hidden { display: none; }
+
+    /* Título como uma etiqueta de presente pendurada */
+    .tag-title {
+      position: absolute; top: 2.2vmin; left: 50%; transform: translateX(-50%) rotate(-1.5deg);
+      background: var(--snow); color: var(--cranberry);
+      padding: 1.2vmin 4.5vmin 1.4vmin 6vmin;
+      clip-path: polygon(3.6vmin 0, 100% 0, 100% 100%, 3.6vmin 100%, 0 50%);
+      text-align: center; filter: drop-shadow(0 0.6vmin 0 rgba(0,0,0,.35));
+    }
+    .tag-title::before { /* furinho da etiqueta */
+      content: ''; position: absolute; left: 2.2vmin; top: 50%; width: 1.4vmin; height: 1.4vmin;
+      margin-top: -0.7vmin; border-radius: 50%; background: #140b07;
+    }
+    .tag-title h1 { font-family: var(--display); font-size: clamp(22px, 5.6vmin, 64px); line-height: 1; }
+    .tag-title p { font-size: clamp(11px, 2.2vmin, 22px); color: var(--pine); font-weight: 700; margin-top: .4vmin; }
+
+    /* Placa de madeira com as recompensas */
+    .sign {
+      position: absolute; top: 2.2vmin; left: 2.2vmin; width: min(34vmin, 330px);
+      background: linear-gradient(#5a3820, #4a2c18); border: .5vmin solid #2b170b;
+      border-radius: 1.2vmin; padding: 1.4vmin 1.8vmin;
+      box-shadow: inset 0 0 0 .3vmin rgba(255,220,160,.15);
+    }
+    .sign h2 { font-family: var(--display); color: var(--candle); font-size: clamp(14px, 3vmin, 30px); line-height: 1.1; margin-bottom: .6vmin; }
+    .sign ul { list-style: none; }
+    .sign li { display: grid; grid-template-columns: 4.2vmin 1fr; gap: 1vmin; align-items: center; padding: .5vmin 0; font-size: clamp(10px, 1.9vmin, 19px); line-height: 1.2; }
+    .sign li + li { border-top: .2vmin dashed rgba(255,220,160,.25); }
+    .sign .ico { font-size: clamp(16px, 3.4vmin, 34px); text-align: center; }
+    .sign b { display: block; font-weight: 800; }
+    .sign small { opacity: .8; font-size: .9em; }
+
+    .queue-pill {
+      position: absolute; bottom: 3vmin; left: 50%; transform: translateX(-50%);
+      background: var(--pine); border: .45vmin solid var(--candle); border-radius: 99px;
+      padding: .8vmin 3.4vmin; font-weight: 800; font-size: clamp(13px, 2.8vmin, 28px); white-space: nowrap;
+    }
+    .queue-pill span { color: var(--candle); }
+
+    #feed { position: absolute; top: 2.2vmin; right: 2.2vmin; width: min(36vmin, 340px); list-style: none; display: flex; flex-direction: column; gap: .8vmin; }
+    #feed li {
+      background: rgba(20, 11, 7, .78); border-left: .7vmin solid #9be7ff; border-radius: .8vmin;
+      padding: .6vmin 1.2vmin; font-size: clamp(10px, 1.9vmin, 19px); line-height: 1.25;
+      animation: feedIn .35s ease-out;
+    }
+    #feed li.tier-medium { border-left-color: #7cfc9a; }
+    #feed li.tier-large { border-left-color: var(--candle); background: rgba(90, 60, 0, .82); }
+    #feed li b { color: var(--candle); }
+    @keyframes feedIn { from { opacity: 0; transform: translateX(3vmin); } to { opacity: 1; transform: none; } }
+
+    #status { position: absolute; bottom: 1vmin; right: 1.4vmin; font-size: clamp(9px, 1.4vmin, 14px); opacity: .75; display: flex; gap: .6vmin; align-items: center; }
+    #status i { width: 1.2vmin; height: 1.2vmin; border-radius: 50%; background: #e74c3c; }
+    #status.socket i { background: #f1c40f; }
+    #status.live i { background: #2ecc71; }
+
+    /* Anúncio central para presentes valiosos */
+    #announce {
+      position: fixed; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(.6);
+      font-family: var(--body); font-weight: 800; font-size: clamp(24px, 5.6vmin, 70px); text-align: center; line-height: 1.05;
+      color: var(--candle);
+      text-shadow: 0 .45vmin 0 var(--cocoa), 0 0 .3vmin var(--cocoa), 0 0 4vmin rgba(255, 210, 90, .8);
+      opacity: 0; pointer-events: none; width: 92vw; transition: opacity .3s, transform .45s cubic-bezier(.2, 1.6, .4, 1);
+    }
+    #announce.medium { color: #c9ffd8; font-size: clamp(20px, 4.6vmin, 56px); }
+    #announce.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    #flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle, rgba(255, 220, 120, .55), rgba(255, 200, 80, 0) 70%); opacity: 0; transition: opacity .6s; }
+    #flash.on { opacity: 1; transition: none; }
+
+    /* Retrato (9:16 do TikTok) */
+    @media (max-aspect-ratio: 1/1) {
+      .tag-title { top: 2vmax; }
+      .tag-title h1 { font-size: clamp(24px, 4.6vmax, 70px); }
+      .tag-title p { font-size: clamp(12px, 1.7vmax, 26px); }
+      .sign { top: auto; bottom: 9vmax; left: 2vmin; width: 44vmin; }
+      #feed { top: auto; bottom: 9vmax; right: 2vmin; width: 48vmin; }
+      .queue-pill { bottom: 3vmax; }
+    }
+
+    /* Overlay de início (navegadores bloqueiam áudio sem clique) */
+    #startOverlay {
+      position: fixed; inset: 0; display: flex; flex-direction: column; gap: 1.6vmin;
+      align-items: center; justify-content: center; background: rgba(20, 11, 7, .72); z-index: 10;
+    }
+    #startOverlay.hidden { display: none; }
+    #startOverlay button {
+      font-family: var(--body); font-weight: 800; font-size: clamp(16px, 3.4vmin, 34px);
+      background: var(--cranberry); color: var(--snow); border: .5vmin solid var(--snow);
+      border-radius: 99px; padding: 1.4vmin 5vmin; cursor: pointer;
+    }
+    #startOverlay button:focus-visible { outline: .5vmin solid var(--candle); outline-offset: .5vmin; }
+    #startOverlay small { opacity: .8; font-size: clamp(11px, 1.8vmin, 18px); text-align: center; max-width: 80vw; }
+
+    #top { top: auto; left: auto; right: 2.2vmin; bottom: 9vmin; }
+    #top[hidden] { display: none; }
+    #top ol { list-style: none; counter-reset: r; }
+    #top li { display: flex; justify-content: space-between; gap: 1vmin; padding: .4vmin 0; font-size: clamp(10px, 1.9vmin, 19px); font-weight: 700; }
+    #top li + li { border-top: .2vmin dashed rgba(255,220,160,.25); }
+    #top li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #top li span:first-child::before { counter-increment: r; content: counter(r) 'º  '; color: var(--candle); }
+    #top li b { color: var(--candle); white-space: nowrap; }
+    .sign .ico img { width: 1.25em; height: 1.25em; object-fit: contain; display: inline-block; vertical-align: middle; filter: drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
+    .sign .ico2 img { width: .95em; height: .95em; }
+    #opbar { position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); display: flex; gap: 8px; z-index: 20; flex-wrap: wrap; justify-content: center; }
+    #opbar button { font: 700 14px var(--body); background: rgba(20,11,7,.85); color: var(--snow); border: 2px solid var(--candle); border-radius: 99px; padding: 6px 14px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+    #opbar button img { width: 22px; height: 22px; }
+    #opbar #opLive { background: var(--cranberry); border-color: var(--snow); }
+    .live #opbar, .live #status, .live #startOverlay { display: none !important; }
+
+    /* ===== JANELA DA LIVE (?obs=1): palco fixo 9:16 (540×960), áreas livres do TikTok ===== */
+    .live body { background: #000; }
+    .live #stage { position: fixed; left: 50%; top: 50%; width: 540px; height: 960px; transform: translate(-50%,-50%) scale(var(--s,1)); overflow: hidden; background: #140b07; }
+    .live #app, .live #app canvas, .live #hud, .live #announce, .live #flash { position: absolute !important; }
+    .live #app, .live #app canvas { width: 540px !important; height: 960px !important; inset: 0; }
+    .live .tag-title { top: 118px; padding: 8px 26px 9px 36px; clip-path: polygon(22px 0,100% 0,100% 100%,22px 100%,0 50%); }
+    .live .tag-title::before { left: 13px; width: 9px; height: 9px; margin-top: -4.5px; }
+    .live .tag-title h1 { font-size: 30px; white-space: nowrap; }
+    .live .tag-title p { font-size: 12px; margin-top: 2px; white-space: nowrap; }
+    .live .queue-pill { top: 196px; bottom: auto; padding: 4px 18px; font-size: 16px; border-width: 3px; }
+    .live .sign { top: auto; bottom: var(--signB, 128px); left: auto; right: 10px; width: 250px; padding: 8px 10px; border-width: 3px; border-radius: 8px; }
+    .live .sign h2 { font-size: 18px; margin-bottom: 3px; }
+    .live .sign li { grid-template-columns: 30px 1fr; gap: 6px; padding: 3px 0; font-size: 12px; }
+    .live .sign li + li { border-top-width: 1px; }
+    .live .sign .ico { font-size: 22px; }
+    /* na live o quadro de presentes vira uma faixa compacta de 3 ícones */
+    .live .sign:not(#top) ul { display: flex; gap: 4px; }
+    .live .sign:not(#top) li { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; flex: 1; padding: 2px 0; border: 0 !important; font-size: 11px; line-height: 1.1; }
+    .live .sign:not(#top) li small { font-size: 9.5px; display: block; }
+    .live .sign:not(#top) li .ico { font-size: 26px; }
+    .live .sign:not(#top) h2 { font-size: 16px; text-align: center; }
+    .live #top { top: auto; bottom: 128px; right: 10px; width: 250px; }
+    .live #top li { font-size: 13px; padding: 2px 0; gap: 6px; }
+    .live #feed { top: 250px; bottom: auto; left: 10px; right: auto; width: 205px; gap: 5px; }
+    .live #feed li { font-size: 12px; padding: 4px 8px; border-left-width: 4px; border-radius: 6px; }
+    .live #announce { top: 37%; width: 500px; font-size: 40px; }
+    .live #announce.medium { font-size: 32px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #feed li { animation: none; }
+      #announce { transition: opacity .3s; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="hud">
+    <header class="tag-title">
+      <h1>Fila do Papai Noel</h1>
+      <p>Mande um presente na live e entre na fila</p>
+    </header>
+
+    <aside class="sign">
+      <h2>O que você ganha</h2>
+      <ul>
+        <li><span class="ico"><img src="data:image/webp;base64,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" alt="Rosa"></span><span><b>Caixinha</b><small>Rosa e pequenos</small></span></li>
+        <li><span class="ico"><img src="data:image/webp;base64,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" alt="GG"></span><span><b>Caixa especial</b><small>GG ou 10+ moedas</small></span></li>
+        <li><span class="ico ico2"><img src="data:image/webp;base64,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" alt="Pistola de dinheiro"><img src="data:image/webp;base64,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" alt="Galáxia"></span><span><b>Presente gigante</b><small>500+ moedas</small></span></li>
+      </ul>
+    </aside>
+
+    <ul id="feed" aria-live="polite"></ul>
+
+    <aside id="top" class="sign" hidden>
+      <h2>👑 Quem mais deu</h2>
+      <ol id="topList"></ol>
+    </aside>
+
+    <div class="queue-pill"><span id="queueCount">0</span> na fila &nbsp;|&nbsp; <span id="servedCount">0</span> presenteados</div>
+
+    <div id="status"><i></i><span id="statusText">Conectando ao servidor…</span></div>
+  </div>
+
+  <div id="opbar">
+    <button type="button" id="opLive">📺 Abrir janela da live</button>
+    <button type="button" data-t="1"><img src="data:image/webp;base64,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" alt="">Rosa</button>
+    <button type="button" data-t="2"><img src="data:image/webp;base64,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" alt="">GG</button>
+    <button type="button" data-t="3"><img src="data:image/webp;base64,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" alt="">Pistola</button>
+    <button type="button" data-t="0">🎁 x10</button>
+  </div>
+  <div id="announce"></div>
+  <div id="flash"></div>
+
+  <div id="startOverlay" class="hidden">
+    <button id="startBtn" type="button">Começar com som</button>
+    <small>Teclas de teste: 1 = Rosa, 2 = GG, 3 = Pistola de dinheiro, 0 = 10 presentes, M = mudo, H = esconder HUD</small>
+  </div>
+
+  <script type="module">
+import * as THREE from 'three';
+
+// ======================================================================
+// config.js
+// ======================================================================
+/**
+ * config.js — Configurações do jogo (ajuste aqui sem mexer no resto)
+ *
+ * Parâmetros de URL:
+ *   ?autostart      → inicia o áudio sem clique (use no OBS)
+ *   ?hud=0          → esconde o HUD (título, placa, fila)
+ *   ?debug=0        → desativa as teclas de teste
+ *   ?ws=ws://ip:porta → servidor WebSocket diferente
+ */
+const params = new URLSearchParams(location.search);
+const LIVE = document.documentElement.classList.contains('live');
+if (LIVE) {   // palco 540×960: tudo dentro dele
+  const st = document.createElement('div'); st.id = 'stage';
+  [...document.body.children].forEach((el) => { if (el.tagName !== 'SCRIPT') st.appendChild(el); });
+  document.body.prepend(st);
+}
+// Padrão: WebSocket da Event API do TikFinity (app desktop). Troque com ?ws=...
+const defaultWs = 'ws://localhost:21213/';
+
+const CONFIG = {
+  wsUrl: params.get('ws') || defaultWs,
+  autostart: params.get('autostart') !== '0', // automático por padrão
+  showHud: params.get('hud') !== '0',
+  debugKeys: params.get('debug') !== '0',
+  timeScale: Math.min(4, Math.max(0.25, Number(params.get('speed')) || 1)), // ?speed=2 acelera tudo
+
+  queue: {
+    spacing: 0.85, // distância entre crianças na fila
+  },
+
+  // Mesmas regras do servidor (usadas se a mensagem vier sem "tier")
+  tiers: {
+    thresholds: { medium: 10, large: 500 },
+    byName: {
+      rose: 'small', rosa: 'small',
+      gg: 'medium',
+      lion: 'large', 'leão': 'large', leao: 'large',
+      universe: 'large', universo: 'large',
+      'money gun': 'large', 'pistola de dinheiro': 'large', galaxy: 'large', 'galáxia': 'large', galaxia: 'large',
+    },
+  },
+
+  audio: {
+    // Coloque seus arquivos em public/assets/. Se não existirem,
+    // o jogo usa música e risada sintetizadas (Web Audio).
+    bgm: 'assets/bgm.mp3',
+    laughs: ['assets/laugh.mp3', 'assets/laugh2.mp3', 'assets/laugh3.mp3'],
+    bgmVolume: 0.35,
+    sfxVolume: 0.9,
+  },
+};
+
+const RANK = { small: 0, medium: 1, large: 2 };
+
+function resolveTier(giftName = '', coins = 1) {
+  const { thresholds, byName } = CONFIG.tiers;
+  const byCoins = coins >= thresholds.large ? 'large' : coins >= thresholds.medium ? 'medium' : 'small';
+  const nameTier = byName[String(giftName).trim().toLowerCase()];
+  if (!nameTier) return byCoins;
+  return RANK[nameTier] >= RANK[byCoins] ? nameTier : byCoins;
+}
+
+// ======================================================================
+// utils.js
+// ======================================================================
+/**
+ * utils.js — Funções auxiliares: matemática, materiais, texturas em canvas,
+ * etiquetas de nome (sprites), trajetória da fila e limpeza de memória.
+ */
+
+// ---------- Matemática ----------
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+/** Suaviza um valor em direção a outro, independente do FPS. */
+const damp = (a, b, lambda, dt) => lerp(a, b, 1 - Math.exp(-lambda * dt));
+/** Igual ao damp, mas para ângulos (pega o caminho mais curto). */
+function dampAngle(a, b, lambda, dt) {
+  const TAU = Math.PI * 2;
+  const diff = ((((b - a) % TAU) + TAU * 1.5) % TAU) - Math.PI;
+  return a + diff * (1 - Math.exp(-lambda * dt));
+}
+function easeOutBack(t) {
+  const c1 = 1.70158, c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+// ---------- Materiais e malhas ----------
+function mat(color, opts = {}) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...opts });
+}
+
+/** Cria uma malha, posiciona e adiciona ao "pai". */
+function addMesh(parent, geometry, material, pos = [0, 0, 0], rot = [0, 0, 0], scale = null) {
+  const m = new THREE.Mesh(geometry, material);
+  m.position.set(pos[0], pos[1], pos[2]);
+  m.rotation.set(rot[0], rot[1], rot[2]);
+  if (scale !== null) Array.isArray(scale) ? m.scale.set(scale[0], scale[1], scale[2]) : m.scale.setScalar(scale);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+
+// ---------- Texturas desenhadas em canvas ----------
+function canvasTexture(w, h, draw, repeat = null) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  if (repeat) {
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(repeat[0], repeat[1]);
+  }
+  return tex;
+}
+
+let _glow = null;
+/** Textura de brilho redonda (compartilhada — nunca é descartada). */
+function glowTexture() {
+  if (_glow) return _glow;
+  _glow = canvasTexture(64, 64, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.25, 'rgba(255,255,255,0.85)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+  _glow.userData.shared = true;
+  return _glow;
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/**
+ * Etiqueta de texto que sempre olha para a câmera (usada no @usuario,
+ * no balão "HO HO HO" e nas placas de porta).
+ */
+function makeLabelSprite(text, {
+  bg = 'rgba(30, 14, 8, 0.82)',
+  border = '#f2c14e',
+  color = '#fff8ee',
+  worldHeight = 0.36,
+  maxChars = 20,
+  depthTest = false,
+  font = "800 64px 'Baloo 2', 'Trebuchet MS', Arial, sans-serif",
+} = {}) {
+  const label = text.length > maxChars ? text.slice(0, maxChars - 1) + '…' : text;
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  ctx.font = font;
+  const padX = 38, h = 108;
+  c.width = Math.ceil(Math.min(ctx.measureText(label).width, 900) + padX * 2);
+  c.height = h;
+  ctx.font = font; // redimensionar o canvas reseta o contexto
+  roundRectPath(ctx, 4, 4, c.width - 8, h - 8, (h - 8) / 2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = border;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, c.width / 2, h / 2 + 4, c.width - padX * 1.6);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(worldHeight * (c.width / c.height), worldHeight, 1);
+  sprite.renderOrder = depthTest ? 0 : 999;
+  return sprite;
+}
+
+// ---------- Trajetória da fila (linha poligonal no chão) ----------
+class Path {
+  /** points: [[x, z], ...] — o índice 0 é a FRENTE da fila. */
+  constructor(points) {
+    this.points = points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+    this.cum = [0];
+    for (let i = 1; i < this.points.length; i++) {
+      this.cum.push(this.cum[i - 1] + this.points[i].distanceTo(this.points[i - 1]));
+    }
+    this.length = this.cum[this.cum.length - 1];
+  }
+  pointAt(d, out = new THREE.Vector3()) {
+    d = clamp(d, 0, this.length);
+    let i = 0;
+    while (i < this.points.length - 2 && this.cum[i + 1] < d) i++;
+    const seg = this.cum[i + 1] - this.cum[i] || 1;
+    return out.lerpVectors(this.points[i], this.points[i + 1], (d - this.cum[i]) / seg);
+  }
+}
+
+// ---------- Limpeza de memória (GPU) ----------
+function disposeObject(root) {
+  root.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+    for (const m of mats) {
+      if (m.map && !m.map.userData.shared) m.map.dispose();
+      m.dispose();
+    }
+  });
+}
+
+// ======================================================================
+// effects.js
+// ======================================================================
+/**
+ * effects.js — Explosões de partículas (confete e brilhos).
+ */
+
+const CONFETTI = ['#ff4d4d', '#ffd34d', '#4dff88', '#4dc3ff', '#ff7af5', '#ffffff'];
+
+class Effects {
+  constructor(scene) {
+    this.scene = scene;
+    this.systems = [];
+  }
+
+  /**
+   * Cria uma explosão de partículas em `origin`.
+   * additive=true → brilhos luminosos; false → confete colorido.
+   */
+  burst(origin, {
+    count = 80, colors = CONFETTI, speed = 3.5, upBoost = 3, gravity = -7,
+    life = 1.8, size = 0.1, additive = false, drag = 0.985,
+  } = {}) {
+    const positions = new Float32Array(count * 3);
+    const cols = new Float32Array(count * 3);
+    const vel = [];
+    const c = new THREE.Color();
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = origin.x;
+      positions[i * 3 + 1] = origin.y;
+      positions[i * 3 + 2] = origin.z;
+      const theta = rand(0, Math.PI * 2);
+      const phi = Math.acos(rand(-1, 1));
+      const v = new THREE.Vector3(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta))
+        .multiplyScalar(rand(0.3, 1) * speed);
+      v.y += upBoost * rand(0.5, 1);
+      vel.push(v);
+      c.set(pick(colors));
+      cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    const material = new THREE.PointsMaterial({
+      size, vertexColors: true, transparent: true, depthWrite: false, sizeAttenuation: true,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+      map: additive ? glowTexture() : null,
+    });
+    const points = new THREE.Points(geo, material);
+    points.frustumCulled = false;
+    this.scene.add(points);
+    this.systems.push({ points, vel, age: 0, life, gravity, drag });
+  }
+
+  update(dt) {
+    for (let i = this.systems.length - 1; i >= 0; i--) {
+      const s = this.systems[i];
+      s.age += dt;
+      const attr = s.points.geometry.attributes.position;
+      const arr = attr.array;
+      const dragK = Math.pow(s.drag, dt * 60);
+      for (let j = 0; j < s.vel.length; j++) {
+        const v = s.vel[j];
+        v.y += s.gravity * dt;
+        v.multiplyScalar(dragK);
+        arr[j * 3] += v.x * dt;
+        arr[j * 3 + 1] += v.y * dt;
+        arr[j * 3 + 2] += v.z * dt;
+        if (arr[j * 3 + 1] < 0.02) { // quica no chão
+          arr[j * 3 + 1] = 0.02;
+          v.y *= -0.3; v.x *= 0.7; v.z *= 0.7;
+        }
+      }
+      attr.needsUpdate = true;
+      s.points.material.opacity = clamp(1 - Math.pow(s.age / s.life, 2), 0, 1);
+      if (s.age >= s.life) {
+        this.scene.remove(s.points);
+        s.points.geometry.dispose();
+        s.points.material.dispose();
+        this.systems.splice(i, 1);
+      }
+    }
+  }
+}
+
+// ======================================================================
+// gifts.js
+// ======================================================================
+/**
+ * gifts.js — Caixas de presente 3D para cada categoria.
+ *   small  → caixinha simples, uma cor, laço dourado
+ *   medium → caixa maior com estampa de bolinhas e laço metálico
+ *   large  → caixa dourada gigante, brilho, estrela e faíscas girando
+ */
+
+const TIER_INFO = {
+  small: { label: 'Caixinha', size: 0.34 },
+  medium: { label: 'Caixa especial', size: 0.56 },
+  large: { label: 'Presente gigante', size: 0.95 },
+};
+
+/** Estrela de 5 pontas extrudada (usada no presente gigante e na árvore). */
+function createStarGeometry(outer = 0.3, inner = 0.13, depth = 0.08) {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? inner : outer;
+    const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
+  }
+  shape.closePath();
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth, bevelEnabled: true, bevelThickness: depth * 0.3, bevelSize: depth * 0.3, bevelSegments: 2,
+  });
+  g.center();
+  return g;
+}
+
+function polkaTexture(base, dot) {
+  return canvasTexture(128, 128, (ctx, w, h) => {
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = dot;
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        ctx.beginPath();
+        ctx.arc(x * 32 + (y % 2 ? 16 : 0) + 8, y * 32 + 16, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  });
+}
+
+/**
+ * Cria uma caixa de presente. O pivô fica na BASE da caixa.
+ * Retorna { group, tier, size, height, update(dt, t) }.
+ */
+function createGiftBox(tier = 'small') {
+  const info = TIER_INFO[tier] || TIER_INFO.small;
+  const s = info.size;
+  const group = new THREE.Group();
+  group.name = `gift-${tier}`;
+
+  let boxMat, ribbonMat;
+  if (tier === 'large') {
+    boxMat = mat('#f5c542', { metalness: 0.85, roughness: 0.25, emissive: '#7a5200', emissiveIntensity: 0.7 });
+    ribbonMat = mat('#d1121f', { roughness: 0.35, emissive: '#5a0008', emissiveIntensity: 0.5 });
+  } else if (tier === 'medium') {
+    const base = pick(['#2b9348', '#c1121f', '#3a0ca3', '#0077b6']);
+    boxMat = new THREE.MeshStandardMaterial({ map: polkaTexture(base, pick(['#ffffff', '#ffd166', '#ffafcc'])), roughness: 0.45, metalness: 0.1 });
+    ribbonMat = mat('#ffd166', { metalness: 0.7, roughness: 0.3 });
+  } else {
+    boxMat = mat(pick(['#d62828', '#2a9d8f', '#3a86ff', '#8338ec']), { roughness: 0.6 });
+    ribbonMat = mat('#ffd166', { metalness: 0.3, roughness: 0.45 });
+  }
+
+  // Corpo + tampa
+  const bodyH = s * 0.8;
+  const lidH = s * 0.18;
+  const top = bodyH + lidH;
+  addMesh(group, new THREE.BoxGeometry(s, bodyH, s), boxMat, [0, bodyH / 2, 0]);
+  addMesh(group, new THREE.BoxGeometry(s * 1.08, lidH, s * 1.08), boxMat, [0, bodyH + lidH / 2 - 0.005, 0]);
+
+  // Fitas cruzadas
+  const rw = s * 0.16;
+  addMesh(group, new THREE.BoxGeometry(rw, top + 0.01, s * 1.1), ribbonMat, [0, top / 2, 0]);
+  addMesh(group, new THREE.BoxGeometry(s * 1.1, top + 0.01, rw), ribbonMat, [0, top / 2, 0]);
+
+  // Laço (duas alças + nó)
+  const loopR = s * (tier === 'small' ? 0.17 : 0.22);
+  for (const side of [-1, 1]) {
+    addMesh(group, new THREE.TorusGeometry(loopR, s * 0.05, 10, 24), ribbonMat,
+      [side * loopR * 0.9, top + loopR * 0.7, 0], [0, 0, side * 0.6], [1, 0.8, 0.55]);
+  }
+  addMesh(group, new THREE.SphereGeometry(rw * 0.6, 12, 10), ribbonMat, [0, top + rw * 0.3, 0]);
+
+  let height = top + loopR * 1.5;
+  let update = () => {};
+
+  if (tier === 'large') {
+    // Estrela no topo
+    const star = addMesh(group, createStarGeometry(s * 0.22, s * 0.1, s * 0.06),
+      mat('#ffe066', { emissive: '#ffb300', emissiveIntensity: 1.6, metalness: 0.5, roughness: 0.3 }),
+      [0, top + loopR * 1.9, 0]);
+    height = top + loopR * 1.9 + s * 0.22;
+
+    // Halo luminoso (sem PointLight, para não recompilar shaders em cena)
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture(), color: '#ffd24a', transparent: true, opacity: 0.7,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    halo.position.y = top / 2;
+    halo.scale.setScalar(s * 3.2);
+    group.add(halo);
+
+    // Faíscas girando ao redor
+    const N = 60;
+    const pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const r = rand(s * 0.85, s * 1.3);
+      const a = rand(0, Math.PI * 2);
+      pos[i * 3] = Math.cos(a) * r;
+      pos[i * 3 + 1] = rand(0, top * 1.4);
+      pos[i * 3 + 2] = Math.sin(a) * r;
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const sparks = new THREE.Points(sg, new THREE.PointsMaterial({
+      map: glowTexture(), color: '#fff3b0', size: 0.12, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    group.add(sparks);
+
+    update = (dt, t) => {
+      sparks.rotation.y += dt * 1.4;
+      sparks.material.size = 0.1 + 0.04 * Math.sin(t * 9);
+      halo.material.opacity = 0.5 + 0.25 * Math.sin(t * 4);
+      halo.scale.setScalar(s * (3 + 0.3 * Math.sin(t * 3)));
+      star.rotation.y += dt * 2;
+    };
+  }
+
+  return { group, tier, size: s, height, update };
+}
+
+// ======================================================================
+// kid.js
+// ======================================================================
+/**
+ * kid.js — Avatar 3D de criança (um por presente recebido na live).
+ *
+ * Modos de movimento:
+ *   'path'      → segue a trajetória da fila até o seu lugar (slot)
+ *   'free'      → anda por uma lista de pontos (até o Noel / até a saída)
+ *   'celebrate' → pula de alegria segurando o presente
+ *   'idle'      → parado
+ */
+
+const SKIN = ['#f9d7b9', '#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+const HAIR = ['#2b1b0e', '#4a2c17', '#8b5a2b', '#d4a017', '#1a1a1a', '#b5651d', '#e8c07d'];
+const SHIRT = ['#e63946', '#2a9d8f', '#457b9d', '#f4a261', '#8e44ad', '#06d6a0', '#ef476f', '#118ab2'];
+const PANTS = ['#264653', '#1d3557', '#3d405b', '#5c4033', '#2f3e46'];
+const TAG_BORDER = { small: '#9be7ff', medium: '#7cfc9a', large: '#f2c14e' };
+
+const TAG_Y = 1.62;
+const RAISED_Y = 1.42;
+
+class Kid {
+  constructor({ username = 'anonimo', nickname = '', tier = 'small', coins = 1, giftName = '' } = {}) {
+    Object.assign(this, { username, nickname, tier, coins, giftName });
+
+    this.group = new THREE.Group();   // posição/rotação no mundo
+    this.body = new THREE.Group();    // pulos e balanço
+    this.group.add(this.body);
+
+    this.speed = 2.6;
+    this.speedMul = 1;
+    this.mode = 'idle';
+    this.path = null;
+    this.pathDist = 0;
+    this.targetDist = 0;
+    this.tagOffset = 0; // alterna a altura das etiquetas na fila
+    this.blockDist = 0; // não pode chegar mais perto que isso (criança da frente)
+    this.waypoints = [];
+    this.onArrive = null;
+    this.walkPhase = Math.random() * 10;
+    this.targetHeading = 0;
+
+    this.gift = null;
+    this.raised = false;
+    this.celebrateT = 0;
+    this.onCelebrateEnd = null;
+    this.done = false;
+
+    this._build();
+  }
+
+  // ---------------------------------------------------------------- modelo
+  _build() {
+    const skin = mat(pick(SKIN), { roughness: 0.6 });
+    const hair = mat(pick(HAIR), { roughness: 0.9 });
+    const shirt = mat(pick(SHIRT), { roughness: 0.8 });
+    const pants = mat(pick(PANTS));
+    const shoe = mat('#222222');
+    const black = new THREE.MeshBasicMaterial({ color: '#111111' });
+    const b = this.body;
+
+    // Pernas (pivô no quadril)
+    this.legL = new THREE.Group(); this.legL.position.set(-0.09, 0.42, 0); b.add(this.legL);
+    this.legR = new THREE.Group(); this.legR.position.set(0.09, 0.42, 0); b.add(this.legR);
+    for (const leg of [this.legL, this.legR]) {
+      addMesh(leg, new THREE.CylinderGeometry(0.075, 0.07, 0.36, 10), pants, [0, -0.18, 0]);
+      addMesh(leg, new THREE.BoxGeometry(0.13, 0.07, 0.2), shoe, [0, -0.385, 0.035]);
+    }
+
+    // Tronco + cachecol
+    addMesh(b, new THREE.CapsuleGeometry(0.17, 0.22, 6, 12), shirt, [0, 0.66, 0]);
+    addMesh(b, new THREE.TorusGeometry(0.11, 0.045, 8, 16), mat(pick(SHIRT)), [0, 0.93, 0], [Math.PI / 2, 0, 0]);
+
+    // Braços (pivô no ombro)
+    this.armL = new THREE.Group(); this.armL.position.set(-0.22, 0.88, 0); b.add(this.armL);
+    this.armR = new THREE.Group(); this.armR.position.set(0.22, 0.88, 0); b.add(this.armR);
+    for (const arm of [this.armL, this.armR]) {
+      addMesh(arm, new THREE.CylinderGeometry(0.055, 0.05, 0.34, 8), shirt, [0, -0.17, 0]);
+      addMesh(arm, new THREE.SphereGeometry(0.06, 10, 8), skin, [0, -0.36, 0]);
+    }
+
+    // Cabeça
+    this.head = new THREE.Group(); this.head.position.set(0, 1.13, 0); b.add(this.head);
+    const h = this.head;
+    addMesh(h, new THREE.SphereGeometry(0.21, 20, 16), skin);
+    for (const sx of [-1, 1]) {
+      addMesh(h, new THREE.SphereGeometry(0.028, 8, 8), black, [sx * 0.075, 0.03, 0.19]);
+      addMesh(h, new THREE.SphereGeometry(0.035, 8, 8), mat('#ff8fa3', { transparent: true, opacity: 0.6 }), [sx * 0.12, -0.04, 0.16]);
+    }
+    addMesh(h, new THREE.SphereGeometry(0.025, 8, 8), skin, [0, -0.005, 0.21]);
+    addMesh(h, new THREE.TorusGeometry(0.06, 0.014, 6, 12, Math.PI), black, [0, -0.05, 0.185], [0, 0, Math.PI]);
+
+    // Cabelo / gorro (aleatório)
+    const style = Math.floor(Math.random() * 3);
+    if (style === 2) {
+      // Gorrinho de Natal
+      const red = mat('#c1121f'), white = mat('#fdfdfd');
+      addMesh(h, new THREE.TorusGeometry(0.19, 0.05, 8, 20), white, [0, 0.12, 0], [Math.PI / 2 - 0.15, 0, 0]);
+      addMesh(h, new THREE.ConeGeometry(0.19, 0.38, 14), red, [0.04, 0.33, -0.04], [-0.15, 0, -0.35]);
+      addMesh(h, new THREE.SphereGeometry(0.06, 10, 8), white, [0.15, 0.5, -0.06]);
+    } else {
+      addMesh(h, new THREE.SphereGeometry(0.225, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, [0, 0.015, -0.01], [-0.25, 0, 0]);
+      if (style === 1) addMesh(h, new THREE.SphereGeometry(0.09, 10, 8), hair, [0, 0.02, -0.24]); // rabo de cavalo
+    }
+
+    // Etiqueta @usuario
+    this.tag = makeLabelSprite('@' + this.username, { border: TAG_BORDER[this.tier] || TAG_BORDER.small });
+    this.tag.position.set(0, TAG_Y, 0);
+    this.group.add(this.tag);
+  }
+
+  // ------------------------------------------------------------- comandos
+  followPath(path, targetDist) {
+    this.path = path;
+    this.targetDist = targetDist;
+    this.mode = 'path';
+  }
+
+  isAtSlot() {
+    return this.mode === 'path' && Math.abs(this.pathDist - this.targetDist) < 0.02;
+  }
+
+  walkTo(points, onArrive) {
+    this.mode = 'free';
+    this.waypoints = points.map(p => p.clone());
+    this.onArrive = onArrive || null;
+  }
+
+  faceTowards(v) {
+    const p = this.group.position;
+    this.targetHeading = Math.atan2(v.x - p.x, v.z - p.z);
+  }
+
+  /** Posição local (no corpo) onde a caixa fica. */
+  _holdLocal(gift, raised, out = new THREE.Vector3()) {
+    return raised ? out.set(0, RAISED_Y, 0.02) : out.set(0, 0.42, 0.1 + gift.size / 2);
+  }
+
+  /** Ponto no mundo onde o presente deve chegar (para a animação de entrega). */
+  getHoldWorld(out, gift) {
+    this.group.updateMatrixWorld(true);
+    return this.body.localToWorld(this._holdLocal(gift, false, out));
+  }
+
+  holdGift(gift) {
+    this.gift = gift;
+    this.raised = false;
+    gift.group.rotation.set(0, 0, 0);
+    this.body.add(gift.group);
+    this._holdLocal(gift, false, gift.group.position);
+  }
+
+  celebrate(duration, onEnd) {
+    this.mode = 'celebrate';
+    this.celebrateT = duration;
+    this.onCelebrateEnd = onEnd || null;
+    this.raised = true;
+  }
+
+  // --------------------------------------------------------------- update
+  update(dt, t) {
+    const pos = this.group.position;
+    const spd = this.speed * this.speedMul;
+    let moving = false;
+
+    if (this.mode === 'path' && this.path) {
+      const d = Math.max(this.targetDist, this.blockDist) - this.pathDist;
+      if (Math.abs(d) > 0.005) {
+        const px = pos.x, pz = pos.z;
+        this.pathDist += Math.sign(d) * Math.min(Math.abs(d), spd * dt);
+        this.path.pointAt(this.pathDist, pos);
+        const dx = pos.x - px, dz = pos.z - pz;
+        if (dx * dx + dz * dz > 1e-8) this.targetHeading = Math.atan2(dx, dz);
+        moving = true;
+      }
+    } else if (this.mode === 'free' && this.waypoints.length) {
+      const tgt = this.waypoints[0];
+      const dx = tgt.x - pos.x, dz = tgt.z - pos.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 0.02) {
+        this.waypoints.shift();
+        if (!this.waypoints.length) {
+          this.mode = 'idle';
+          const cb = this.onArrive;
+          this.onArrive = null;
+          cb?.(this);
+        }
+      } else {
+        const step = Math.min(dist, spd * dt);
+        pos.x += (dx / dist) * step;
+        pos.z += (dz / dist) * step;
+        this.targetHeading = Math.atan2(dx, dz);
+        moving = true;
+      }
+    }
+
+    this.group.rotation.y = dampAngle(this.group.rotation.y, this.targetHeading, 10, dt);
+    this._animate(dt, t, moving);
+  }
+
+  _animate(dt, t, moving) {
+    const b = this.body;
+    const hasGift = !!this.gift;
+    let armX = 0, armZ = 0, legSwing = 0, bodyY = 0, bodyRotY = 0;
+
+    if (this.mode === 'celebrate') {
+      this.celebrateT -= dt * this.speedMul;
+      const j = Math.abs(Math.sin(t * 9));
+      bodyY = j * 0.3;
+      bodyRotY = Math.sin(t * 6) * 0.3;
+      armX = -2.8 + Math.sin(t * 18) * 0.12;
+      armZ = 0.25;
+      this.legL.rotation.x = this.legR.rotation.x = -j * 0.4;
+      if (this.celebrateT <= 0) {
+        this.mode = 'idle';
+        this.raised = this.gift?.tier === 'large'; // o gigante continua no alto
+        const cb = this.onCelebrateEnd;
+        this.onCelebrateEnd = null;
+        cb?.(this);
+      }
+    } else if (moving) {
+      this.walkPhase += dt * 11 * this.speedMul;
+      const s = Math.sin(this.walkPhase);
+      legSwing = s * 0.7;
+      bodyY = Math.abs(Math.cos(this.walkPhase)) * 0.05;
+      armX = hasGift ? (this.raised ? -2.9 : -1.0) : -s * 0.6;
+      if (!hasGift) { this.armL.rotation.x = -s * 0.6; this.armR.rotation.x = s * 0.6; }
+    } else {
+      armX = hasGift ? (this.raised ? -2.9 : -1.0) : 0;
+      this.head.rotation.z = Math.sin(t * 2 + this.walkPhase) * 0.06;
+    }
+
+    if (this.mode !== 'celebrate') {
+      this.legL.rotation.x = damp(this.legL.rotation.x, legSwing, 20, dt);
+      this.legR.rotation.x = damp(this.legR.rotation.x, -legSwing, 20, dt);
+    }
+    // Braços: andando sem presente já foram definidos acima
+    if (!(moving && !hasGift && this.mode !== 'celebrate')) {
+      this.armL.rotation.x = damp(this.armL.rotation.x, armX, 12, dt);
+      this.armR.rotation.x = damp(this.armR.rotation.x, armX, 12, dt);
+    }
+    this.armL.rotation.z = damp(this.armL.rotation.z, -armZ, 12, dt);
+    this.armR.rotation.z = damp(this.armR.rotation.z, armZ, 12, dt);
+    b.position.y = this.mode === 'celebrate' ? bodyY : damp(b.position.y, bodyY, 15, dt);
+    b.rotation.y = damp(b.rotation.y, bodyRotY, 8, dt);
+
+    // Presente: desliza suavemente entre "na frente" e "acima da cabeça"
+    let tagY = TAG_Y + this.tagOffset;
+    if (this.gift) {
+      const g = this.gift;
+      const target = this._holdLocal(g, this.raised, Kid._tmp);
+      g.group.position.lerp(target, 1 - Math.exp(-10 * dt));
+      g.update(dt, t);
+      if (this.raised) tagY = RAISED_Y + g.height + 0.25;
+    }
+    this.tag.position.y = damp(this.tag.position.y, tagY, 8, dt);
+  }
+
+  dispose() {
+    disposeObject(this.group);
+  }
+}
+Kid._tmp = new THREE.Vector3();
+
+// ======================================================================
+// santa.js
+// ======================================================================
+/**
+ * santa.js — Papai Noel sentado na poltrona.
+ *  - respira, mexe a cabeça e acena de vez em quando
+ *  - setGiving(true) estica os braços para entregar o presente
+ *  - sayHoHo() mostra o balão "HO HO HO!"
+ * O grupo olha para +Z (frente). Posicione/rotacione pelo `santa.group`.
+ */
+
+class Santa {
+  constructor() {
+    this.group = new THREE.Group();
+    this.giving = false;
+    this.waveTimer = rand(3, 6);
+    this.waving = 0;
+    this.bubbleT = 0;
+    this._buildChair();
+    this._buildSanta();
+
+    this.bubble = makeLabelSprite('HO HO HO!', { border: '#b3202a', worldHeight: 0.5 });
+    this.bubbleBase = this.bubble.scale.clone();
+    this.bubble.position.set(0, 2.85, 0.2);
+    this.bubble.visible = false;
+    this.group.add(this.bubble);
+  }
+
+  _buildChair() {
+    const wood = mat('#5a3215', { roughness: 0.55 });
+    const velvet = mat('#7d0f16', { roughness: 0.95 });
+    const gold = mat('#d4a73a', { metalness: 0.8, roughness: 0.3 });
+    const g = this.group;
+    addMesh(g, new THREE.BoxGeometry(1.25, 0.18, 1.05), wood, [0, 0.46, -0.05]);
+    addMesh(g, new THREE.BoxGeometry(1.1, 0.12, 0.95), velvet, [0, 0.6, -0.03]);
+    addMesh(g, new THREE.BoxGeometry(1.35, 1.9, 0.16), wood, [0, 1.35, -0.6]);
+    addMesh(g, new THREE.BoxGeometry(1.1, 1.55, 0.08), velvet, [0, 1.35, -0.5]);
+    addMesh(g, new THREE.SphereGeometry(0.1, 12, 10), gold, [-0.6, 2.35, -0.6]);
+    addMesh(g, new THREE.SphereGeometry(0.1, 12, 10), gold, [0.6, 2.35, -0.6]);
+    for (const sx of [-1, 1]) {
+      addMesh(g, new THREE.BoxGeometry(0.16, 0.12, 1.0), wood, [sx * 0.66, 0.92, -0.05]);
+      addMesh(g, new THREE.BoxGeometry(0.12, 0.38, 0.12), wood, [sx * 0.66, 0.7, 0.38]);
+      for (const sz of [-1, 1]) {
+        addMesh(g, new THREE.CylinderGeometry(0.06, 0.05, 0.4, 8), wood, [sx * 0.55, 0.2, -0.05 + sz * 0.42]);
+      }
+    }
+  }
+
+  _buildSanta() {
+    const red = mat('#c8102e', { roughness: 0.85 });
+    const white = mat('#fbfbf7', { roughness: 1 });
+    const skin = mat('#f1c9a5', { roughness: 0.6 });
+    const black = mat('#1b1b1b', { roughness: 0.5 });
+    const gold = mat('#e2b53b', { metalness: 0.8, roughness: 0.3 });
+    const eye = new THREE.MeshBasicMaterial({ color: '#111' });
+    const g = this.group;
+
+    // Corpo
+    this.torso = new THREE.Group();
+    g.add(this.torso);
+    const t = this.torso;
+    addMesh(t, new THREE.CylinderGeometry(0.38, 0.5, 0.85, 20), red, [0, 1.08, -0.12]);
+    addMesh(t, new THREE.SphereGeometry(0.46, 24, 18), red, [0, 0.95, 0.02], [0, 0, 0], [1, 0.9, 0.95]);
+    addMesh(t, new THREE.TorusGeometry(0.45, 0.06, 10, 32), black, [0, 0.86, 0.02], [Math.PI / 2, 0, 0], [1, 0.95, 1]);
+    addMesh(t, new THREE.BoxGeometry(0.2, 0.15, 0.06), gold, [0, 0.86, 0.47]);
+    addMesh(t, new THREE.BoxGeometry(0.11, 0.55, 0.05), white, [0, 1.22, 0.31], [-0.35, 0, 0]);
+    addMesh(t, new THREE.TorusGeometry(0.4, 0.07, 8, 24), white, [0, 1.5, -0.1], [Math.PI / 2, 0, 0]);
+
+    // Pernas sentadas + botas
+    for (const sx of [-1, 1]) {
+      addMesh(g, new THREE.CylinderGeometry(0.15, 0.15, 0.6, 12), red, [sx * 0.21, 0.74, 0.22], [Math.PI / 2, 0, 0]);
+      addMesh(g, new THREE.CylinderGeometry(0.13, 0.12, 0.5, 12), red, [sx * 0.21, 0.45, 0.5]);
+      addMesh(g, new THREE.TorusGeometry(0.13, 0.05, 8, 16), white, [sx * 0.21, 0.24, 0.5], [Math.PI / 2, 0, 0]);
+      addMesh(g, new THREE.BoxGeometry(0.22, 0.2, 0.38), black, [sx * 0.21, 0.1, 0.58]);
+    }
+
+    // Cabeça
+    this.head = new THREE.Group();
+    this.head.position.set(0, 1.78, -0.08);
+    g.add(this.head);
+    const h = this.head;
+    addMesh(h, new THREE.SphereGeometry(0.28, 24, 18), skin);
+    addMesh(h, new THREE.SphereGeometry(0.29, 20, 16), white, [0, 0.0, -0.08], [0, 0, 0], [1.05, 1, 0.9]); // cabelo
+    addMesh(h, new THREE.SphereGeometry(0.3, 20, 16), white, [0, -0.22, 0.12], [0, 0, 0], [1, 1.15, 0.75]); // barba
+    for (const sx of [-1, 1]) {
+      addMesh(h, new THREE.SphereGeometry(0.09, 12, 10), white, [sx * 0.08, -0.08, 0.25], [0, 0, sx * 0.4], [1.4, 0.7, 0.8]); // bigode
+      addMesh(h, new THREE.SphereGeometry(0.035, 8, 8), eye, [sx * 0.1, 0.07, 0.25]);
+      addMesh(h, new THREE.BoxGeometry(0.1, 0.03, 0.03), white, [sx * 0.1, 0.13, 0.25], [0, 0, -sx * 0.15]); // sobrancelha
+      addMesh(h, new THREE.SphereGeometry(0.055, 10, 8), mat('#f59a9a', { transparent: true, opacity: 0.7 }), [sx * 0.17, -0.0, 0.2]);
+    }
+    addMesh(h, new THREE.SphereGeometry(0.06, 12, 10), mat('#e88b84'), [0, 0.0, 0.29]); // nariz
+
+    // Gorro
+    const hat = new THREE.Group();
+    hat.position.set(0, 0.17, -0.02);
+    hat.rotation.set(-0.15, 0, 0.25);
+    h.add(hat);
+    addMesh(hat, new THREE.TorusGeometry(0.27, 0.065, 10, 28), white, [0, 0, 0], [Math.PI / 2, 0, 0]);
+    addMesh(hat, new THREE.ConeGeometry(0.27, 0.6, 20), red, [0, 0.3, 0]);
+    addMesh(hat, new THREE.SphereGeometry(0.085, 12, 10), white, [0, 0.62, 0]);
+
+    // Braços (pivô nos ombros). armA = lado -X, armB = lado +X
+    this.armA = new THREE.Group(); this.armA.position.set(-0.47, 1.4, -0.08);
+    this.armB = new THREE.Group(); this.armB.position.set(0.47, 1.4, -0.08);
+    for (const arm of [this.armA, this.armB]) {
+      g.add(arm);
+      addMesh(arm, new THREE.CylinderGeometry(0.12, 0.11, 0.55, 12), red, [0, -0.27, 0]);
+      addMesh(arm, new THREE.TorusGeometry(0.1, 0.045, 8, 16), white, [0, -0.54, 0], [Math.PI / 2, 0, 0]);
+      addMesh(arm, new THREE.SphereGeometry(0.1, 12, 10), white, [0, -0.63, 0]); // luva
+    }
+    this.armA.rotation.set(-0.45, 0, -0.18);
+    this.armB.rotation.set(-0.45, 0, 0.18);
+  }
+
+  setGiving(v) { this.giving = v; }
+  sayHoHo() { this.bubbleT = 1.8; }
+
+  /** Ponto no mundo onde o presente "aparece" nas mãos do Noel. */
+  getGiftSpawnWorld(out, giftSize = 0.4) {
+    this.group.updateMatrixWorld(true);
+    return this.group.localToWorld(out.set(0, 1.0, 0.55 + giftSize * 0.5));
+  }
+
+  update(dt, t) {
+    // Respiração e cabeça
+    this.torso.scale.y = 1 + Math.sin(t * 1.6) * 0.015;
+    this.head.rotation.y = Math.sin(t * 0.5) * 0.15;
+    this.head.rotation.z = Math.sin(t * 0.8) * 0.04;
+
+    // Pose dos braços
+    let ax = -0.45, az = -0.18, bx = -0.45, bz = 0.18;
+    if (this.giving) {
+      ax = bx = -1.25; az = 0.28; bz = -0.28;
+      this.waving = 0;
+    } else {
+      this.waveTimer -= dt;
+      if (this.waveTimer <= 0 && this.waving <= 0) {
+        this.waving = 2.2;
+        this.waveTimer = rand(7, 12);
+      }
+      if (this.waving > 0) {
+        this.waving -= dt;
+        ax = -0.25;
+        az = -2.5 + Math.sin(t * 12) * 0.35;
+      }
+    }
+    const k = 1 - Math.exp(-dt * 8);
+    this.armA.rotation.x += (ax - this.armA.rotation.x) * k;
+    this.armA.rotation.z += (az - this.armA.rotation.z) * k;
+    this.armB.rotation.x += (bx - this.armB.rotation.x) * k;
+    this.armB.rotation.z += (bz - this.armB.rotation.z) * k;
+
+    // Balão HO HO HO
+    if (this.bubbleT > 0) {
+      this.bubbleT -= dt;
+      const p = clamp((1.8 - this.bubbleT) / 0.35, 0, 1);
+      const s = Math.max(0.01, easeOutBack(p));
+      this.bubble.visible = true;
+      this.bubble.scale.set(this.bubbleBase.x * s, this.bubbleBase.y * s, 1);
+      this.bubble.position.y = 2.85 + Math.sin(t * 10) * 0.03;
+    } else {
+      this.bubble.visible = false;
+    }
+  }
+}
+
+// ======================================================================
+// room.js
+// ======================================================================
+/**
+ * room.js — Cenário: sala do Papai Noel.
+ *  Piso de madeira, papel de parede, lareira com fogo animado, meias,
+ *  guirlanda, árvore com bolas e pisca-pisca, janela com neve caindo,
+ *  portas de entrada (direita) e saída (esquerda), tapete e iluminação.
+ *
+ *  Coordenadas: sala de x -7..7, z -6 (parede do fundo) até a frente aberta.
+ *  buildRoom(scene) retorna { update(dt, t) } para as animações.
+ */
+
+const H = 6.2;          // altura da decoração (moldura do teto)
+const WALL_H = 11;     // paredes mais altas para esconder o céu em câmeras altas
+const BACK_Z = -6;
+const FX = -3.8;        // centro da lareira
+const TX = 5.2, TZ = -4.0; // árvore
+const WIN = { x0: 1.2, x1: 3.8, y0: 1.8, y1: 4.4 }; // janela
+
+// ------------------------------------------------------------ texturas
+function woodFloorTexture() {
+  return canvasTexture(512, 512, (ctx, w, h) => {
+    const rows = 8, rh = h / rows;
+    for (let r = 0; r < rows; r++) {
+      let x = (r % 2) * -90;
+      while (x < w) {
+        const len = rand(140, 260);
+        ctx.fillStyle = `hsl(${24 + rand(-4, 4)}, 45%, ${24 + rand(-4, 6)}%)`;
+        ctx.fillRect(x, r * rh, len, rh);
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, r * rh, len, rh);
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 1;
+        for (let k = 0; k < 4; k++) {
+          const yy = r * rh + rand(6, rh - 6);
+          ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + len, yy + rand(-3, 3)); ctx.stroke();
+        }
+        x += len;
+      }
+    }
+  }, [4, 4]);
+}
+
+function wallpaperTexture() {
+  return canvasTexture(256, 256, (ctx, w, h) => {
+    ctx.fillStyle = '#6e1b1b';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#5e1515';
+    for (let x = 0; x < w; x += 64) ctx.fillRect(x, 0, 28, h);
+    ctx.fillStyle = 'rgba(214, 170, 60, 0.55)';
+    for (let y = 16; y < h; y += 64) {
+      for (let x = 46; x < w; x += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - 8); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 8); ctx.lineTo(x - 6, y);
+        ctx.fill();
+      }
+    }
+  });
+}
+
+function brickTexture() {
+  return canvasTexture(256, 256, (ctx, w, h) => {
+    ctx.fillStyle = '#4a3a33';
+    ctx.fillRect(0, 0, w, h);
+    const bh = 32, bw = 64;
+    for (let r = 0; r < h / bh; r++) {
+      for (let c = -1; c < w / bw + 1; c++) {
+        const x = c * bw + (r % 2 ? bw / 2 : 0);
+        ctx.fillStyle = `hsl(${8 + rand(0, 10)}, 45%, ${28 + rand(0, 10)}%)`;
+        ctx.fillRect(x + 2, r * bh + 2, bw - 4, bh - 4);
+      }
+    }
+  }, [1.5, 1.5]);
+}
+
+function nightSkyTexture() {
+  return canvasTexture(512, 512, (ctx, w, h) => {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#081530');
+    g.addColorStop(1, '#2c4a7a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 160; i++) {
+      ctx.globalAlpha = rand(0.3, 1);
+      ctx.fillRect(rand(0, w), rand(0, h * 0.7), rand(1, 2.5), rand(1, 2.5));
+    }
+    ctx.globalAlpha = 1;
+    const mg = ctx.createRadialGradient(300, 140, 10, 300, 140, 90);
+    mg.addColorStop(0, 'rgba(255,248,220,1)');
+    mg.addColorStop(0.35, 'rgba(255,248,220,0.9)');
+    mg.addColorStop(0.4, 'rgba(255,248,220,0.25)');
+    mg.addColorStop(1, 'rgba(255,248,220,0)');
+    ctx.fillStyle = mg;
+    ctx.fillRect(200, 40, 200, 200);
+  });
+}
+
+function rugTexture() {
+  return canvasTexture(256, 256, (ctx, w, h) => {
+    const rings = ['#7d0f16', '#d4a73a', '#9b1c1c', '#1e4d3a', '#9b1c1c', '#d4a73a', '#7d0f16'];
+    rings.forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, (w / 2) * (1 - i / rings.length), 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+}
+
+// ------------------------------------------------------------ cenário
+function buildRoom(scene) {
+  const updaters = [];
+  const blinkMats = [];
+
+  // ---------- Luzes ----------
+  scene.add(new THREE.HemisphereLight('#ffe6c7', '#3a2414', 0.9));
+  scene.add(new THREE.AmbientLight('#402818', 0.25));
+
+  const key = new THREE.DirectionalLight('#ffe2b8', 1.5);
+  key.position.set(6, 12, 9);
+  key.target.position.set(0, 0, -1);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 40 });
+  key.shadow.bias = -0.0005;
+  key.shadow.normalBias = 0.02;
+  scene.add(key, key.target);
+
+  const moon = new THREE.DirectionalLight('#9fb8ff', 0.35);
+  moon.position.set(2.5, 5, -10);
+  scene.add(moon);
+
+  const spot = new THREE.SpotLight('#ffd9a0', 60, 14, Math.PI / 5, 0.5, 2);
+  spot.position.set(-0.8, 6.5, 0.5);
+  spot.target.position.set(-1.2, 1, -3.2);
+  scene.add(spot, spot.target);
+
+  const fireLight = new THREE.PointLight('#ff7a2a', 28, 16, 2);
+  fireLight.position.set(FX, 0.9, -4.7);
+  scene.add(fireLight);
+
+  // ---------- Piso, tapete e paredes ----------
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14),
+    new THREE.MeshStandardMaterial({ map: woodFloorTexture(), roughness: 0.8 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, 1);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const rug = new THREE.Mesh(new THREE.CircleGeometry(2.1, 48),
+    new THREE.MeshStandardMaterial({ map: rugTexture(), roughness: 1 }));
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(-0.8, 0.012, -2.4);
+  rug.receiveShadow = true;
+  scene.add(rug);
+
+  const wallBase = wallpaperTexture();
+  const wallMat = (w, h) => {
+    const t = wallBase.clone();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(w / 2, h / 2);
+    t.needsUpdate = true;
+    return new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 });
+  };
+  const wall = (w, h, x, y, z, rotY = 0) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat(w, h));
+    m.position.set(x, y, z);
+    m.rotation.y = rotY;
+    m.receiveShadow = true;
+    scene.add(m);
+    return m;
+  };
+  // Parede do fundo com o buraco da janela
+  wall(WIN.x0 + 7, WALL_H, (-7 + WIN.x0) / 2, WALL_H / 2, BACK_Z);
+  wall(7 - WIN.x1, WALL_H, (WIN.x1 + 7) / 2, WALL_H / 2, BACK_Z);
+  wall(WIN.x1 - WIN.x0, WIN.y0, (WIN.x0 + WIN.x1) / 2, WIN.y0 / 2, BACK_Z);
+  wall(WIN.x1 - WIN.x0, WALL_H - WIN.y1, (WIN.x0 + WIN.x1) / 2, (WIN.y1 + WALL_H) / 2, BACK_Z);
+  // Laterais
+  // Parede esquerda dividida em 3 partes para abrir o vão da porta de saída
+  wall(4.75, WALL_H, -7, WALL_H / 2, -3.625, Math.PI / 2);
+  wall(7.95, WALL_H, -7, WALL_H / 2, 4.025, Math.PI / 2);
+  wall(1.3, WALL_H - 2.45, -7, (2.45 + WALL_H) / 2, -0.6, Math.PI / 2);
+  wall(14, WALL_H, 7, WALL_H / 2, 1, -Math.PI / 2);
+
+  // Rodapé e moldura do teto
+  const trim = mat('#3e2410', { roughness: 0.6 });
+  addMesh(scene, new THREE.BoxGeometry(14, 0.2, 0.06), trim, [0, 0.1, BACK_Z + 0.03]);
+  addMesh(scene, new THREE.BoxGeometry(14, 0.18, 0.12), trim, [0, H - 0.09, BACK_Z + 0.06]);
+  addMesh(scene, new THREE.BoxGeometry(0.06, 0.2, 14), trim, [6.97, 0.1, 1]);
+  addMesh(scene, new THREE.BoxGeometry(0.06, 0.2, 4.68), trim, [-6.97, 0.1, -3.66]); // rodapé esquerdo
+  addMesh(scene, new THREE.BoxGeometry(0.06, 0.2, 7.88), trim, [-6.97, 0.1, 4.06]);  // (sem cortar o vão)
+
+  // ---------- Janela + lado de fora ----------
+  const frame = mat('#efe6d8', { roughness: 0.6 });
+  const wcx = (WIN.x0 + WIN.x1) / 2, wcy = (WIN.y0 + WIN.y1) / 2;
+  const ww = WIN.x1 - WIN.x0, wh = WIN.y1 - WIN.y0;
+  addMesh(scene, new THREE.BoxGeometry(ww + 0.3, 0.15, 0.25), frame, [wcx, WIN.y1 + 0.05, BACK_Z + 0.05]);
+  addMesh(scene, new THREE.BoxGeometry(ww + 0.4, 0.12, 0.45), frame, [wcx, WIN.y0 - 0.06, BACK_Z + 0.15]);
+  addMesh(scene, new THREE.BoxGeometry(0.15, wh + 0.15, 0.25), frame, [WIN.x0 - 0.05, wcy, BACK_Z + 0.05]);
+  addMesh(scene, new THREE.BoxGeometry(0.15, wh + 0.15, 0.25), frame, [WIN.x1 + 0.05, wcy, BACK_Z + 0.05]);
+  addMesh(scene, new THREE.BoxGeometry(0.06, wh, 0.08), frame, [wcx, wcy, BACK_Z]);
+  addMesh(scene, new THREE.BoxGeometry(ww, 0.06, 0.08), frame, [wcx, wcy, BACK_Z]);
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(ww, wh),
+    new THREE.MeshBasicMaterial({ color: '#cfe6ff', transparent: true, opacity: 0.08, depthWrite: false }));
+  glass.position.set(wcx, wcy, BACK_Z - 0.02);
+  scene.add(glass);
+
+  // Cortinas e varão
+  const velvet = mat('#8e1420', { roughness: 0.95 });
+  addMesh(scene, new THREE.BoxGeometry(0.5, 3.6, 0.12), velvet, [WIN.x0 - 0.35, 3.3, BACK_Z + 0.2]);
+  addMesh(scene, new THREE.BoxGeometry(0.5, 3.6, 0.12), velvet, [WIN.x1 + 0.35, 3.3, BACK_Z + 0.2]);
+  addMesh(scene, new THREE.CylinderGeometry(0.04, 0.04, ww + 1.6, 10),
+    mat('#d4a73a', { metalness: 0.8, roughness: 0.3 }), [wcx, 5.12, BACK_Z + 0.25], [0, 0, Math.PI / 2]);
+
+  // Lado de fora (não recebe luz da sala)
+  const sky = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), new THREE.MeshBasicMaterial({ map: nightSkyTexture() }));
+  sky.position.set(wcx, 3.5, -11);
+  scene.add(sky);
+  const outGround = new THREE.Mesh(new THREE.PlaneGeometry(16, 8), new THREE.MeshBasicMaterial({ color: '#aebfd9' }));
+  outGround.rotation.x = -Math.PI / 2;
+  outGround.position.set(wcx, 1.0, -10.1); // começa atrás da parede (z -6)
+  scene.add(outGround);
+  const hillMat = new THREE.MeshBasicMaterial({ color: '#c9d8ef' });
+  [[wcx - 1.6, 1.0, -9.2, 3, 0.9], [wcx + 1.8, 0.9, -9.8, 3.5, 1.2]].forEach(([x, y, z, sx, sy]) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), hillMat);
+    m.position.set(x, y, z); m.scale.set(sx, sy, 1.5);
+    scene.add(m);
+  });
+  const pineMat = new THREE.MeshBasicMaterial({ color: '#16324a' });
+  [[wcx - 0.9, -8.6, 1.4], [wcx + 0.4, -9.4, 1.8], [wcx + 1.4, -8.4, 1.2]].forEach(([x, z, hgt]) => {
+    const m = new THREE.Mesh(new THREE.ConeGeometry(hgt * 0.35, hgt, 8), pineMat);
+    m.position.set(x, 1.2 + hgt / 2, z);
+    scene.add(m);
+  });
+
+  // Neve caindo (atrás da parede, visível só pela janela)
+  const SNOW = 500;
+  const snowPos = new Float32Array(SNOW * 3);
+  const snowSpeed = new Float32Array(SNOW);
+  for (let i = 0; i < SNOW; i++) {
+    snowPos[i * 3] = rand(WIN.x0 - 0.8, WIN.x1 + 0.8);
+    snowPos[i * 3 + 1] = rand(1.0, 5.4);
+    snowPos[i * 3 + 2] = rand(-6.3, -9.2);
+    snowSpeed[i] = rand(0.35, 0.9);
+  }
+  const snowGeo = new THREE.BufferGeometry();
+  snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+  const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({
+    color: '#ffffff', size: 0.08, map: glowTexture(), transparent: true, depthWrite: false,
+  }));
+  snow.frustumCulled = false;
+  scene.add(snow);
+  updaters.push((dt, t) => {
+    for (let i = 0; i < SNOW; i++) {
+      snowPos[i * 3 + 1] -= snowSpeed[i] * dt;
+      snowPos[i * 3] += Math.sin(t * 1.3 + i) * 0.15 * dt;
+      if (snowPos[i * 3 + 1] < 1.0) {
+        snowPos[i * 3 + 1] = 5.4;
+        snowPos[i * 3] = rand(WIN.x0 - 0.8, WIN.x1 + 0.8);
+      }
+    }
+    snowGeo.attributes.position.needsUpdate = true;
+  });
+
+  // ---------- Lareira ----------
+  const brick = new THREE.MeshStandardMaterial({ map: brickTexture(), roughness: 0.95 });
+  const stone = mat('#7d7470', { roughness: 0.9 });
+  const soot = mat('#120c0a', { roughness: 1 });
+  const woodDark = mat('#4a2a14', { roughness: 0.6 });
+  addMesh(scene, new THREE.BoxGeometry(3.4, 0.16, 1.3), stone, [FX, 0.08, -5.35]);
+  addMesh(scene, new THREE.BoxGeometry(0.7, 2.15, 0.9), brick, [FX - 1.25, 1.075, -5.55]);
+  addMesh(scene, new THREE.BoxGeometry(0.7, 2.15, 0.9), brick, [FX + 1.25, 1.075, -5.55]);
+  addMesh(scene, new THREE.BoxGeometry(1.8, 0.4, 0.9), brick, [FX, 1.95, -5.55]);
+  addMesh(scene, new THREE.BoxGeometry(3.6, 0.16, 1.15), woodDark, [FX, 2.23, -5.45]);
+  addMesh(scene, new THREE.BoxGeometry(1.8, 1.75, 0.1), soot, [FX, 0.875, -5.95]);
+  addMesh(scene, new THREE.BoxGeometry(2.6, WALL_H - 2.31, 0.55), brick, [FX, 2.31 + (WALL_H - 2.31) / 2, -5.75]);
+
+  // Lenha
+  const bark = mat('#5b3a1e', { roughness: 0.9, emissive: '#331100', emissiveIntensity: 0.6 });
+  addMesh(scene, new THREE.CylinderGeometry(0.1, 0.1, 1.1, 10), bark, [FX, 0.26, -5.35], [0, 0, Math.PI / 2]);
+  addMesh(scene, new THREE.CylinderGeometry(0.1, 0.1, 1.1, 10), bark, [FX, 0.26, -5.6], [0, 0, Math.PI / 2]);
+  addMesh(scene, new THREE.CylinderGeometry(0.09, 0.09, 1.0, 10), bark, [FX, 0.42, -5.48], [0, 0.6, Math.PI / 2]);
+
+  // Chamas (cones aditivos animados)
+  const flameColors = ['#ff4a12', '#ff7a1a', '#ffa22e', '#ffc23d', '#ffe680'];
+  const flames = [];
+  for (let i = 0; i < 9; i++) {
+    const h = rand(0.5, 0.95);
+    const m = new THREE.Mesh(new THREE.ConeGeometry(rand(0.13, 0.22), h, 8, 1, true),
+      new THREE.MeshBasicMaterial({
+        color: flameColors[i % flameColors.length], transparent: true, opacity: 0.7,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      }));
+    const baseY = 0.35 + h / 2;
+    m.position.set(FX + rand(-0.45, 0.45), baseY, -5.5 + rand(-0.12, 0.12));
+    scene.add(m);
+    flames.push({ m, baseY, h, phase: rand(0, 10), speed: rand(7, 13) });
+  }
+  const fireGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(), color: '#ff8a2a', transparent: true, opacity: 0.6,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }));
+  fireGlow.position.set(FX, 0.75, -5.2);
+  fireGlow.scale.setScalar(2.4);
+  scene.add(fireGlow);
+
+  // Brasas subindo
+  const EMB = 40;
+  const embPos = new Float32Array(EMB * 3);
+  const resetEmber = (i) => {
+    embPos[i * 3] = FX + rand(-0.5, 0.5);
+    embPos[i * 3 + 1] = rand(0.3, 0.6);
+    embPos[i * 3 + 2] = -5.5 + rand(-0.15, 0.15);
+  };
+  for (let i = 0; i < EMB; i++) { resetEmber(i); embPos[i * 3 + 1] = rand(0.3, 1.6); }
+  const embGeo = new THREE.BufferGeometry();
+  embGeo.setAttribute('position', new THREE.BufferAttribute(embPos, 3));
+  const embers = new THREE.Points(embGeo, new THREE.PointsMaterial({
+    color: '#ffb04a', size: 0.06, map: glowTexture(), transparent: true,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }));
+  embers.frustumCulled = false;
+  scene.add(embers);
+
+  updaters.push((dt, t) => {
+    for (const f of flames) {
+      const s = 0.85 + 0.25 * Math.sin(t * f.speed + f.phase) + 0.1 * Math.sin(t * 23 + f.phase * 3);
+      f.m.scale.set(1 / Math.sqrt(s), s, 1 / Math.sqrt(s));
+      f.m.position.y = f.baseY + (s - 1) * f.h * 0.5;
+    }
+    fireLight.intensity = 26 + Math.sin(t * 13) * 4 + Math.sin(t * 7.3) * 3 + Math.random() * 3;
+    fireGlow.material.opacity = 0.5 + 0.12 * Math.sin(t * 11);
+    for (let i = 0; i < EMB; i++) {
+      embPos[i * 3 + 1] += dt * rand(0.4, 0.9);
+      embPos[i * 3] += Math.sin(t * 4 + i) * dt * 0.2;
+      if (embPos[i * 3 + 1] > 1.7) resetEmber(i);
+    }
+    embGeo.attributes.position.needsUpdate = true;
+  });
+
+  // Meias na lareira
+  [FX - 1.1, FX, FX + 1.1].forEach((x, i) => {
+    const g = new THREE.Group();
+    g.position.set(x, 2.08, -4.83);
+    const col = mat(i % 2 ? '#1f7a3a' : '#c1121f');
+    addMesh(g, new THREE.BoxGeometry(0.24, 0.42, 0.07), col, [0, -0.21, 0]);
+    addMesh(g, new THREE.BoxGeometry(0.36, 0.17, 0.07), col, [0.06, -0.42, 0]);
+    addMesh(g, new THREE.BoxGeometry(0.28, 0.11, 0.09), mat('#fdfdfd'), [0, 0, 0]);
+    scene.add(g);
+  });
+
+  // Festão sobre a cornija + velas
+  const greenery = mat('#1f5d34', { roughness: 0.9 });
+  const berry = mat('#d1121f', { roughness: 0.4 });
+  for (let i = 0; i < 26; i++) {
+    const u = i / 25;
+    const x = FX - 1.7 + u * 3.4;
+    const y = 2.3 - Math.sin(u * Math.PI * 3) * 0.06;
+    addMesh(scene, new THREE.SphereGeometry(i % 3 === 0 ? 0.05 : 0.09, 8, 6), i % 3 === 0 ? berry : greenery, [x, y, -4.9]);
+  }
+  for (const sx of [-1, 1]) {
+    addMesh(scene, new THREE.CylinderGeometry(0.06, 0.06, 0.35, 12), mat('#fff6e0'), [FX + sx * 1.55, 2.48, -5.5]);
+    const fl = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture(), color: '#ffcc66', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+    }));
+    fl.position.set(FX + sx * 1.55, 2.72, -5.5);
+    fl.scale.setScalar(0.22);
+    scene.add(fl);
+    updaters.push((dt, t) => fl.scale.setScalar(0.2 + 0.03 * Math.sin(t * 17 + sx)));
+  }
+
+  // Guirlanda na parede
+  const wreath = new THREE.Group();
+  wreath.position.set(FX, 3.75, -5.42);
+  scene.add(wreath);
+  addMesh(wreath, new THREE.TorusGeometry(0.45, 0.13, 10, 28), greenery);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    addMesh(wreath, new THREE.SphereGeometry(0.05, 8, 6), berry, [Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0.12]);
+  }
+  addMesh(wreath, new THREE.SphereGeometry(0.09, 10, 8), berry, [0, -0.45, 0.15], [0, 0, 0], [1.6, 1, 0.6]);
+
+  // ---------- Árvore de Natal ----------
+  const tree = new THREE.Group();
+  tree.position.set(TX, 0, TZ);
+  scene.add(tree);
+  addMesh(tree, new THREE.CylinderGeometry(1.25, 1.25, 0.04, 32), mat('#9b1c1c'), [0, 0.02, 0]);
+  addMesh(tree, new THREE.CylinderGeometry(0.16, 0.2, 0.5, 10), mat('#5b3a1e'), [0, 0.25, 0]);
+  const levels = [
+    { r: 1.5, h: 1.7, y: 1.25 },
+    { r: 1.2, h: 1.5, y: 2.05 },
+    { r: 0.92, h: 1.3, y: 2.75 },
+    { r: 0.6, h: 1.05, y: 3.4 },
+  ];
+  const needles = mat('#1d5a32', { roughness: 0.85, flatShading: true });
+  for (const L of levels) addMesh(tree, new THREE.ConeGeometry(L.r, L.h, 14, 3), needles, [0, L.y, 0]);
+
+  const ornamentMats = ['#d62828', '#f2c14e', '#3a86ff', '#e5e5e5', '#8338ec']
+    .map(c => mat(c, { metalness: 0.6, roughness: 0.25 }));
+  for (let i = 0; i < 40; i++) {
+    const L = pick(levels);
+    const f = rand(0.1, 0.8);
+    const a = rand(0, Math.PI * 2);
+    const rr = L.r * (1 - f) + 0.04;
+    addMesh(tree, new THREE.SphereGeometry(rand(0.06, 0.09), 12, 10), pick(ornamentMats),
+      [Math.cos(a) * rr, L.y - L.h / 2 + f * L.h, Math.sin(a) * rr]);
+  }
+
+  // Pisca-pisca (3 grupos que piscam alternados)
+  ['#ff3b3b', '#ffd93b', '#3bd1ff'].forEach((c) => {
+    blinkMats.push(new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 2 }));
+  });
+  for (let i = 0; i < 64; i++) {
+    const f = i / 64;
+    const y = 0.5 + f * 3.4;
+    const r = Math.max(0.08, 1.5 * (1 - (y - 0.4) / 3.6)) + 0.04;
+    const a = f * Math.PI * 2 * 7;
+    addMesh(tree, new THREE.SphereGeometry(0.035, 8, 6), blinkMats[i % 3], [Math.cos(a) * r, y, Math.sin(a) * r]);
+  }
+
+  // Estrela no topo
+  const star = addMesh(tree, createStarGeometry(0.3, 0.13, 0.08),
+    mat('#ffd447', { emissive: '#ffb300', emissiveIntensity: 1.5, metalness: 0.5, roughness: 0.3 }), [0, 4.12, 0]);
+  const starGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(), color: '#ffd24a', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.8,
+  }));
+  starGlow.position.set(0, 4.12, 0);
+  starGlow.scale.setScalar(1.4);
+  tree.add(starGlow);
+  const treeLight = new THREE.PointLight('#ffcf7a', 6, 7, 2);
+  treeLight.position.set(0, 2.5, 0.8);
+  tree.add(treeLight);
+
+  // Presentes embaixo da árvore
+  [[-0.9, 0.7, 'medium'], [0.2, 1.1, 'small'], [0.9, 0.5, 'small'], [-0.3, 1.25, 'small'], [1.1, -0.4, 'medium']]
+    .forEach(([x, z, tier]) => {
+      const g = createGiftBox(tier);
+      g.group.position.set(x, 0.04, z);
+      g.group.rotation.y = rand(-0.6, 0.6);
+      tree.add(g.group);
+    });
+
+  // Varal de luzes no alto da parede do fundo (3 "barrigas")
+  for (let i = 0; i < 45; i++) {
+    const x = -6.8 + i * (13.6 / 44);
+    const u = ((x + 6.8) / (13.6 / 3)) % 1;
+    addMesh(scene, new THREE.SphereGeometry(0.05, 8, 6), blinkMats[i % 3], [x, 5.8 - 0.4 * Math.sin(Math.PI * u), BACK_Z + 0.12]);
+  }
+
+  updaters.push((dt, t) => {
+    blinkMats.forEach((m, k) => { m.emissiveIntensity = Math.sin(t * 3 + k * 2.1) > -0.2 ? 2.5 : 0.25; });
+    star.rotation.y += dt * 0.8;
+    starGlow.material.opacity = 0.65 + 0.2 * Math.sin(t * 3);
+  });
+
+  // ---------- Portas ----------
+  const door = (x, z, rotY, label) => {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    g.rotation.y = rotY;
+    scene.add(g);
+    addMesh(g, new THREE.BoxGeometry(1.55, 2.6, 0.06), mat('#3e2410'), [0, 1.3, 0]);
+    addMesh(g, new THREE.BoxGeometry(1.3, 2.4, 0.08), mat('#6b3e1f', { roughness: 0.6 }), [0, 1.2, 0.04]);
+    for (const py of [0.7, 1.75]) {
+      addMesh(g, new THREE.BoxGeometry(0.9, 0.7, 0.03), mat('#5a3318'), [0, py, 0.09]);
+    }
+    addMesh(g, new THREE.SphereGeometry(0.06, 10, 8), mat('#d4a73a', { metalness: 0.8, roughness: 0.3 }), [0.48, 1.15, 0.12]);
+    addMesh(g, new THREE.TorusGeometry(0.26, 0.07, 8, 20), greenery, [0, 1.75, 0.16]);
+    addMesh(g, new THREE.SphereGeometry(0.06, 8, 6), berry, [0, 1.5, 0.2], [0, 0, 0], [1.6, 1, 0.6]);
+    const sign = makeLabelSprite(label, { worldHeight: 0.32, depthTest: true, border: '#f2c14e' });
+    sign.position.set(0, 2.9, 0.2);
+    g.add(sign);
+  };
+  door(6.97, 2.2, -Math.PI / 2, 'Entrada');
+
+  // ---------- Porta de SAÍDA aberta, com o lado de fora nevando ----------
+  {
+    const g = new THREE.Group();
+    g.position.set(-6.97, 0, -0.6);
+    g.rotation.y = Math.PI / 2; // local +Z aponta para dentro da sala
+    scene.add(g);
+    const frameMat = mat('#3e2410', { roughness: 0.6 });
+    const doorMat = mat('#6b3e1f', { roughness: 0.6 });
+    const insetMat = mat('#5a3318');
+    const brass = mat('#d4a73a', { metalness: 0.8, roughness: 0.3 });
+
+    // Batentes, verga e soleira (o vão fica livre)
+    for (const sx of [-1, 1]) addMesh(g, new THREE.BoxGeometry(0.14, 2.6, 0.36), frameMat, [sx * 0.72, 1.3, -0.1]);
+    addMesh(g, new THREE.BoxGeometry(1.58, 0.18, 0.36), frameMat, [0, 2.53, -0.1]);
+    addMesh(g, new THREE.BoxGeometry(1.32, 0.04, 0.36), mat('#7d7470'), [0, 0.02, -0.1]);
+
+    // Folha da porta presa na dobradiça, escancarada para dentro da sala
+    const hinge = new THREE.Group();
+    hinge.position.set(0.65, 0, 0.02);
+    hinge.rotation.y = 1.75;
+    g.add(hinge);
+    addMesh(hinge, new THREE.BoxGeometry(1.3, 2.4, 0.08), doorMat, [-0.65, 1.21, 0]);
+    for (const side of [-1, 1]) {
+      for (const py of [0.7, 1.75]) addMesh(hinge, new THREE.BoxGeometry(0.9, 0.7, 0.03), insetMat, [-0.65, py, side * 0.05]);
+      addMesh(hinge, new THREE.SphereGeometry(0.06, 10, 8), brass, [-1.13, 1.15, side * 0.08]);
+    }
+    for (const py of [0.4, 2.0]) addMesh(hinge, new THREE.BoxGeometry(0.05, 0.16, 0.1), brass, [0, py, 0]);
+    // Guirlanda no lado que fica virado para a câmera
+    addMesh(hinge, new THREE.TorusGeometry(0.26, 0.07, 8, 20), greenery, [-0.65, 1.75, -0.12]);
+    addMesh(hinge, new THREE.SphereGeometry(0.06, 8, 6), berry, [-0.65, 1.5, -0.16], [0, 0, 0], [1.6, 1, 0.6]);
+
+    // Placa "Saída" e capacho
+    const sign = makeLabelSprite('Saída', { worldHeight: 0.32, depthTest: true, border: '#f2c14e' });
+    sign.position.set(0, 2.95, 0.2);
+    g.add(sign);
+    addMesh(g, new THREE.BoxGeometry(1.1, 0.02, 0.6), mat('#7d0f16', { roughness: 1 }), [0, 0.012, 0.5]);
+
+    // Luz azulada da noite entrando pelo vão
+    const spill = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.8), new THREE.MeshBasicMaterial({
+      map: glowTexture(), color: '#6f8fd8', transparent: true, opacity: 0.45,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    spill.rotation.x = -Math.PI / 2;
+    spill.position.set(0, 0.03, 0.75);
+    g.add(spill);
+  }
+
+  // Lado de fora (só aparece pelo vão da porta)
+  {
+    const outSnow = new THREE.Mesh(new THREE.PlaneGeometry(9, 22), new THREE.MeshBasicMaterial({ color: '#8ea3c6' }));
+    outSnow.rotation.x = -Math.PI / 2;
+    outSnow.position.set(-11.5, 0, -4);
+    scene.add(outSnow);
+    const outSky = new THREE.Mesh(new THREE.PlaneGeometry(26, 14), new THREE.MeshBasicMaterial({ map: nightSkyTexture() }));
+    outSky.rotation.y = Math.PI / 2;
+    outSky.position.set(-16, 5, -4);
+    scene.add(outSky);
+    const pine = new THREE.MeshBasicMaterial({ color: '#16324a' });
+    [[-10.5, -6.5, 2.2], [-12.5, -3.8, 2.8], [-11.2, -9, 2.5], [-13.5, -7.5, 3]].forEach(([x, z, hgt]) => {
+      const m = new THREE.Mesh(new THREE.ConeGeometry(hgt * 0.32, hgt, 8), pine);
+      m.position.set(x, hgt / 2, z);
+      scene.add(m);
+    });
+    // Bonequinho de neve logo depois da porta
+    const snowWhite = new THREE.MeshBasicMaterial({ color: '#d3def2' });
+    const sm = new THREE.Group();
+    sm.position.set(-9.1, 0, -4.3);
+    scene.add(sm);
+    [[0.42, 0.38], [0.3, 0.98], [0.21, 1.42]].forEach(([r, y]) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), snowWhite);
+      m.position.y = y;
+      sm.add(m);
+    });
+    const coal = new THREE.MeshBasicMaterial({ color: '#111' });
+    for (const sz of [-0.07, 0.07]) {
+      const e = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), coal);
+      e.position.set(0.19, 1.48, sz);
+      sm.add(e);
+    }
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.22, 8), new THREE.MeshBasicMaterial({ color: '#ff8c1a' }));
+    nose.rotation.z = -Math.PI / 2;
+    nose.position.set(0.3, 1.42, 0);
+    sm.add(nose);
+    const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.05, 8, 16), new THREE.MeshBasicMaterial({ color: '#c1121f' }));
+    scarf.rotation.x = Math.PI / 2;
+    scarf.position.y = 1.22;
+    sm.add(scarf);
+    const hatM = new THREE.MeshBasicMaterial({ color: '#1b1b1b' });
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.03, 16), hatM);
+    brim.position.y = 1.6;
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.28, 16), hatM);
+    crown.position.y = 1.75;
+    sm.add(brim, crown);
+
+    // Neve caindo do lado de fora
+    const N = 300;
+    const pos = new Float32Array(N * 3);
+    const spd = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      pos[i * 3] = rand(-7.2, -13);
+      pos[i * 3 + 1] = rand(0, 5);
+      pos[i * 3 + 2] = rand(-11, 1);
+      spd[i] = rand(0.35, 0.9);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const flakes = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: '#ffffff', size: 0.08, map: glowTexture(), transparent: true, depthWrite: false,
+    }));
+    flakes.frustumCulled = false;
+    scene.add(flakes);
+    updaters.push((dt, t) => {
+      for (let i = 0; i < N; i++) {
+        pos[i * 3 + 1] -= spd[i] * dt;
+        pos[i * 3 + 2] += Math.sin(t * 1.1 + i) * 0.15 * dt;
+        if (pos[i * 3 + 1] < 0) pos[i * 3 + 1] = 5;
+      }
+      geo.attributes.position.needsUpdate = true;
+    });
+  }
+
+
+  return {
+    update(dt, t) { for (const fn of updaters) fn(dt, t); },
+  };
+}
+
+// ======================================================================
+// audio.js
+// ======================================================================
+/**
+ * audio.js — Música de fundo (loop) e efeitos sonoros.
+ *
+ * Se existirem arquivos em public/assets/ eles são usados:
+ *   bgm.mp3                       → música natalina instrumental em loop
+ *   laugh.mp3, laugh2.mp3, ...    → risadas/comemorações de criança (sorteadas)
+ * Se não existirem, tudo é sintetizado com Web Audio:
+ *   - "Jingle Bells" (domínio público, 1857) em estilo caixinha de música
+ *   - risadinha sintética + sininhos de recompensa
+ */
+
+const NOTE_INDEX = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+function noteFreq(name) {
+  const m = /^([A-G]#?)(\d)$/.exec(name);
+  const midi = (Number(m[2]) + 1) * 12 + NOTE_INDEX[m[1]];
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// Refrão de Jingle Bells: [nota, duração em tempos]
+const A1 = [['E5', 1], ['E5', 1], ['E5', 2], ['E5', 1], ['E5', 1], ['E5', 2],
+  ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5], ['E5', 4]];
+const MELODY = [
+  ...A1,
+  ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5], ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+  ['E5', 1], ['D5', 1], ['D5', 1], ['E5', 1], ['D5', 2], ['G5', 2],
+  ...A1,
+  ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5], ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+  ['G5', 1], ['G5', 1], ['F5', 1], ['D5', 1], ['C5', 4],
+];
+const CHORDS = ['C', 'C', 'C', 'C', 'F', 'C', 'D', 'G', 'C', 'C', 'C', 'C', 'F', 'C', 'G', 'C'];
+const CHORD_NOTES = {
+  C: ['C3', 'G3', 'E4', 'G4'],
+  F: ['F2', 'C3', 'A3', 'C4'],
+  G: ['G2', 'D3', 'B3', 'D4'],
+  D: ['D3', 'A3', 'F#4', 'A4'],
+};
+
+class AudioManager {
+  constructor() {
+    this.ctx = null;
+    this.ready = false;
+    this.muted = false;
+    this.bpm = 118;
+    this.bgmBuffer = null;
+    this.laughBuffers = [];
+    this._bgmTimer = null;
+    this._bgmSource = null;
+  }
+
+  /** Cria o AudioContext e carrega os arquivos (chamar após um clique ou com ?autostart). */
+  async init() {
+    if (this.ctx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new Ctx();
+    const c = this.ctx;
+
+    this.master = c.createGain();
+    this.master.connect(c.destination);
+    this.bgmGain = c.createGain();
+    this.bgmGain.gain.value = CONFIG.audio.bgmVolume;
+    this.bgmGain.connect(this.master);
+    this.sfxGain = c.createGain();
+    this.sfxGain.gain.value = CONFIG.audio.sfxVolume;
+    this.sfxGain.connect(this.master);
+
+    // Ruído branco (sininhos de trenó e respiração da risada)
+    this.noise = c.createBuffer(1, c.sampleRate, c.sampleRate);
+    const d = this.noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+
+    const [bgm, ...laughs] = await Promise.all([
+      this._load(CONFIG.audio.bgm),
+      ...CONFIG.audio.laughs.map(u => this._load(u)),
+    ]);
+    this.bgmBuffer = bgm;
+    this.laughBuffers = laughs.filter(Boolean);
+    console.log(`[áudio] BGM: ${bgm ? 'arquivo' : 'sintetizada'} | risadas: ${this.laughBuffers.length || 'sintetizadas'}`);
+    this.ready = true;
+  }
+
+  async _load(url) {
+    try {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) return null;
+      return await this.ctx.decodeAudioData(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
+  }
+
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.master) this.master.gain.value = this.muted ? 0 : 1;
+    return this.muted;
+  }
+
+  // ------------------------------------------------------------ música
+  startBGM() {
+    if (!this.ready || this._bgmSource || this._bgmTimer) return;
+    if (this.bgmBuffer) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.bgmBuffer;
+      src.loop = true;
+      src.connect(this.bgmGain);
+      src.start();
+      this._bgmSource = src;
+    } else {
+      this._startSynthBGM();
+    }
+  }
+
+  _buildSong() {
+    const ev = [];
+    let beat = 0;
+    for (const [note, dur] of MELODY) {
+      ev.push({ beat, type: 'lead', note, dur });
+      beat += dur;
+    }
+    CHORDS.forEach((ch, bar) => {
+      const s = bar * 4;
+      const n = CHORD_NOTES[ch];
+      ev.push({ beat: s, type: 'bass', note: n[0] });
+      ev.push({ beat: s + 2, type: 'bass', note: n[1] });
+      ev.push({ beat: s + 1, type: 'pad', notes: [n[2], n[3]] });
+      ev.push({ beat: s + 3, type: 'pad', notes: [n[2], n[3]] });
+      for (let k = 0; k < 4; k++) {
+        ev.push({ beat: s + k, type: 'bell', accent: k % 2 === 0 });
+        ev.push({ beat: s + k + 0.5, type: 'bell', accent: false, soft: true });
+      }
+    });
+    ev.sort((a, b) => a.beat - b.beat);
+    return { ev, totalBeats: beat };
+  }
+
+  /** Agendador com "lookahead": agenda notas ~0,4 s à frente. */
+  _startSynthBGM() {
+    const { ev, totalBeats } = this._buildSong();
+    const spb = 60 / this.bpm;
+    let loopStart = this.ctx.currentTime + 0.15;
+    let i = 0;
+    this._bgmTimer = setInterval(() => {
+      const now = this.ctx.currentTime;
+      const horizon = now + 0.4;
+      while (true) {
+        const e = ev[i];
+        const time = loopStart + e.beat * spb;
+        if (time > horizon) break;
+        if (time >= now - 0.05) this._playEvent(e, time, spb);
+        i++;
+        if (i >= ev.length) { i = 0; loopStart += totalBeats * spb; }
+      }
+    }, 60);
+  }
+
+  _playEvent(e, time, spb) {
+    switch (e.type) {
+      case 'lead': {
+        const f = noteFreq(e.note);
+        this._tone(f, time, e.dur * spb * 0.55, { type: 'triangle', gain: 0.16, release: 0.35 });
+        this._tone(f * 2, time, 0.04, { type: 'sine', gain: 0.06, release: 0.5 });
+        this._tone(f * 3, time, 0.02, { type: 'sine', gain: 0.02, release: 0.3 });
+        break;
+      }
+      case 'bass':
+        this._tone(noteFreq(e.note), time, spb * 0.5, { type: 'sine', gain: 0.22, release: 0.15 });
+        break;
+      case 'pad':
+        for (const n of e.notes) this._tone(noteFreq(n), time, spb * 0.2, { type: 'triangle', gain: 0.045, release: 0.12 });
+        break;
+      case 'bell':
+        this._noiseHit(time, e.accent ? 0.05 : e.soft ? 0.018 : 0.03, 0.09, 7000);
+        break;
+      default:
+    }
+  }
+
+  // ------------------------------------------------------------ primitivas
+  _tone(freq, time, dur, { type = 'sine', gain = 0.2, attack = 0.01, release = 0.3, dest = this.bgmGain, glideTo = null } = {}) {
+    const c = this.ctx;
+    const o = c.createOscillator();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, time);
+    if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, time + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(gain, time + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur + release);
+    o.connect(g).connect(dest);
+    o.start(time);
+    o.stop(time + dur + release + 0.05);
+  }
+
+  _noiseHit(time, gain, dur, freq, dest = this.bgmGain, type = 'highpass') {
+    const c = this.ctx;
+    const src = c.createBufferSource();
+    src.buffer = this.noise;
+    const f = c.createBiquadFilter();
+    f.type = type;
+    f.frequency.value = freq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, time);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    src.connect(f).connect(g).connect(dest);
+    src.start(time, rand(0, 0.5), dur + 0.05);
+  }
+
+  // ------------------------------------------------------------ efeitos
+  /** "Pop" quando o presente aparece nas mãos do Noel. */
+  playPop() {
+    if (!this.ready) return;
+    const t = this.ctx.currentTime + 0.01;
+    this._tone(320, t, 0.12, { type: 'sine', gain: 0.35, release: 0.08, dest: this.sfxGain, glideTo: 950 });
+  }
+
+  /** Sininhos de recompensa — mais longos para presentes maiores. */
+  playJingle(tier = 'small') {
+    if (!this.ready) return;
+    const t = this.ctx.currentTime + 0.02;
+    const seq = tier === 'large' ? ['C6', 'E6', 'G6', 'C7', 'E7', 'G7', 'C8']
+      : tier === 'medium' ? ['C6', 'E6', 'G6', 'C7'] : ['E6', 'C7'];
+    seq.forEach((n, i) => this._tone(noteFreq(n), t + i * 0.07, 0.05, { gain: 0.2, release: 0.6, dest: this.sfxGain }));
+    if (tier === 'large') {
+      const t2 = t + seq.length * 0.07 + 0.1;
+      ['C5', 'E5', 'G5', 'C6'].forEach(n => this._tone(noteFreq(n), t2, 0.6, { type: 'triangle', gain: 0.12, release: 1.2, dest: this.sfxGain }));
+      for (let k = 0; k < 10; k++) this._noiseHit(t2 + k * 0.08, 0.08, 0.12, 8000, this.sfxGain);
+    }
+  }
+
+  /** Risada de criança: usa arquivo se houver, senão sintetiza. */
+  playLaugh() {
+    if (!this.ready) return;
+    if (this.laughBuffers.length) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = pick(this.laughBuffers);
+      src.playbackRate.value = rand(0.95, 1.08); // variação para não soar repetitivo
+      src.connect(this.sfxGain);
+      src.start();
+      return;
+    }
+    this._synthLaugh(this.ctx.currentTime + 0.03);
+  }
+
+  /** "Ha-ha-ha… iêêê!" sintético: pulsos com filtros de formante. */
+  _synthLaugh(t) {
+    const c = this.ctx;
+    const out = c.createGain();
+    out.gain.value = 0.9;
+    out.connect(this.sfxGain);
+    const formants = [[1000, 5, 1], [2600, 7, 0.6], [3400, 8, 0.3]].map(([fq, q, lvl]) => {
+      const f = c.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = q;
+      const g = c.createGain(); g.gain.value = lvl * 2.2;
+      f.connect(g).connect(out);
+      return f;
+    });
+    const voice = (start, dur, f0, f1, peak) => {
+      const o = c.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0, start);
+      o.frequency.exponentialRampToValueAtTime(f1, start + dur);
+      const vib = c.createOscillator(); vib.frequency.value = 9;
+      const vg = c.createGain(); vg.gain.value = f0 * 0.02;
+      vib.connect(vg).connect(o.frequency);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g);
+      formants.forEach(f => g.connect(f));
+      o.start(start); vib.start(start);
+      o.stop(start + dur + 0.05); vib.stop(start + dur + 0.05);
+    };
+    const base = rand(470, 600);
+    const n = 5 + Math.floor(rand(0, 3));
+    for (let i = 0; i < n; i++) {
+      const s = t + i * 0.135;
+      this._noiseHit(s - 0.02, 0.05, 0.05, 2200, out, 'bandpass'); // "h"
+      voice(s, 0.1, base * (1.12 - i * 0.025), base * (0.92 - i * 0.025), 0.35);
+    }
+    voice(t + n * 0.135 + 0.08, 0.42, base * 0.95, base * 1.55, 0.3); // "iêêê!"
+  }
+}
+
+// ======================================================================
+// network.js
+// ======================================================================
+/**
+ * network.js — Conexão WebSocket com o server.js (reconecta sozinho).
+ *
+ * Mensagens recebidas (JSON):
+ *   { type: 'gift', username, nickname, giftName, coins, repeatCount, tier }
+ *   { type: 'status', tiktok: bool, username, roomId, demo }
+ */
+function connectGameSocket(url, { onGift, onStatus, onSocket } = {}) {
+  let ws = null;
+  let delay = 1000;
+
+  const schedule = () => {
+    setTimeout(open, delay);
+    delay = Math.min(delay * 2, 10000);
+  };
+
+  function open() {
+    try {
+      ws = new WebSocket(url);
+    } catch (err) {
+      console.warn('[ws] URL inválida:', url, err);
+      schedule();
+      return;
+    }
+    ws.onopen = () => {
+      delay = 1000;
+      console.log('[ws] conectado a', url);
+      onSocket?.(true);
+    };
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      const kind = msg.type || msg.event;
+      if (kind === 'gift') onGift?.(msg.data && !msg.username ? msg.data : msg);
+      else if (kind === 'status') onStatus?.(msg);
+    };
+    ws.onclose = () => {
+      onSocket?.(false);
+      schedule();
+    };
+    ws.onerror = () => ws.close();
+  }
+
+  open();
+}
+
+// ======================================================================
+// hud.js
+// ======================================================================
+/**
+ * hud.js — Interface HTML sobreposta à cena 3D (feed, fila, anúncios, status).
+ * Todo texto vindo do TikTok entra via textContent (sem risco de HTML injetado).
+ */
+function createHud() {
+  const $ = (id) => document.getElementById(id);
+  const feedEl = $('feed');
+  const queueEl = $('queueCount');
+  const servedEl = $('servedCount');
+  const statusEl = $('status');
+  const statusText = $('statusText');
+  const announceEl = $('announce');
+  const flashEl = $('flash');
+  let announceTimer = null;
+  let socketUp = false;
+  let lastStatus = null;
+
+  function renderStatus() {
+    statusEl.className = '';
+    if (!socketUp) {
+      statusText.textContent = CONFIG.wsUrl.includes(':21213')
+        ? 'TikFinity não encontrado: abra o app TikFinity no PC'
+        : `Sem conexão com ${CONFIG.wsUrl}`;
+      return;
+    }
+    if (!lastStatus) {
+      statusEl.className = 'live';
+      statusText.textContent = CONFIG.wsUrl.includes(':21213') ? 'Conectado ao TikFinity' : 'Conectado';
+      return;
+    }
+    if (lastStatus.tiktok) {
+      statusEl.className = 'live';
+      statusText.textContent = `Ao vivo: @${lastStatus.username}`;
+    } else {
+      statusEl.className = 'socket';
+      statusText.textContent = lastStatus?.username
+        ? `Aguardando a live de @${lastStatus.username}…`
+        : lastStatus?.demo ? 'Modo demo' : 'Servidor ok, sem usuário do TikTok';
+    }
+  }
+
+  return {
+    feed(evt) {
+      const li = document.createElement('li');
+      li.className = `tier-${evt.tier}`;
+      const who = document.createElement('b');
+      who.textContent = '@' + evt.username;
+      const what = document.createElement('span');
+      const combo = evt.repeatCount > 1 ? ` x${evt.repeatCount}` : '';
+      what.textContent = ` mandou ${evt.giftName}${combo} (${evt.coins} moeda${evt.coins === 1 ? '' : 's'})`;
+      li.append(who, what);
+      feedEl.prepend(li);
+      while (feedEl.children.length > 5) feedEl.lastElementChild.remove();
+    },
+    setQueue(n) { queueEl.textContent = String(n); },
+    setServed(n) { servedEl.textContent = String(n); },
+    setSocket(up) { socketUp = up; renderStatus(); },
+    setStatus(st) { lastStatus = st; renderStatus(); },
+    announce(text, tier = 'large') {
+      announceEl.textContent = text;
+      announceEl.className = `${tier} show`;
+      clearTimeout(announceTimer);
+      announceTimer = setTimeout(() => { announceEl.className = tier; }, tier === 'large' ? 3200 : 2000);
+      if (tier === 'large') {
+        flashEl.classList.add('on');
+        requestAnimationFrame(() => requestAnimationFrame(() => flashEl.classList.remove('on')));
+      }
+    },
+  };
+}
+
+// ======================================================================
+// elf.js — Ajudantes do Papai Noel (3 duendes com funções diferentes)
+//   caller    → fica do lado do Noel e chama: "Sua vez, @fulano!"
+//   organizer → fica no meio do corredor de cordas organizando a fila
+//   greeter   → fica na porta de entrada dando boas-vindas
+// ======================================================================
+class Elf {
+  constructor({ name = 'Ajudante', tunic = '#1f8a4c', hair = '#8a3f14', braids = true } = {}) {
+    this.name = name;
+    this.color = tunic;
+    this.group = new THREE.Group();
+    this.body = new THREE.Group();
+    this.group.add(this.body);
+    this.homeLook = new THREE.Vector3(3, 0, 0);
+    this.lookTarget = this.homeLook;
+    this.targetHeading = 0;
+    this.action = 'idle';
+    this.actionT = 0;
+    this.bubble = null;
+    this.bubbleT = 0;
+    this.bubbleDur = 1;
+    this.cool = {};        // tempo da última fala de cada tipo (para não falar demais)
+    this.time = 0;
+    this.phase = Math.random() * 10;
+    this._build(tunic, hair, braids);
+  }
+
+  _build(tunicColor, hairColor, braids) {
+    const tunic = mat(tunicColor, { roughness: 0.8 });
+    const dark = mat(new THREE.Color(tunicColor).multiplyScalar(0.6), { roughness: 0.7 });
+    const red = mat('#c8102e', { roughness: 0.7 });
+    const skin = mat(pick(['#f6cfae', '#e8b48a', '#c68642', '#ffdbac']), { roughness: 0.6 });
+    const hair = mat(hairColor, { roughness: 0.9 });
+    const gold = mat('#e2b53b', { metalness: 0.8, roughness: 0.3 });
+    const white = mat('#fbfbf7', { roughness: 1 });
+    const eye = new THREE.MeshBasicMaterial({ color: '#111111' });
+    const stripeA = tunicColor.toLowerCase() === '#c8102e' ? '#1f8a4c' : '#d62828';
+    const stripes = new THREE.MeshStandardMaterial({
+      roughness: 0.8,
+      map: canvasTexture(32, 64, (ctx, w, h) => {
+        for (let i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? '#ffffff' : stripeA; ctx.fillRect(0, (i * h) / 8, w, h / 8); }
+      }),
+    });
+    const b = this.body;
+
+    for (const sx of [-1, 1]) {
+      addMesh(b, new THREE.CylinderGeometry(0.055, 0.05, 0.4, 10), stripes, [sx * 0.08, 0.22, 0]);
+      addMesh(b, new THREE.BoxGeometry(0.11, 0.07, 0.2), dark, [sx * 0.08, 0.035, 0.04]);
+      addMesh(b, new THREE.ConeGeometry(0.045, 0.16, 8), dark, [sx * 0.08, 0.08, 0.19], [Math.PI / 2 - 0.6, 0, 0]);
+      addMesh(b, new THREE.SphereGeometry(0.025, 8, 6), gold, [sx * 0.08, 0.13, 0.26]);
+    }
+
+    addMesh(b, new THREE.CylinderGeometry(0.16, 0.3, 0.42, 18), tunic, [0, 0.55, 0]);
+    addMesh(b, new THREE.TorusGeometry(0.3, 0.03, 8, 24), white, [0, 0.345, 0], [Math.PI / 2, 0, 0]);
+    addMesh(b, new THREE.CylinderGeometry(0.13, 0.16, 0.26, 16), tunic, [0, 0.88, 0]);
+    addMesh(b, new THREE.TorusGeometry(0.165, 0.035, 8, 20), tunicColor.toLowerCase() === '#c8102e' ? mat('#1b1b1b') : red, [0, 0.76, 0], [Math.PI / 2, 0, 0]);
+    addMesh(b, new THREE.BoxGeometry(0.08, 0.07, 0.03), gold, [0, 0.76, 0.19]);
+    addMesh(b, new THREE.TorusGeometry(0.12, 0.04, 8, 18), white, [0, 1.0, 0], [Math.PI / 2, 0, 0]);
+    for (let i = 0; i < 3; i++) addMesh(b, new THREE.SphereGeometry(0.022, 8, 6), gold, [0, 0.95 - i * 0.08, 0.14 + i * 0.012]);
+
+    // Prancheta
+    const board = new THREE.Group();
+    board.position.set(0.05, 0.84, 0.24);
+    board.rotation.set(-0.7, 0, 0.1);
+    b.add(board);
+    addMesh(board, new THREE.BoxGeometry(0.22, 0.29, 0.02), mat('#8b5a2b'));
+    addMesh(board, new THREE.BoxGeometry(0.18, 0.23, 0.005), white, [0, -0.015, 0.013]);
+    addMesh(board, new THREE.BoxGeometry(0.08, 0.03, 0.03), mat('#b0b0b0', { metalness: 0.8, roughness: 0.3 }), [0, 0.13, 0.015]);
+    for (let i = 0; i < 4; i++) addMesh(board, new THREE.BoxGeometry(0.13, 0.008, 0.002), mat('#555555'), [-0.01, 0.05 - i * 0.045, 0.017]);
+
+    this.armR = new THREE.Group(); this.armR.position.set(-0.19, 0.97, 0); b.add(this.armR);
+    this.armL = new THREE.Group(); this.armL.position.set(0.19, 0.97, 0); b.add(this.armL);
+    for (const arm of [this.armR, this.armL]) {
+      addMesh(arm, new THREE.CylinderGeometry(0.045, 0.04, 0.32, 8), tunic, [0, -0.16, 0]);
+      addMesh(arm, new THREE.TorusGeometry(0.042, 0.018, 6, 12), white, [0, -0.31, 0], [Math.PI / 2, 0, 0]);
+      addMesh(arm, new THREE.SphereGeometry(0.048, 10, 8), skin, [0, -0.35, 0]);
+    }
+    addMesh(this.armR, new THREE.CylinderGeometry(0.01, 0.01, 0.16, 6), mat('#f2c14e'), [0, -0.38, 0.04], [0.8, 0, 0]);
+
+    this.head = new THREE.Group();
+    this.head.position.set(0, 1.2, 0);
+    b.add(this.head);
+    const h = this.head;
+    addMesh(h, new THREE.SphereGeometry(0.19, 20, 16), skin);
+    for (const sx of [-1, 1]) {
+      addMesh(h, new THREE.SphereGeometry(0.026, 8, 8), eye, [sx * 0.065, 0.03, 0.17]);
+      addMesh(h, new THREE.SphereGeometry(0.032, 8, 8), mat('#ff8fa3', { transparent: true, opacity: 0.6 }), [sx * 0.11, -0.04, 0.14]);
+      addMesh(h, new THREE.ConeGeometry(0.045, 0.16, 8), skin, [sx * 0.2, 0.03, -0.01], [0, 0, -sx * 1.07], [1, 1, 0.5]);
+      if (braids) {
+        addMesh(h, new THREE.SphereGeometry(0.06, 10, 8), hair, [sx * 0.16, -0.12, -0.06]);
+        addMesh(h, new THREE.SphereGeometry(0.05, 10, 8), hair, [sx * 0.17, -0.22, -0.05]);
+        addMesh(h, new THREE.SphereGeometry(0.025, 8, 6), red, [sx * 0.17, -0.28, -0.05]);
+      }
+    }
+    addMesh(h, new THREE.SphereGeometry(0.022, 8, 8), skin, [0, -0.005, 0.19]);
+    addMesh(h, new THREE.TorusGeometry(0.05, 0.012, 6, 12, Math.PI), eye, [0, -0.05, 0.165], [0, 0, Math.PI]);
+    addMesh(h, new THREE.SphereGeometry(0.2, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hair, [0, 0.02, -0.01], [-0.2, 0, 0]);
+
+    const hat = new THREE.Group();
+    hat.position.set(0, 0.12, -0.01);
+    hat.rotation.set(-0.35, 0, -0.45);
+    h.add(hat);
+    addMesh(hat, new THREE.TorusGeometry(0.185, 0.04, 8, 24), white, [0, 0, 0], [Math.PI / 2, 0, 0]);
+    addMesh(hat, new THREE.ConeGeometry(0.185, 0.5, 16), tunic, [0, 0.25, 0]);
+    this.bell = addMesh(hat, new THREE.SphereGeometry(0.045, 10, 8), gold, [0, 0.51, 0]);
+
+    // Crachá com o nome
+    const badge = makeLabelSprite(this.name, { worldHeight: 0.2, border: this.color, depthTest: true });
+    badge.position.set(0, 0.45, 0.38);
+    this.group.add(badge);
+  }
+
+  // -------- falas --------
+  say(text, dur = 1.8) {
+    if (this.bubble) {
+      this.group.remove(this.bubble);
+      this.bubble.material.map.dispose();
+      this.bubble.material.dispose();
+    }
+    this.bubble = makeLabelSprite(text, { border: this.color, worldHeight: 0.36, maxChars: 30 });
+    this.bubbleBase = this.bubble.scale.clone();
+    this.bubble.position.set(0, 1.95, 0);
+    this.group.add(this.bubble);
+    this.bubbleT = this.bubbleDur = dur;
+  }
+
+  /** true se pode falar algo do tipo `key` (respeita o intervalo mínimo em segundos). */
+  _canSay(key, gap) {
+    if (this.time - (this.cool[key] ?? -99) < gap) return false;
+    this.cool[key] = this.time;
+    return true;
+  }
+
+  _doAction(name, dur, look) {
+    this.action = name;
+    this.actionT = dur;
+    this.lookTarget = look || this.homeLook;
+  }
+
+  // -------- ações chamadas pelo jogo --------
+  call(kid) {
+    this._doAction('call', 1.8, kid.group.position);
+    this.say(`Sua vez, @${kid.username}!`, 2.2);
+  }
+
+  greet(kid) {
+    if (this.action === 'cheer' || !this._canSay('greet', 2.5)) return;
+    this._doAction('wave', 1.5, kid.group.position);
+    this.say(pick([`Bem-vindo, @${kid.username}!`, `Oi, @${kid.username}!`, 'Pode entrar!']), 1.8);
+  }
+
+  direct(kid) {
+    if (this.action !== 'idle' || !this._canSay('direct', 4)) return;
+    this._doAction('point', 1.6, kid.group.position);
+    this.say(pick(['A fila é por aqui!', 'Siga o corredor!', 'Um de cada vez!', 'Sem empurrar, hein!']), 1.8);
+  }
+
+  chatter() {
+    if (this.action !== 'idle' || this.bubbleT > 0 || !this._canSay('chatter', 12 + Math.random() * 6)) return;
+    this._doAction('point', 1.4);
+    this.say(pick(['Já já chega a sua vez!', 'Fila andando, pessoal!', 'Tem presente pra todo mundo!']), 2);
+  }
+
+  cheer(text = 'Uaaau! Que presentão!') {
+    this._doAction('cheer', 1.8);
+    this.say(text, 1.8);
+  }
+
+  bye(kid) {
+    if (this.action !== 'idle' || this.bubbleT > 0) return;
+    this._doAction('wave', 1.4, kid.group.position);
+    this.say(pick(['Feliz Natal!', 'Tchau, até a próxima!', 'Boas festas!']), 1.6);
+  }
+
+  update(dt, t) {
+    this.time = t;
+    this.actionT -= dt;
+    if (this.action !== 'idle' && this.actionT <= 0) this._doAction('idle', 0);
+
+    const p = this.group.position;
+    const lt = this.lookTarget;
+    if (Math.abs(lt.x - p.x) + Math.abs(lt.z - p.z) > 0.01) this.targetHeading = Math.atan2(lt.x - p.x, lt.z - p.z);
+    this.group.rotation.y = dampAngle(this.group.rotation.y, this.targetHeading, 6, dt);
+
+    const tt = t + this.phase;
+    let lx = -1.05, lz = -0.45, rx = -0.95, rz = 0.4, bodyY = 0, headX = 0.25;
+    if (this.action === 'idle') {
+      const writing = Math.sin(tt * 0.7) > 0.2;
+      rx += writing ? Math.sin(tt * 16) * 0.07 : 0;
+      headX = writing ? 0.3 : 0.05;
+    } else if (this.action === 'call') {
+      rx = -1.7 + Math.sin(t * 10) * 0.45; rz = 0; headX = 0;
+    } else if (this.action === 'point') {
+      rx = -1.45; rz = -0.35; headX = 0;
+    } else if (this.action === 'wave') {
+      rx = -0.3; rz = -2.4 + Math.sin(t * 12) * 0.35; headX = 0;
+    } else if (this.action === 'cheer') {
+      const j = Math.abs(Math.sin(tt * 10));
+      bodyY = j * 0.2; lx = -2.7; lz = 0; rx = -2.7 + Math.sin(t * 20) * 0.15; rz = 0; headX = -0.2;
+    }
+    this.armL.rotation.x = damp(this.armL.rotation.x, lx, 10, dt);
+    this.armL.rotation.z = damp(this.armL.rotation.z, lz, 10, dt);
+    this.armR.rotation.x = damp(this.armR.rotation.x, rx, 10, dt);
+    this.armR.rotation.z = damp(this.armR.rotation.z, rz, 10, dt);
+    this.head.rotation.x = damp(this.head.rotation.x, headX, 6, dt);
+    this.head.rotation.z = Math.sin(tt * 1.8) * 0.05;
+    this.body.position.y = this.action === 'cheer' ? bodyY : damp(this.body.position.y, 0, 12, dt);
+    this.body.scale.y = 1 + Math.sin(tt * 2) * 0.012;
+    this.bell.position.x = Math.sin(tt * 5) * 0.015;
+
+    if (this.bubbleT > 0) {
+      this.bubbleT -= dt;
+      const k = Math.max(0.01, easeOutBack(clamp((this.bubbleDur - this.bubbleT) / 0.3, 0, 1)));
+      this.bubble.scale.set(this.bubbleBase.x * k, this.bubbleBase.y * k, 1);
+      this.bubble.position.y = 1.95 + Math.sin(t * 9) * 0.02;
+      this.bubble.visible = true;
+    } else if (this.bubble) {
+      this.bubble.visible = false;
+    }
+  }
+}
+
+// ======================================================================
+// game.js
+// ======================================================================
+/**
+ * game.js — Lógica da fila e da entrega de presentes.
+ *
+ * Fluxo de cada criança:
+ *   1. entra pela porta da direita e anda pela trajetória até o fim da fila
+ *   2. quando é a primeira e o Noel está livre → anda até o Noel
+ *   3. Noel diz "HO HO HO", o presente aparece (pop) e voa até a criança
+ *   4. risada + sininhos + confete → criança comemora levantando o presente
+ *   5. criança sai pela porta da esquerda e a fila anda
+ *
+ * Quanto mais gente na fila, mais rápido tudo acontece (speed factor).
+ */
+
+// Fila em LINHA RETA: índice 0 = frente (perto do Noel), último ponto = porta de entrada.
+// A criança anda direto até o Noel; se tiver gente, para atrás da última da fila.
+// Quem não couber na sala espera do lado de fora e entra quando abrir espaço.
+const QUEUE_PATH = [[0.35, -1.35], [8.2, 2.3]];
+
+const TIMING = { pop: 0.6, hold: 0.35, fly: 0.75, celebrate: 2.2 };
+
+class Game {
+  constructor({ scene, santa, elves = {}, effects, audio, hud, onBigGift }) {
+    Object.assign(this, { scene, santa, elves, effects, audio, hud, onBigGift });
+    this.path = new Path(QUEUE_PATH);
+    this.spacing = CONFIG.queue.spacing;
+    this.maxQueue = Math.max(1, Math.floor((this.path.length - 1.6) / this.spacing) + 1);
+
+    this.queue = [];    // crianças na fila (0 = próxima)
+    this.pending = [];  // presentes esperando espaço na fila
+    this.leaving = [];  // crianças indo embora
+    this.active = null; // criança sendo atendida
+    this.travel = null; // animação do presente (Noel → criança)
+    this.served = 0;
+
+    this.giftSpot = new THREE.Vector3(-0.68, 0, -1.98);
+    this._buildRopeCorridor();
+    this._placeElves();
+    this.exitPoints = [new THREE.Vector3(-1.7, 0, -0.6), new THREE.Vector3(-9.0, 0, -0.6)];
+    this._v = new THREE.Vector3();
+  }
+
+  /** Chamado para cada presente recebido da live. */
+  addGift(evt) {
+    this.hud.feed(evt);
+    if (this.queue.length >= this.maxQueue) this.pending.push(evt);
+    else this._spawn(evt);
+    this._updateHud();
+  }
+
+  _spawn(evt) {
+    const kid = new Kid(evt);
+    kid.pathDist = this.path.length;
+    this.path.pointAt(kid.pathDist, kid.group.position);
+    kid.group.rotation.y = kid.targetHeading = -Math.PI / 2;
+    this.scene.add(kid.group);
+    this.queue.push(kid);
+    this._assignSlots();
+    // A recepcionista dá boas-vindas na porta
+    this.elves.greeter?.greet(kid);
+  }
+
+
+  /** Ponto ao lado da fila: distância `d` no caminho, deslocado `side` metros para o lado. */
+  sidePoint(d, side, out = new THREE.Vector3()) {
+    const a = this.path.points[0], b = this.path.points[this.path.points.length - 1];
+    const dir = new THREE.Vector3().subVectors(b, a).normalize();
+    this.path.pointAt(d, out);
+    return out.set(out.x - dir.z * side, 0, out.z + dir.x * side);
+  }
+
+  /** Corredor de pedestais dourados com corda de veludo dos dois lados da fila. */
+  _buildRopeCorridor() {
+    const goldM = mat('#d4a73a', { metalness: 0.85, roughness: 0.25 });
+    const ropeM = mat('#8e0f1c', { roughness: 0.95 });
+    const group = new THREE.Group();
+    this.scene.add(group);
+    const half = 0.55;     // meia largura do corredor
+    const step = 1.45;     // distância entre pedestais
+    for (const side of [-1, 1]) {
+      const tops = [];
+      for (let d = 0.45; ; d += step) {
+        const p = this.sidePoint(d, side * half);
+        if (p.x > 6.4) break; // para antes da porta de entrada
+        addMesh(group, new THREE.CylinderGeometry(0.15, 0.17, 0.04, 20), goldM, [p.x, 0.02, p.z]);
+        addMesh(group, new THREE.CylinderGeometry(0.03, 0.035, 0.9, 10), goldM, [p.x, 0.47, p.z]);
+        addMesh(group, new THREE.SphereGeometry(0.06, 12, 10), goldM, [p.x, 0.95, p.z]);
+        tops.push(new THREE.Vector3(p.x, 0.88, p.z));
+      }
+      for (let i = 0; i < tops.length - 1; i++) {
+        const a = tops[i], b = tops[i + 1];
+        const mid = a.clone().add(b).multiplyScalar(0.5);
+        mid.y -= 0.3; // a corda faz uma "barriga"
+        const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+        addMesh(group, new THREE.TubeGeometry(curve, 16, 0.028, 6, false), ropeM);
+      }
+    }
+  }
+
+  /** Três ajudantes: chamadora (Noel), organizador (corredor) e recepcionista (porta). */
+  _placeElves() {
+    const { caller, organizer, greeter } = this.elves;
+    const look = this.path.pointAt(3.5);
+    if (caller) {
+      caller.group.position.set(-0.15, 0, -0.45);
+      caller.homeLook.copy(look);
+    }
+    if (organizer) {
+      organizer.group.position.copy(this.sidePoint(3.6, 1.2));
+      organizer.homeLook.copy(this.path.pointAt(3.6));
+      this.organizerZone = organizer.group.position.clone();
+    }
+    if (greeter) {
+      greeter.group.position.copy(this.sidePoint(6.0, 1.1));
+      greeter.homeLook.copy(this.path.pointAt(7.6));
+    }
+    for (const e of Object.values(this.elves)) this.scene.add(e.group);
+  }
+
+  _eachElf(fn) { for (const e of Object.values(this.elves)) fn(e); }
+
+  _assignSlots() {
+    this.queue.forEach((k, i) => k.followPath(this.path, i * this.spacing));
+  }
+
+  _speedFactor() {
+    const n = this.queue.length + this.pending.length;
+    return n > 15 ? 1.9 : n > 7 ? 1.4 : 1;
+  }
+
+  update(dt, t) {
+    const sf = this._speedFactor();
+
+    while (this.pending.length && this.queue.length < this.maxQueue) this._spawn(this.pending.shift());
+
+    if (!this.active && this.queue.length && this.queue[0].isAtSlot()) {
+      this._startServe(this.queue.shift());
+    }
+
+    this.queue.forEach((k, i) => {
+      // evita que as crianças se atravessem: cada uma respeita a da frente
+      k.blockDist = i > 0 ? this.queue[i - 1].pathDist + this.spacing : 0;
+      k.tagOffset = (i % 2) * 0.34;
+      const org = this.elves.organizer;
+      if (org && !k.directed && this.queue.length >= 3 && k.group.position.distanceTo(this.organizerZone) < 1.7) {
+        k.directed = true;
+        org.direct(k);
+      }
+      k.speedMul = sf;
+      k.update(dt, t);
+    });
+    if (this.active) { this.active.speedMul = sf; this.active.update(dt, t); }
+    for (let i = this.leaving.length - 1; i >= 0; i--) {
+      const k = this.leaving[i];
+      k.speedMul = sf;
+      k.update(dt, t);
+      if (k.done) {
+        this.scene.remove(k.group);
+        k.dispose();
+        this.leaving.splice(i, 1);
+      }
+    }
+
+    if (this.queue.length + this.pending.length >= 4) this.elves.organizer?.chatter();
+    this._eachElf(e => e.update(dt, t));
+    this._updateTravel(dt, t, sf);
+    this._updateHud();
+  }
+
+  // ------------------------------------------------------------ entrega
+  _startServe(kid) {
+    this.active = kid;
+    kid.tagOffset = 0;
+    this.elves.caller?.call(kid);
+    this._assignSlots(); // a fila anda
+    kid.walkTo([this.giftSpot], () => {
+      kid.faceTowards(this.santa.group.position);
+      this._give(kid);
+    });
+  }
+
+  _give(kid) {
+    this.santa.setGiving(true);
+    this.santa.sayHoHo();
+    const gift = createGiftBox(kid.tier);
+    gift.group.scale.setScalar(0.001);
+    const spawn = this.santa.getGiftSpawnWorld(new THREE.Vector3(), gift.size);
+    gift.group.position.copy(spawn);
+    this.scene.add(gift.group);
+    this.audio.playPop();
+    this.travel = { kid, gift, phase: 'pop', t: 0, from: spawn.clone(), to: new THREE.Vector3() };
+  }
+
+  _updateTravel(dt, t, sf) {
+    const tr = this.travel;
+    if (!tr) return;
+    tr.t += dt * sf;
+    tr.gift.update(dt, t);
+    const g = tr.gift.group;
+
+    if (tr.phase === 'pop') {
+      const p = Math.min(tr.t / TIMING.pop, 1);
+      g.scale.setScalar(Math.max(0.001, easeOutBack(p)));
+      g.rotation.y += dt * 3;
+      if (p >= 1) { tr.phase = 'hold'; tr.t = 0; }
+    } else if (tr.phase === 'hold') {
+      g.rotation.y += dt * 2;
+      if (tr.t >= TIMING.hold) {
+        tr.phase = 'fly';
+        tr.t = 0;
+        tr.from.copy(g.position);
+        tr.kid.getHoldWorld(tr.to, tr.gift);
+      }
+    } else if (tr.phase === 'fly') {
+      const p = Math.min(tr.t / TIMING.fly, 1);
+      g.position.lerpVectors(tr.from, tr.to, easeInOutQuad(p));
+      g.position.y += Math.sin(p * Math.PI) * 0.6; // arco
+      g.rotation.y += dt * 4;
+      if (p >= 1) {
+        this.travel = null;
+        this._delivered(tr.kid, tr.gift);
+      }
+    }
+  }
+
+  _delivered(kid, gift) {
+    gift.group.scale.setScalar(1);
+    kid.holdGift(gift);
+    this.santa.setGiving(false);
+
+    this.audio.playLaugh();
+    this.audio.playJingle(kid.tier);
+
+    const p = this._v.copy(kid.group.position);
+    p.y += 1.2;
+    const big = kid.tier === 'large', mid = kid.tier === 'medium';
+    this.effects.burst(p, { count: big ? 260 : mid ? 140 : 70, speed: big ? 5 : 3.5, upBoost: big ? 5 : 3.5 });
+    if (big || mid) {
+      this.effects.burst(p, {
+        additive: true, count: big ? 160 : 50, colors: ['#fff6c2', '#ffd700', '#ffe9a0'],
+        size: big ? 0.22 : 0.14, speed: big ? 4.5 : 2.5, gravity: -1.5, life: 1.6,
+      });
+    }
+    if (big) {
+      this.hud.announce(`@${kid.username} ganhou o presente gigante!`, 'large');
+      this.onBigGift?.();
+      this.elves.caller?.cheer('Uaaau! Que presentão!');
+      this.elves.organizer?.cheer('Que demais!');
+      this.elves.greeter?.cheer('Parabéns!');
+    } else if (mid) {
+      this.hud.announce(`@${kid.username} ganhou uma caixa especial!`, 'medium');
+    }
+
+    this.served++;
+    kid.celebrate(TIMING.celebrate, () => {
+      kid.walkTo(this.exitPoints, () => { kid.done = true; });
+      if (Math.random() < 0.6) this.elves.caller?.bye(kid);
+      this.leaving.push(kid);
+      if (this.active === kid) this.active = null;
+    });
+  }
+
+  _updateHud() {
+    this.hud.setQueue(this.queue.length + this.pending.length);
+    this.hud.setServed(this.served);
+  }
+}
+
+// ======================================================================
+// main.js
+// ======================================================================
+/**
+ * main.js — Ponto de entrada: renderer, câmera, cena, áudio, rede e loop.
+ */
+
+// ---------- Renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.getElementById('app').appendChild(renderer.domElement);
+
+// ---------- Cena e câmera ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#1a0f0a');
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+const camTarget = new THREE.Vector3(0.6, 1.5, -1.4);
+const camBase = new THREE.Vector3();
+
+/** Ajusta a distância da câmera para caber a sala em 16:9 ou 9:16. */
+function fitCamera() {
+  const w = LIVE ? 540 : window.innerWidth, h = LIVE ? 960 : window.innerHeight;
+  if (LIVE) {
+    const sc = Math.min(window.innerWidth / 540, window.innerHeight / 960);
+    document.getElementById('stage').style.setProperty('--s', sc);
+    renderer.setPixelRatio(Math.min(2, (window.devicePixelRatio || 1) * sc));
+  }
+  const aspect = w / h;
+  camera.aspect = aspect;
+  const portrait = aspect < 1;
+  const halfWidth = LIVE ? 5.4 : portrait ? 6.0 : 8.6;
+  camTarget.set(0.6, LIVE ? 1.2 : 1.5, -1.4);   // na live: cena um pouco maior, deixando a parte de baixo para os painéis
+  const vfov = THREE.MathUtils.degToRad(camera.fov);
+  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
+  const dist = clamp(halfWidth / Math.tan(hfov / 2), 11, 26);
+  const dir = new THREE.Vector3(0, portrait ? 0.8 : 0.5, 1).normalize();
+  camBase.copy(camTarget).addScaledVector(dir, dist);
+  camera.position.copy(camBase);
+  camera.lookAt(camTarget);
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+window.addEventListener('resize', fitCamera);
+fitCamera();
+
+// ---------- Mundo ----------
+const room = buildRoom(scene);
+
+const santa = new Santa();
+santa.group.position.set(-1.2, 0, -3.2);
+santa.group.rotation.y = 0.4; // virado para a fila
+scene.add(santa.group);
+
+// Os 3 ajudantes do Papai Noel (posições definidas em Game._placeElves)
+const elves = {
+  caller: new Elf({ name: 'Lila', tunic: '#1f8a4c', hair: '#8a3f14', braids: true }),
+  organizer: new Elf({ name: 'Pipo', tunic: '#c8102e', hair: '#e0b44c', braids: false }),
+  greeter: new Elf({ name: 'Nina', tunic: '#127b7b', hair: '#2b1b0e', braids: true }),
+};
+
+const effects = new Effects(scene);
+const audio = new AudioManager();
+const hud = createHud();
+if (!CONFIG.showHud) document.getElementById('hud').classList.add('hidden');
+
+let shake = 0;
+const game = new Game({
+  scene, santa, elves, effects, audio, hud,
+  onBigGift: () => { shake = 0.5; },
+});
+
+// ---------- Áudio (precisa de interação, exceto no OBS com ?autostart) ----------
+const overlay = document.getElementById('startOverlay');
+async function startAudio() {
+  overlay.classList.add('hidden');
+  try {
+    await audio.init();
+    audio.resume();
+    audio.startBGM();
+  } catch (err) {
+    console.warn('[áudio] não foi possível iniciar:', err);
+  }
+}
+if (CONFIG.autostart) startAudio();
+document.getElementById('startBtn').addEventListener('click', startAudio);
+window.addEventListener('pointerdown', () => audio.resume());
+// Se o navegador embutido segurar o áudio, tenta liberar de novo a cada segundo
+setInterval(() => audio.resume(), 1000);
+
+// ---------- Ranking: quem mais deu (soma das moedas) ----------
+const topMap = new Map();
+function addTop(name, coins) {
+  name = name.replace(/^@/, '').slice(0, 22);
+  topMap.set(name, (topMap.get(name) || 0) + coins);
+  const list = [...topMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const ol = document.getElementById('topList'); ol.innerHTML = '';
+  list.forEach(([n, c]) => {
+    const li = document.createElement('li');
+    const a = document.createElement('span'); a.textContent = n;
+    const b = document.createElement('b'); b.textContent = c.toLocaleString('pt-BR') + ' 🪙';
+    li.append(a, b); ol.appendChild(li);
+  });
+  const tp = document.getElementById('top'); tp.hidden = false;
+  // na live: o quadro de presentes fica logo acima do ranking (os dois embaixo, à direita)
+  document.documentElement.style.setProperty('--signB', (128 + tp.offsetHeight + 8) + 'px');
+}
+
+// ---------- Presentes vindos da live ----------
+function handleGift(raw) {
+  // Aceita o formato do server.js e também eventos "crus" do tiktok-live-connector
+  // (v1 ou v2) repassados por outras ferramentas.
+  const user = raw.user || {};
+  const det = raw.giftDetails || raw.extendedGiftInfo || {};
+  const giftType = Number(raw.giftType ?? det.giftType ?? 0);
+  if (raw.coins === undefined && giftType === 1 && raw.repeatEnd === false) return; // combo ainda em andamento
+  const repeat = Number(raw.repeatCount) || 1;
+  const msg = {
+    username: raw.username || raw.uniqueId || user.uniqueId || raw.nickname || user.nickname,
+    nickname: raw.nickname || user.nickname,
+    giftName: raw.giftName || det.giftName || det.name,
+    coins: raw.coins ?? (Number(raw.diamondCount ?? det.diamondCount ?? 1) || 1) * repeat,
+    repeatCount: repeat,
+    tier: raw.tier,
+  };
+  const coins = Number(msg.coins) || 1;
+  addTop(String(msg.nickname || msg.username || 'anonimo'), coins);
+  const tier = ['small', 'medium', 'large'].includes(msg.tier) ? msg.tier : resolveTier(msg.giftName, coins);
+  game.addGift({
+    username: String(msg.username || 'anonimo').replace(/^@/, ''),
+    nickname: msg.nickname || msg.username,
+    giftName: msg.giftName || 'Presente',
+    coins,
+    repeatCount: Number(msg.repeatCount) || 1,
+    tier,
+  });
+}
+
+connectGameSocket(CONFIG.wsUrl, {
+  onGift: handleGift,
+  onStatus: (st) => hud.setStatus(st),
+  onSocket: (up) => hud.setSocket(up),
+});
+
+// ---------- Teclas de teste ----------
+const TEST_NAMES = ['ana.clara', 'joaozinho', 'lucas_gamer', 'bia2010', 'pedro.h', 'marianinha', 'theo_fps', 'duda.art'];
+const TEST_GIFTS = {
+  1: { giftName: 'Rose', coins: 1 },
+  2: { giftName: 'GG', coins: 1 },
+  3: { giftName: 'Pistola de dinheiro', coins: 500 },
+};
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'm') { audio.toggleMute(); return; }
+  if (k === 'h') { document.getElementById('hud').classList.toggle('hidden'); return; }
+  if (!CONFIG.debugKeys) return;
+  testKey(k);
+});
+
+// ---------- Janela da live + botões de teste (os testes vão também para a janela da live) ----------
+let bc = null; try { bc = new BroadcastChannel('papai-noel-live'); } catch (e) {}
+function testKey(k) {
+  if (TEST_GIFTS[k]) { const g = { username: pick(TEST_NAMES), ...TEST_GIFTS[k] }; handleGift(g); if (bc && !LIVE) bc.postMessage({ t: 'gift', g }); }
+  if (k === '0') for (let i = 0; i < 10; i++) setTimeout(() => testKey(pick(['1', '1', '1', '2', '2', '3'])), i * 250);
+}
+if (bc && LIVE) bc.onmessage = (e) => { const m = e.data || {}; if (m.t === 'gift') handleGift(m.g); if (m.t === 'mute') audio.toggleMute(); };
+document.querySelectorAll('#opbar [data-t]').forEach((b) => b.addEventListener('click', () => { audio.resume(); testKey(b.dataset.t); }));
+document.getElementById('opLive').addEventListener('click', () => window.open(location.pathname + '?obs=1' + (params.get('ws') ? '&ws=' + encodeURIComponent(params.get('ws')) : ''), 'papai-noel-live', 'width=540,height=960'));
+
+// ---------- Loop ----------
+const clock = new THREE.Clock();
+function loop() {
+  const dt = Math.min(clock.getDelta(), 0.05) * CONFIG.timeScale;
+  const t = clock.elapsedTime * CONFIG.timeScale;
+
+  room.update(dt, t);
+  santa.update(dt, t);
+  game.update(dt, t);
+  effects.update(dt);
+
+  // Leve balanço de câmera + tremida no presente gigante
+  camera.position.copy(camBase);
+  camera.position.x += Math.sin(t * 0.25) * 0.25;
+  camera.position.y += Math.sin(t * 0.4) * 0.1;
+  if (shake > 0) {
+    shake = Math.max(0, shake - dt);
+    const s = shake * 0.25;
+    camera.position.x += (Math.random() - 0.5) * s;
+    camera.position.y += (Math.random() - 0.5) * s;
+  }
+  camera.lookAt(camTarget);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+loop();
+
+</script>
+</body>
+</html>
