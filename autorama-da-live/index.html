@@ -261,12 +261,14 @@ span.li.emo{font-size:50px}
   <button class="cbtn" id="btnSound" aria-label="Som">🔊 <span>Som</span></button>
   <button class="cbtn" id="btnSim" aria-label="Live simulada">🤖 <span>Live simulada</span></button>
   <button class="cbtn" id="btnCam" aria-label="Câmera">🎥 <span>Câmera: auto</span></button>
+  <button class="cbtn" id="btnPick" aria-label="Escolher presentes">🎁 <span>Escolher presentes</span></button>
   <button class="cbtn" id="btnLive" aria-label="Abrir janela da live">📺 <span>Abrir janela da live</span></button>
 </div>
 
 <div id="overlay"><div class="card panel" id="card"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../jogos-live/escolher-presentes.js?v=1"></script>
 <script>
 (function(){
 "use strict";
@@ -1038,6 +1040,7 @@ function showMenu(){
     '<div class="lbl">Voltas</div><div class="seg" id="segL">'+[3,5,10].map(n=>'<button data-v="'+n+'" class="'+(n===laps?"sel":"")+'">'+n+'</button>').join("")+'</div>'+
     '<div class="lbl">Velocidade</div><div class="seg" id="segS">'+[[22,"Lenta"],[16,"Normal"],[11,"Rápida"]].map(([v,t])=>'<button data-v="'+v+'" class="'+(v===lapTime?"sel":"")+'">'+t+'</button>').join("")+'</div>'+
     '<label class="check"><input type="checkbox" id="optSim" '+(sim?"checked":"")+'> Simular espectadores interagindo</label>'+
+    '<button class="cbtn" id="pickBtn2" style="width:100%;margin-bottom:12px;padding:12px;font-size:15px">🎁 Escolher os presentes da live</button>'+
     '<button class="big" id="startBtn">Começar corrida</button>'+
     '<p class="hint">Tudo roda sozinho; ao fim de cada corrida a próxima começa.<br>Ajudam: <kbd>1</kbd>–<kbd>4</kbd> · Atrapalham: <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> · Seguidor: <kbd>F</kbd></p>';
   $("#overlay").hidden=false;
@@ -1045,6 +1048,7 @@ function showMenu(){
   seg("#segL",v=>laps=v); seg("#segS",v=>lapTime=v);
   $("#optSim").addEventListener("change",e=>{sim=e.target.checked;syncSim();});
   $("#startBtn").addEventListener("click",()=>{audio();startRace();});
+  $("#pickBtn2").addEventListener("click",()=>EscolherPresentes.abrir());
 }
 function showResult(){
   const st=standings(),won=st[0].isUs;
@@ -1248,6 +1252,19 @@ setTimeout(()=>{if(!ac||ac.state!=="running")$("#tapSound").classList.add("show"
 document.addEventListener("pointerdown",()=>{audio();setTimeout(()=>{if(ac&&ac.state==="running")$("#tapSound").classList.remove("show");},120);});
 
 /* ================= início ================= */
+// presentes escolhidos pelo criador (painel "Escolher presentes"; vale também na janela da live)
+const PADRAO={gg:6064,donut:5879,bone:6104,pistola:7168,rosa:5655,capivara:14488,chapeu:6427,galaxia:11046};
+if(window.EscolherPresentes){
+  EscolherPresentes.init({
+    jogo:"autorama",
+    acoes:GIFTS.map(g=>({id:g.id,texto:g.desc,tipo:g.type==="bad"?"mau":"bom",padrao:PADRAO[g.id]})),
+    aoMudar:(esc)=>{
+      GIFTS.forEach(g=>{const e=esc[g.id]; if(!e) return; g.tid=[e.id]; g.names=[e.en,e.nome.toLowerCase()]; g.name=e.nome; g.img=e.img;});
+      buildLegends();
+    }
+  });
+  $("#btnPick").addEventListener("click",()=>EscolherPresentes.abrir());
+}
 buildLegends();
 resetCars();
 connectWS();
