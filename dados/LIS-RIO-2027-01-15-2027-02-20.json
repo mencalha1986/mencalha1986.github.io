@@ -6,8 +6,8 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-07T20:58:07.346Z",
- "tentativa": "2026-11-07T20:58:07.346Z",
+ "atualizado": "2026-11-08T00:44:08.622Z",
+ "tentativa": "2026-11-08T00:44:08.622Z",
  "erro": null,
  "voos": [
   {
@@ -205,6 +205,26 @@
   },
   {
    "quando": "2026-11-07T20:58:07.346Z",
+   "brl": 5293,
+   "eur": 863,
+   "direto": 7886,
+   "razoavelEur": 863,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-08T00:44:01.067Z",
+   "brl": 5293,
+   "eur": 863,
+   "direto": 7886,
+   "razoavelEur": 863,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1285,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-08T00:44:08.622Z",
    "brl": 5293,
    "eur": 863,
    "direto": 7886,
