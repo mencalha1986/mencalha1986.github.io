@@ -143,7 +143,7 @@
     #opbar button { font: 700 14px var(--body); background: rgba(20,11,7,.85); color: var(--snow); border: 2px solid var(--candle); border-radius: 99px; padding: 6px 14px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
     #opbar button img { width: 22px; height: 22px; }
     #opbar #opLive { background: var(--cranberry); border-color: var(--snow); }
-    .live #opbar, .live #status, .live #startOverlay { display: none !important; }
+    .live #opbar, .live #status, .live #startOverlay, .live #feed { display: none !important; }
 
     /* ===== JANELA DA LIVE (?obs=1): palco fixo 9:16 (540×960), áreas livres do TikTok ===== */
     .live body { background: #000; }
@@ -2650,12 +2650,12 @@ function fitCamera() {
   const aspect = w / h;
   camera.aspect = aspect;
   const portrait = aspect < 1;
-  const halfWidth = LIVE ? 9.0 : portrait ? 6.0 : 8.6;   // na live: sala inteira, com a porta de entrada e a de saída
-  camTarget.set(0.4, LIVE ? 1.2 : 1.5, -1.4);
+  const halfWidth = LIVE ? (Number(params.get('camw')) || 9.0) : portrait ? 6.0 : 8.6;   // na live: sala inteira, com a porta de entrada e a de saída
+  camTarget.set(Number(params.get('camx')) || 0.4, LIVE ? (Number(params.get('camty')) || 1.2) : 1.5, Number(params.get('camz')) || -1.4);
   const vfov = THREE.MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
   const dist = clamp(halfWidth / Math.tan(hfov / 2), 11, LIVE ? 60 : 26);
-  const dir = new THREE.Vector3(0, portrait ? 0.8 : 0.5, 1).normalize();
+  const dir = new THREE.Vector3(0, LIVE ? (Number(params.get('camup')) || 0.8) : portrait ? 0.8 : 0.5, 1).normalize();
   camBase.copy(camTarget).addScaledVector(dir, dist);
   camera.position.copy(camBase);
   camera.lookAt(camTarget);
