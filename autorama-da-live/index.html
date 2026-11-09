@@ -1268,7 +1268,7 @@ if(window.EscolherPresentes){
 buildLegends();
 resetCars();
 connectWS();
-if(LIVE){ sim=PARAMS.get("sim")==="1"; syncSim(); audio(); startRace(); } else showMenu();
+if(LIVE){ sim=PARAMS.get("sim")==="1"; laps=clamp(parseInt(PARAMS.get("voltas"),10)||laps,1,20); lapTime=clamp(parseFloat(PARAMS.get("tempo"))||lapTime,6,40); syncSim(); audio(); startRace(); } else showMenu();   // ?voltas=3&tempo=11 muda a corrida da janela da live
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>labels.forEach(d=>d()));
 loop();
 })();
