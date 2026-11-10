@@ -2761,8 +2761,8 @@ function handleGift(raw) {
 }
 
 // ---------- Curtidas e comentários também ganham presente (caixinha) ----------
-const LIKES_PER_GIFT = 10, CHAT_COOLDOWN = 60000;   // 10 curtidas = 1 presente · 1 comentário = 1 presente (no máx. 1 por minuto por pessoa)
-const likeCount = new Map(), lastChat = new Map();
+const LIKES_PER_GIFT = 10;   // 10 curtidas = 1 presente · todo comentário = 1 presente (mesmo repetido)
+const likeCount = new Map();
 function freeGift(u, giftName) {
   game.addGift({ username: String(u.uniqueId || u.username || u.nickname || 'anonimo').replace(/^@/, ''), nickname: u.nickname || u.uniqueId, giftName, coins: 0, repeatCount: 1, tier: 'small' });
 }
@@ -2775,8 +2775,6 @@ function handleLike(d) {
 }
 function handleChat(d) {
   const id = String(d.uniqueId || d.user?.uniqueId || d.nickname || ''); if (!id) return;
-  const now = Date.now(); if (now - (lastChat.get(id) || 0) < CHAT_COOLDOWN) return;
-  lastChat.set(id, now);
   freeGift({ uniqueId: id, nickname: d.nickname || d.user?.nickname }, 'um comentário');
 }
 
