@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-11-10T09:58:43.636Z",
- "tentativa": "2026-11-10T09:58:43.636Z",
+ "atualizado": "2026-11-10T17:56:15.964Z",
+ "tentativa": "2026-11-10T17:56:15.964Z",
  "erro": null,
  "voos": [
   {
@@ -20,7 +20,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "7h 55 min GRU",
-   "brl": 10076,
+   "brl": 10164,
    "eur": 1629
   },
   {
@@ -33,7 +33,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 10082,
+   "brl": 10170,
    "eur": 1630
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 10107,
+   "brl": 10195,
    "eur": 1634
   },
   {
@@ -59,7 +59,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 10263,
+   "brl": 10353,
    "eur": 1659
   },
   {
@@ -72,7 +72,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "9h 55 min FOR",
-   "brl": 10397,
+   "brl": 10488,
    "eur": 1681
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 10700,
+   "brl": 10794,
    "eur": 1730
   },
   {
@@ -98,21 +98,21 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 40 min CDG",
-   "brl": 11338,
+   "brl": 11437,
    "eur": 1833
   },
   {
-   "saida": "20:05",
-   "chegada": "10:50⁺¹",
-   "companhia": "Air Europa / Azul",
-   "operador": "Air Europa Express",
-   "duracao": 1065,
+   "saida": "07:20",
+   "chegada": "06:40⁺¹",
+   "companhia": "Tap Air Portugal / ITA",
+   "operador": "",
+   "duracao": 1580,
    "sai": "LIS",
-   "chega": "SDU",
-   "paradas": 2,
-   "detalhe": "MAD, GRU",
-   "brl": 11819,
-   "eur": 1910
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "11h 5 min FCO",
+   "brl": 12025,
+   "eur": 1927
   },
   {
    "saida": "09:20",
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 12806,
+   "brl": 12917,
    "eur": 2070
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 35 min CWB",
-   "brl": 13094,
+   "brl": 13208,
    "eur": 2116
   },
   {
@@ -150,7 +150,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14146,
+   "brl": 14269,
    "eur": 2286
   },
   {
@@ -163,7 +163,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 15133,
+   "brl": 15265,
    "eur": 2446
   }
  ],
@@ -662,6 +662,16 @@
    "brl": 10076,
    "eur": 1629,
    "direto": 14146,
+   "razoavelEur": 1629,
+   "razoavelCia": "LATAM, 7h 55 min GRU",
+   "diretoEur": 2286,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-10T17:56:15.964Z",
+   "brl": 10164,
+   "eur": 1629,
+   "direto": 14269,
    "razoavelEur": 1629,
    "razoavelCia": "LATAM, 7h 55 min GRU",
    "diretoEur": 2286,
