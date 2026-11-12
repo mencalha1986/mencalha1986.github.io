@@ -7,8 +7,8 @@
   "issue": 1
  },
  "atualizado": "2026-11-12T11:29:23.700Z",
- "tentativa": "2026-11-12T11:29:23.700Z",
- "erro": null,
+ "tentativa": "2026-11-12T20:03:40.640Z",
+ "erro": "Nenhum voo encontrado.",
  "voos": [
   {
    "saida": "08:50",
