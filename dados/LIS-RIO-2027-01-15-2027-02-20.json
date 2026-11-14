@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-13T16:30:53.067Z",
- "tentativa": "2026-11-13T22:42:14.691Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-14T03:22:52.239Z",
+ "tentativa": "2026-11-14T03:22:52.239Z",
+ "erro": null,
  "voos": [
   {
    "saida": "08:50",
@@ -20,8 +20,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 5362,
-   "eur": 863
+   "brl": 5385,
+   "eur": null
   },
   {
    "saida": "14:35",
@@ -33,8 +33,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 5586,
-   "eur": 899
+   "brl": 5609,
+   "eur": null
   },
   {
    "saida": "08:50",
@@ -46,8 +46,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5613,
-   "eur": 903
+   "brl": 5636,
+   "eur": null
   },
   {
    "saida": "08:50",
@@ -59,8 +59,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5640,
-   "eur": 907
+   "brl": 5663,
+   "eur": null
   },
   {
    "saida": "09:20",
@@ -72,8 +72,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 6508,
-   "eur": 1047
+   "brl": 6726,
+   "eur": null
   },
   {
    "saida": "12:10",
@@ -85,8 +85,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min VCP",
-   "brl": 6692,
-   "eur": 1076
+   "brl": 6911,
+   "eur": null
   },
   {
    "saida": "06:30",
@@ -98,8 +98,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min MAD",
-   "brl": 7311,
-   "eur": 1176
+   "brl": 7342,
+   "eur": null
   },
   {
    "saida": "10:00",
@@ -111,8 +111,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 30 min OPO",
-   "brl": 7725,
-   "eur": 1242
+   "brl": 7757,
+   "eur": null
   },
   {
    "saida": "13:00",
@@ -124,8 +124,8 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7945,
-   "eur": 1278
+   "brl": 7978,
+   "eur": null
   },
   {
    "saida": "23:20",
@@ -137,8 +137,8 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 8691,
-   "eur": 1398
+   "brl": 8728,
+   "eur": null
   }
  ],
  "escolhas": {
@@ -403,6 +403,25 @@
    "razoavelEur": 863,
    "razoavelCia": "LATAM, 4h 20 min GRU",
    "diretoEur": 1278,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-14T03:22:44.978Z",
+   "brl": 5385,
+   "eur": 863,
+   "direto": 7978,
+   "razoavelEur": 863,
+   "razoavelCia": "LATAM, 4h 20 min GRU",
+   "diretoEur": 1278,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-14T03:22:52.239Z",
+   "brl": 5385,
+   "eur": null,
+   "direto": 7978,
+   "razoavelEur": null,
+   "diretoEur": null,
    "diretoCia": "Tap Air Portugal / Gol, direto"
   }
  ],
