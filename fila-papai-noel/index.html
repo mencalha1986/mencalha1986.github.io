@@ -150,6 +150,9 @@
     .live #stage { position: fixed; left: 50%; top: 50%; width: 540px; height: 960px; transform: translate(-50%,-50%) scale(var(--s,1)); overflow: hidden; background: #140b07; }
     .live #app, .live #app canvas, .live #hud, .live #announce, .live #flash { position: absolute !important; }
     .live #app, .live #app canvas { width: 540px !important; height: 960px !important; inset: 0; }
+    #nowPlaying { position: fixed; z-index: 6; top: 14px; left: 50%; transform: translate(-50%, -8px); padding: 4px 14px; border-radius: 999px; background: rgba(43,23,11,.86); border: 2px solid var(--candle, #f2c14e); color: #fff6e0; font: 800 14px Nunito, sans-serif; opacity: 0; transition: opacity .4s, transform .4s; pointer-events: none; white-space: nowrap; }
+    #nowPlaying.show { opacity: 1; transform: translate(-50%, 0); }
+    .live #nowPlaying { position: absolute; top: 222px; font-size: 13px; }
     .sign .mini { width: 1.3em; height: 1.3em; vertical-align: middle; object-fit: contain; }
     .live .tag-title { top: 106px; padding: 5px 22px 6px 32px; clip-path: polygon(18px 0,100% 0,100% 100%,18px 100%,0 50%); }
     .live .tag-title::before { left: 10px; width: 8px; height: 8px; margin-top: -4px; }
@@ -158,7 +161,7 @@
     /* faixa "Como brincar" logo abaixo do título (em cima da parede do fundo) */
     .live .sign:not(#top) { top: 150px; bottom: auto; left: 10px; right: 10px; width: auto; padding: 4px 6px 5px; border-width: 2px; border-radius: 10px; background: rgba(43, 23, 11, .84); }
     .live .sign:not(#top) h2 { display: none; }
-    .live .sign:not(#top) ul { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1.2fr; gap: 4px; }
+    .live .sign:not(#top) ul { display: grid; grid-template-columns: 1.15fr .85fr 1fr 1.1fr 1fr; gap: 3px; }
     .live .sign:not(#top) li { display: flex; align-items: center; gap: 5px; padding: 0 2px; border: 0 !important; font-size: 11.5px; line-height: 1.05; text-align: left; }
     .live .sign:not(#top) li + li { border-left: 1px dashed rgba(255,220,160,.3) !important; padding-left: 5px; }
     .live .sign:not(#top) li .ico { font-size: 22px; flex: none; }
@@ -197,6 +200,7 @@
         <li><span class="ico"><img src="../jogos-live/img/gg.webp" alt="GG"></span><span><b>Fura-fila</b><small>GG</small></span></li>
         <li><span class="ico"><img src="../jogos-live/img/doughnut.webp" alt="Rosquinha"></span><span><b>Duende ladrão</b><small>Rosquinha</small></span></li>
         <li><span class="ico"><img src="../jogos-live/img/money-gun.png" alt="Pistola de dinheiro"></span><span><b>Trenó: presente pra todos</b><small>Pistola de dinheiro</small></span></li>
+        <li><span class="ico"><img src="../jogos-live/img/finger-heart.webp" alt="Coração com os dedos"></span><span><b>Troca a música</b><small>Coração c/ dedos</small></span></li>
       </ul>
     </aside>
 
@@ -218,14 +222,16 @@
     <button type="button" data-t="2"><img src="../jogos-live/img/gg.webp" alt="">Fura-fila</button>
     <button type="button" data-t="4"><img src="../jogos-live/img/doughnut.webp" alt="">Duende</button>
     <button type="button" data-t="3"><img src="../jogos-live/img/money-gun.png" alt="">Trenó</button>
+    <button type="button" data-t="5"><img src="../jogos-live/img/finger-heart.webp" alt="">Música</button>
     <button type="button" data-t="0">🎁 x10</button>
   </div>
   <div id="announce"></div>
+  <div id="nowPlaying"></div>
   <div id="flash"></div>
 
   <div id="startOverlay" class="hidden">
     <button id="startBtn" type="button">Começar com som</button>
-    <small>Teclas de teste: 1 = Rosa, 2 = GG (fura-fila), 3 = Pistola (trenó), 4 = Rosquinha (duende), 0 = 10 presentes, M = mudo, H = esconder HUD</small>
+    <small>Teclas de teste: 1 = Rosa, 2 = GG (fura-fila), 3 = Pistola (trenó), 4 = Rosquinha (duende), 5 = Coração c/ dedos (troca a música), 0 = 10 presentes, M = mudo, H = esconder HUD</small>
   </div>
 
   <script type="module">
@@ -1742,7 +1748,54 @@ const CHORD_NOTES = {
   F: ['F2', 'C3', 'A3', 'C4'],
   G: ['G2', 'D3', 'B3', 'D4'],
   D: ['D3', 'A3', 'F#4', 'A4'],
+  E: ['E2', 'B2', 'G#3', 'B3'],
+  Em: ['E2', 'B2', 'G3', 'B3'],
+  Am: ['A2', 'E3', 'C4', 'E4'],
+  A: ['A2', 'E3', 'C#4', 'E4'],
 };
+
+// Músicas de Natal tradicionais (domínio público), tocadas pelo sintetizador do jogo.
+// melody: [nota, tempos] ('R' = pausa) · chords: um acorde por compasso · meter: tempos por compasso
+const SONGS = [
+  { name: 'Jingle Bells', bpm: 118, meter: 4, melody: MELODY, chords: CHORDS },
+  {
+    name: 'We Wish You a Merry Christmas', bpm: 150, meter: 3,
+    melody: [
+      ['R', 2], ['D5', 1],
+      ['G5', 1], ['G5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F#5', 0.5], ['E5', 1], ['E5', 1], ['E5', 1],
+      ['A5', 1], ['A5', 0.5], ['B5', 0.5], ['A5', 0.5], ['G5', 0.5], ['F#5', 1], ['D5', 1], ['D5', 1],
+      ['B5', 1], ['B5', 0.5], ['C6', 0.5], ['B5', 0.5], ['A5', 0.5], ['G5', 1], ['E5', 1], ['D5', 0.5], ['D5', 0.5],
+      ['E5', 1], ['A5', 1], ['F#5', 1], ['G5', 3],
+    ],
+    chords: ['G', 'G', 'C', 'D', 'D', 'Em', 'C', 'D', 'G'],
+  },
+  {
+    name: 'Deck the Halls', bpm: 128, meter: 4,
+    melody: (() => {
+      const fa = [['G5', 1.5], ['F5', 0.5], ['E5', 1], ['D5', 1], ['C5', 1], ['D5', 1], ['E5', 1], ['C5', 1],
+        ['D5', 0.5], ['E5', 0.5], ['F5', 0.5], ['D5', 0.5], ['E5', 1.5], ['D5', 0.5], ['C5', 1], ['B4', 1], ['C5', 2]];
+      return [...fa, ...fa,
+        ['D5', 1.5], ['E5', 0.5], ['F5', 1], ['D5', 1], ['E5', 1.5], ['F5', 0.5], ['G5', 1], ['D5', 1],
+        ['E5', 0.5], ['F#5', 0.5], ['G5', 1], ['A5', 0.5], ['B5', 0.5], ['C6', 1], ['B5', 1], ['A5', 1], ['G5', 2],
+        ...fa];
+    })(),
+    chords: ['C', 'C', 'G', 'C', 'C', 'C', 'G', 'C', 'G', 'G', 'D', 'G', 'C', 'F', 'G', 'C'],
+  },
+  {
+    name: 'Joy to the World', bpm: 132, meter: 4,
+    melody: [
+      ['C6', 2], ['B5', 1.5], ['A5', 0.5], ['G5', 3], ['F5', 1], ['E5', 2], ['D5', 2], ['C5', 3], ['G5', 1],
+      ['A5', 3], ['A5', 1], ['B5', 3], ['B5', 1], ['C6', 4],
+      ['C6', 1], ['C6', 1], ['B5', 1], ['A5', 1], ['G5', 1.5], ['F5', 0.5], ['E5', 1], ['C6', 1],
+      ['C6', 1], ['B5', 1], ['A5', 1], ['G5', 1], ['G5', 1.5], ['F5', 0.5], ['E5', 1], ['E5', 1],
+      ['E5', 1], ['E5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['F5', 0.5], ['G5', 3],
+      ['D5', 1], ['D5', 1], ['D5', 1], ['D5', 0.5], ['E5', 0.5], ['F5', 3], ['E5', 0.5], ['D5', 0.5],
+      ['C5', 1], ['C6', 2], ['A5', 1], ['G5', 1.5], ['F5', 0.5], ['E5', 1], ['F5', 1], ['E5', 2], ['D5', 2], ['C5', 4],
+    ],
+    chords: ['C', 'C', 'G', 'C', 'F', 'G', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'G', 'G', 'C', 'C', 'G', 'C'],
+  },
+];
+const SONG_SECONDS = 75; // troca sozinha depois de ~75 s (sempre no fim da música)
 
 class AudioManager {
   constructor() {
@@ -1820,35 +1873,40 @@ class AudioManager {
     }
   }
 
-  _buildSong() {
+  _buildSong(song) {
     const ev = [];
     let beat = 0;
-    for (const [note, dur] of MELODY) {
-      ev.push({ beat, type: 'lead', note, dur });
+    for (const [note, dur] of song.melody) {
+      if (note !== 'R') ev.push({ beat, type: 'lead', note, dur });
       beat += dur;
     }
-    CHORDS.forEach((ch, bar) => {
-      const s = bar * 4;
+    const M = song.meter || 4;
+    song.chords.forEach((ch, bar) => {
+      const st = bar * M;
       const n = CHORD_NOTES[ch];
-      ev.push({ beat: s, type: 'bass', note: n[0] });
-      ev.push({ beat: s + 2, type: 'bass', note: n[1] });
-      ev.push({ beat: s + 1, type: 'pad', notes: [n[2], n[3]] });
-      ev.push({ beat: s + 3, type: 'pad', notes: [n[2], n[3]] });
-      for (let k = 0; k < 4; k++) {
-        ev.push({ beat: s + k, type: 'bell', accent: k % 2 === 0 });
-        ev.push({ beat: s + k + 0.5, type: 'bell', accent: false, soft: true });
+      ev.push({ beat: st, type: 'bass', note: n[0] });
+      if (M === 4) ev.push({ beat: st + 2, type: 'bass', note: n[1] });
+      for (let k = 1; k < M; k += (M === 4 ? 2 : 1)) ev.push({ beat: st + k, type: 'pad', notes: [n[2], n[3]] });
+      for (let k = 0; k < M; k++) {
+        ev.push({ beat: st + k, type: 'bell', accent: k === 0 || (M === 4 && k === 2) });
+        ev.push({ beat: st + k + 0.5, type: 'bell', accent: false, soft: true });
       }
     });
-    ev.sort((a, b) => a.beat - b.beat);
-    return { ev, totalBeats: beat };
+    ev.sort((x, y) => x.beat - y.beat);
+    return { ev, totalBeats: Math.max(beat, song.chords.length * M) };
   }
 
-  /** Agendador com "lookahead": agenda notas ~0,4 s à frente. */
-  _startSynthBGM() {
-    const { ev, totalBeats } = this._buildSong();
-    const spb = 60 / this.bpm;
-    let loopStart = this.ctx.currentTime + 0.15;
+  /** Agendador com "lookahead": agenda notas ~0,4 s à frente. Troca de música sozinha a cada ~75 s. */
+  _startSynthBGM(index = this.songIndex || 0) {
+    if (this._bgmTimer) clearInterval(this._bgmTimer);
+    this.songIndex = ((index % SONGS.length) + SONGS.length) % SONGS.length;
+    const song = SONGS[this.songIndex];
+    let { ev, totalBeats } = this._buildSong(song);
+    let spb = 60 / song.bpm;
+    let loopStart = this.ctx.currentTime + 0.25;
+    let songStart = loopStart;
     let i = 0;
+    this.onSong?.(song, false);
     this._bgmTimer = setInterval(() => {
       const now = this.ctx.currentTime;
       const horizon = now + 0.4;
@@ -1858,9 +1916,32 @@ class AudioManager {
         if (time > horizon) break;
         if (time >= now - 0.05) this._playEvent(e, time, spb);
         i++;
-        if (i >= ev.length) { i = 0; loopStart += totalBeats * spb; }
+        if (i >= ev.length) {
+          i = 0;
+          loopStart += totalBeats * spb + spb; // um tempo de respiro entre as voltas
+          if (loopStart - songStart > SONG_SECONDS) { // hora de trocar de música
+            this.songIndex = (this.songIndex + 1) % SONGS.length;
+            const nx = SONGS[this.songIndex];
+            ({ ev, totalBeats } = this._buildSong(nx));
+            spb = 60 / nx.bpm;
+            loopStart += spb;
+            songStart = loopStart;
+            setTimeout(() => this.onSong?.(nx, false), Math.max(0, (loopStart - now) * 1000));
+          }
+        }
       }
     }, 60);
+  }
+
+  /** Presente "trocar música": pula para a próxima agora mesmo. */
+  nextSong() {
+    if (!this.ready || this._bgmSource) return null;
+    const g = this.bgmGain.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(0, t + 0.02);
+    g.linearRampToValueAtTime(CONFIG.audio.bgmVolume, t + 0.9);
+    this._startSynthBGM((this.songIndex || 0) + 1);
+    return SONGS[this.songIndex];
   }
 
   _playEvent(e, time, spb) {
@@ -2997,6 +3078,17 @@ const elves = {
 
 const effects = new Effects(scene);
 const audio = new AudioManager();
+// mostra o nome da música que está tocando
+{
+  const np = document.getElementById('nowPlaying');
+  let npT = null;
+  audio.onSong = (song) => {
+    np.textContent = '🎵 ' + song.name;
+    np.classList.add('show');
+    clearTimeout(npT);
+    npT = setTimeout(() => np.classList.remove('show'), 6000);
+  };
+}
 const hud = createHud();
 if (!CONFIG.showHud) document.getElementById('hud').classList.add('hidden');
 
@@ -3044,17 +3136,19 @@ function addTop(name, coins) {
 }
 
 // ---------- O que cada presente faz ----------
-//  GG → FURA-FILA · Rosquinha → DUENDE LADRÃO · Pistola de dinheiro (ou 500+ moedas) → TRENÓ
+//  GG → FURA-FILA · Rosquinha → DUENDE LADRÃO · Pistola de dinheiro (ou 500+ moedas) → TRENÓ · Coração com os dedos → TROCA A MÚSICA
 const ACTIONS = {
   cut: ['gg'],
   thief: ['rosquinha', 'doughnut', 'donut'],
   sleigh: ['pistola de dinheiro', 'money gun'],
+  music: ['coração com os dedos', 'coracao com os dedos', 'finger heart'],
 };
 function giftAction(name = '', tier = 'small') {
   const n = String(name).trim().toLowerCase();
   if (tier === 'large' || ACTIONS.sleigh.includes(n)) return 'sleigh';
   if (ACTIONS.thief.includes(n)) return 'thief';
   if (ACTIONS.cut.includes(n)) return 'cut';
+  if (ACTIONS.music.includes(n)) return 'music';
   return null;
 }
 
@@ -3078,8 +3172,13 @@ function handleGift(raw) {
   const coins = Number(msg.coins) || 1;
   addTop(String(msg.nickname || msg.username || 'anonimo'), coins);
   const tier = ['small', 'medium', 'large'].includes(msg.tier) ? msg.tier : resolveTier(msg.giftName, coins);
+  const action = giftAction(msg.giftName, tier);
+  if (action === 'music') {
+    const song = audio.nextSong();
+    hud.announce(song ? `@${msg.username} trocou a música: ${song.name} 🎵` : `@${msg.username} trocou a música 🎵`, 'medium');
+  }
   game.addGift({
-    action: giftAction(msg.giftName, tier),
+    action: action === 'music' ? null : action,
     username: String(msg.username || 'anonimo').replace(/^@/, ''),
     nickname: msg.nickname || msg.username,
     giftName: msg.giftName || 'Presente',
@@ -3122,6 +3221,7 @@ const TEST_GIFTS = {
   2: { giftName: 'GG', coins: 1 },
   3: { giftName: 'Pistola de dinheiro', coins: 500 },
   4: { giftName: 'Rosquinha', coins: 30 },
+  5: { giftName: 'Coração com os dedos', coins: 5 },
 };
 window.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
