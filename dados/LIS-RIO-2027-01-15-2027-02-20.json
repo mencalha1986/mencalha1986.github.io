@@ -6,8 +6,8 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-14T10:41:27.844Z",
- "tentativa": "2026-11-14T10:41:27.844Z",
+ "atualizado": "2026-11-14T17:12:55.579Z",
+ "tentativa": "2026-11-14T17:12:55.579Z",
  "erro": null,
  "voos": [
   {
@@ -33,20 +33,20 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 5609,
+   "brl": 5385,
    "eur": null
   },
   {
-   "saida": "08:50",
-   "chegada": "22:00",
+   "saida": "14:35",
+   "chegada": "09:25⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
-   "duracao": 970,
+   "duracao": 1310,
    "sai": "LIS",
    "chega": "SDU",
    "paradas": 1,
-   "detalhe": "5h GRU",
-   "brl": 5636,
+   "detalhe": "10h 30 min GRU",
+   "brl": 5412,
    "eur": null
   },
   {
@@ -426,6 +426,15 @@
   },
   {
    "quando": "2026-11-14T10:41:27.844Z",
+   "brl": 5385,
+   "eur": null,
+   "direto": 7978,
+   "razoavelEur": null,
+   "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-14T17:12:55.579Z",
    "brl": 5385,
    "eur": null,
    "direto": 7978,
