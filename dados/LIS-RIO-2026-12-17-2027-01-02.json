@@ -6,8 +6,8 @@
   "volta": "2027-01-02",
   "issue": 1
  },
- "atualizado": "2026-11-15T17:17:17.765Z",
- "tentativa": "2026-11-15T17:17:17.765Z",
+ "atualizado": "2026-11-15T21:54:10.574Z",
+ "tentativa": "2026-11-15T21:54:10.574Z",
  "erro": null,
  "voos": [
   {
@@ -20,7 +20,7 @@
    "chega": "SDU",
    "paradas": 2,
    "detalhe": "FCO, GRU",
-   "brl": 10258,
+   "brl": 10266,
    "eur": 1643
   },
   {
@@ -33,7 +33,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 11369,
+   "brl": 11378,
    "eur": 1821
   },
   {
@@ -46,7 +46,7 @@
    "chega": "SDU",
    "paradas": 2,
    "detalhe": "FOR, CGH",
-   "brl": 11431,
+   "brl": 11440,
    "eur": 1831
   },
   {
@@ -59,7 +59,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "7h 55 min GRU",
-   "brl": 11454,
+   "brl": 11463,
    "eur": 1834
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 11754,
+   "brl": 11763,
    "eur": 1882
   },
   {
@@ -98,7 +98,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 11754,
+   "brl": 11763,
    "eur": 1882
   },
   {
@@ -111,7 +111,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 12459,
+   "brl": 12469,
    "eur": 1995
   },
   {
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 12972,
+   "brl": 12982,
    "eur": 2077
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min MAD",
-   "brl": 14287,
+   "brl": 14298,
    "eur": 2288
   },
   {
@@ -150,7 +150,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 14687,
+   "brl": 14698,
    "eur": 2352
   }
  ],
@@ -775,6 +775,16 @@
    "brl": 10258,
    "eur": 1643,
    "direto": 14687,
+   "razoavelEur": 1821,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2352,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T21:54:10.574Z",
+   "brl": 10266,
+   "eur": 1643,
+   "direto": 14698,
    "razoavelEur": 1821,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 2352,

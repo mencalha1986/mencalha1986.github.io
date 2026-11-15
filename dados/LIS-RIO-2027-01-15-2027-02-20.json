@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-15T09:34:21.208Z",
- "tentativa": "2026-11-15T17:16:37.903Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-15T21:53:45.828Z",
+ "tentativa": "2026-11-15T21:53:45.828Z",
+ "erro": null,
  "voos": [
   {
    "saida": "08:50",
@@ -20,7 +20,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 5385,
+   "brl": 5389,
    "eur": null
   },
   {
@@ -33,20 +33,20 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 5385,
+   "brl": 5389,
    "eur": null
   },
   {
    "saida": "14:35",
-   "chegada": "09:25⁺¹",
+   "chegada": "10:15⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
-   "duracao": 1310,
+   "duracao": 1360,
    "sai": "LIS",
    "chega": "SDU",
    "paradas": 1,
-   "detalhe": "10h 30 min GRU",
-   "brl": 5412,
+   "detalhe": "Mudança de aeroporto",
+   "brl": 5442,
    "eur": null
   },
   {
@@ -59,7 +59,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5663,
+   "brl": 5668,
    "eur": null
   },
   {
@@ -72,7 +72,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 6911,
+   "brl": 6916,
    "eur": null
   },
   {
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 35 min VCP",
-   "brl": 6911,
+   "brl": 7089,
    "eur": null
   },
   {
@@ -98,7 +98,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min MAD",
-   "brl": 7624,
+   "brl": 7630,
    "eur": null
   },
   {
@@ -111,7 +111,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 30 min OPO",
-   "brl": 8038,
+   "brl": 8045,
    "eur": null
   },
   {
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 8728,
+   "brl": 8735,
    "eur": null
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 8728,
+   "brl": 8735,
    "eur": null
   }
  ],
@@ -485,6 +485,15 @@
    "brl": 5385,
    "eur": null,
    "direto": 8728,
+   "razoavelEur": null,
+   "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T21:53:45.828Z",
+   "brl": 5389,
+   "eur": null,
+   "direto": 8735,
    "razoavelEur": null,
    "diretoEur": null,
    "diretoCia": "Tap Air Portugal / Gol, direto"

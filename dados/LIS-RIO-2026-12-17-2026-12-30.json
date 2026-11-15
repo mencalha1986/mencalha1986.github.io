@@ -6,8 +6,8 @@
   "volta": "2026-12-30",
   "issue": 2
  },
- "atualizado": "2026-11-15T17:17:04.025Z",
- "tentativa": "2026-11-15T17:17:04.025Z",
+ "atualizado": "2026-11-15T21:54:01.874Z",
+ "tentativa": "2026-11-15T21:54:01.874Z",
  "erro": null,
  "voos": [
   {
@@ -20,8 +20,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "7h 55 min GRU",
-   "brl": 8025,
-   "eur": 1285
+   "brl": 8175,
+   "eur": 1308
   },
   {
    "saida": "08:50",
@@ -33,7 +33,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 8436,
+   "brl": 8443,
    "eur": 1351
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 8468,
+   "brl": 8475,
    "eur": 1356
   },
   {
@@ -59,7 +59,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
-   "brl": 8468,
+   "brl": 8475,
    "eur": 1356
   },
   {
@@ -72,7 +72,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "9h 55 min FOR",
-   "brl": 8799,
+   "brl": 8805,
    "eur": 1409
   },
   {
@@ -85,7 +85,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 8884,
+   "brl": 8890,
    "eur": 1423
   },
   {
@@ -98,7 +98,7 @@
    "chega": "SDU",
    "paradas": 2,
    "detalhe": "FCO, GRU",
-   "brl": 9165,
+   "brl": 9172,
    "eur": 1468
   },
   {
@@ -111,7 +111,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 9173,
+   "brl": 9181,
    "eur": 1469
   },
   {
@@ -124,7 +124,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 45 min FCO",
-   "brl": 9888,
+   "brl": 9896,
    "eur": 1584
   },
   {
@@ -137,7 +137,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 10762,
+   "brl": 10771,
    "eur": 1723
   },
   {
@@ -150,7 +150,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
-   "brl": 12584,
+   "brl": 12594,
    "eur": 2015
   }
  ],
@@ -775,6 +775,16 @@
    "eur": 1285,
    "direto": 10762,
    "razoavelEur": 1285,
+   "razoavelCia": "LATAM, 7h 55 min GRU",
+   "diretoEur": 1723,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T21:54:01.874Z",
+   "brl": 8175,
+   "eur": 1308,
+   "direto": 10771,
+   "razoavelEur": 1308,
    "razoavelCia": "LATAM, 7h 55 min GRU",
    "diretoEur": 1723,
    "diretoCia": "Tap Air Portugal / Gol, direto"
