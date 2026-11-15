@@ -6,8 +6,8 @@
   "volta": "2027-01-06",
   "issue": 3
  },
- "atualizado": "2026-11-15T09:34:33.013Z",
- "tentativa": "2026-11-15T09:34:33.013Z",
+ "atualizado": "2026-11-15T17:16:50.264Z",
+ "tentativa": "2026-11-15T17:16:50.264Z",
  "erro": null,
  "voos": [
   {
@@ -24,43 +24,17 @@
    "eur": 1544
   },
   {
-   "saida": "08:50",
-   "chegada": "21:25",
+   "saida": "13:50",
+   "chegada": "08:30⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
-   "duracao": 935,
+   "duracao": 1300,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "4h 20 min GRU",
+   "detalhe": "10h 25 min GRU",
    "brl": 9943,
    "eur": 1592
-  },
-  {
-   "saida": "13:50",
-   "chegada": "07:40⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 1250,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "9h 35 min GRU",
-   "brl": 9943,
-   "eur": 1592
-  },
-  {
-   "saida": "13:50",
-   "chegada": "01:00⁺¹",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 850,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "2h 50 min GRU",
-   "brl": 10042,
-   "eur": 1608
   },
   {
    "saida": "18:35",
@@ -72,21 +46,47 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "9h 55 min FOR",
-   "brl": 10267,
-   "eur": 1644
+   "brl": 10073,
+   "eur": 1613
+  },
+  {
+   "saida": "08:50",
+   "chegada": "21:25",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 935,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "4h 20 min GRU",
+   "brl": 10218,
+   "eur": 1636
   },
   {
    "saida": "13:50",
-   "chegada": "09:25⁺¹",
+   "chegada": "01:00⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
-   "duracao": 1355,
+   "duracao": 850,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "2h 50 min GRU",
+   "brl": 10218,
+   "eur": 1636
+  },
+  {
+   "saida": "08:50",
+   "chegada": "22:00",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 970,
    "sai": "LIS",
    "chega": "SDU",
    "paradas": 1,
-   "detalhe": "11h 10 min GRU",
-   "brl": 10269,
-   "eur": 1645
+   "detalhe": "5h GRU",
+   "brl": 10245,
+   "eur": 1641
   },
   {
    "saida": "08:50",
@@ -103,6 +103,19 @@
   },
   {
    "saida": "18:35",
+   "chegada": "07:40⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 965,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 2,
+   "detalhe": "FOR, GRU",
+   "brl": 10766,
+   "eur": 1724
+  },
+  {
+   "saida": "18:35",
    "chegada": "05:50⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
@@ -111,8 +124,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
-   "brl": 10648,
-   "eur": 1705
+   "brl": 10920,
+   "eur": 1749
   },
   {
    "saida": "14:40",
@@ -128,17 +141,17 @@
    "eur": 1768
   },
   {
-   "saida": "09:20",
-   "chegada": "20:10",
-   "companhia": "Azul / Tap Air Portugal",
-   "operador": "EUROATLANTIC Airways",
-   "duracao": 830,
+   "saida": "06:30",
+   "chegada": "18:50",
+   "companhia": "Iberia / LATAM",
+   "operador": "",
+   "duracao": 920,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "2h 25 min VCP",
-   "brl": 11395,
-   "eur": 1825
+   "detalhe": "3h 35 min MAD",
+   "brl": 11501,
+   "eur": 1842
   },
   {
    "saida": "08:20",
@@ -150,8 +163,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min MAD",
-   "brl": 12469,
-   "eur": 1997
+   "brl": 12594,
+   "eur": 2017
   },
   {
    "saida": "23:20",
@@ -169,8 +182,8 @@
  ],
  "escolhas": {
   "barato": 0,
-  "rapido": 3,
-  "direto": 11
+  "rapido": 4,
+  "direto": 12
  },
  "historico": [
   {
@@ -787,6 +800,16 @@
   },
   {
    "quando": "2026-11-15T09:34:33.013Z",
+   "brl": 9643,
+   "eur": 1544,
+   "direto": 13214,
+   "razoavelEur": 1544,
+   "razoavelCia": "LATAM, 7h 55 min GRU",
+   "diretoEur": 2116,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T17:16:50.264Z",
    "brl": 9643,
    "eur": 1544,
    "direto": 13214,
