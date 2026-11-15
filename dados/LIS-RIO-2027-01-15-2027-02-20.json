@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-14T21:33:55.058Z",
- "tentativa": "2026-11-14T21:33:55.058Z",
- "erro": null,
+ "atualizado": "2026-11-15T01:58:51.218Z",
+ "tentativa": "2026-11-15T01:58:58.205Z",
+ "erro": "Nenhum voo encontrado.",
  "voos": [
   {
    "saida": "08:50",
@@ -454,6 +454,15 @@
   },
   {
    "quando": "2026-11-14T21:33:55.058Z",
+   "brl": 5385,
+   "eur": null,
+   "direto": 7978,
+   "razoavelEur": null,
+   "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T01:58:51.218Z",
    "brl": 5385,
    "eur": null,
    "direto": 7978,

@@ -6,8 +6,8 @@
   "volta": "2027-01-02",
   "issue": 1
  },
- "atualizado": "2026-11-14T21:34:43.785Z",
- "tentativa": "2026-11-14T21:34:43.785Z",
+ "atualizado": "2026-11-15T01:59:36.065Z",
+ "tentativa": "2026-11-15T01:59:36.065Z",
  "erro": null,
  "voos": [
   {
@@ -21,7 +21,7 @@
    "paradas": 2,
    "detalhe": "FCO, GRU",
    "brl": 10258,
-   "eur": null
+   "eur": 1643
   },
   {
    "saida": "08:50",
@@ -34,7 +34,7 @@
    "paradas": 1,
    "detalhe": "5h GRU",
    "brl": 11369,
-   "eur": null
+   "eur": 1821
   },
   {
    "saida": "08:50",
@@ -47,7 +47,7 @@
    "paradas": 1,
    "detalhe": "7h 55 min GRU",
    "brl": 11454,
-   "eur": null
+   "eur": 1834
   },
   {
    "saida": "13:50",
@@ -60,7 +60,7 @@
    "paradas": 1,
    "detalhe": "2h 50 min GRU",
    "brl": 11460,
-   "eur": null
+   "eur": 1835
   },
   {
    "saida": "09:20",
@@ -73,7 +73,7 @@
    "paradas": 1,
    "detalhe": "2h 40 min VCP",
    "brl": 11497,
-   "eur": null
+   "eur": 1841
   },
   {
    "saida": "09:20",
@@ -86,7 +86,7 @@
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
    "brl": 11705,
-   "eur": null
+   "eur": 1874
   },
   {
    "saida": "08:50",
@@ -99,7 +99,7 @@
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
    "brl": 11753,
-   "eur": null
+   "eur": 1882
   },
   {
    "saida": "08:50",
@@ -112,7 +112,7 @@
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
    "brl": 11831,
-   "eur": null
+   "eur": 1895
   },
   {
    "saida": "18:35",
@@ -125,7 +125,7 @@
    "paradas": 1,
    "detalhe": "3h 25 min FOR",
    "brl": 12459,
-   "eur": null
+   "eur": 1995
   },
   {
    "saida": "23:20",
@@ -138,7 +138,7 @@
    "paradas": 0,
    "detalhe": "",
    "brl": 14686,
-   "eur": null
+   "eur": 2352
   },
   {
    "saida": "23:25",
@@ -151,7 +151,7 @@
    "paradas": 1,
    "detalhe": "1h 45 min GRU",
    "brl": 17958,
-   "eur": null
+   "eur": 2876
   }
  ],
  "escolhas": {
@@ -748,6 +748,16 @@
    "direto": 14686,
    "razoavelEur": null,
    "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-15T01:59:36.065Z",
+   "brl": 10258,
+   "eur": 1643,
+   "direto": 14686,
+   "razoavelEur": 1821,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 2352,
    "diretoCia": "Tap Air Portugal / Gol, direto"
   }
  ],
