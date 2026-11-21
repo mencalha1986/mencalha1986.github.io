@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-19T22:14:49.061Z",
- "tentativa": "2026-11-21T18:03:01.648Z",
- "erro": "Nenhum voo encontrado.",
+ "atualizado": "2026-11-21T23:26:59.799Z",
+ "tentativa": "2026-11-21T23:26:59.799Z",
+ "erro": null,
  "voos": [
   {
    "saida": "08:50",
@@ -20,7 +20,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5574,
+   "brl": 5582,
    "eur": 856
   },
   {
@@ -33,7 +33,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5601,
+   "brl": 5609,
    "eur": 860
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 5813,
+   "brl": 5822,
    "eur": 893
   },
   {
@@ -59,8 +59,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 5813,
-   "eur": 893
+   "brl": 6090,
+   "eur": 934
   },
   {
    "saida": "10:00",
@@ -72,8 +72,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 30 min OPO",
-   "brl": 6996,
-   "eur": 1075
+   "brl": 7008,
+   "eur": 1074
   },
   {
    "saida": "09:20",
@@ -85,7 +85,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 25 min VCP",
-   "brl": 7004,
+   "brl": 7016,
    "eur": 1076
   },
   {
@@ -98,7 +98,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7194,
+   "brl": 7207,
    "eur": 1105
   },
   {
@@ -111,13 +111,13 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7812,
+   "brl": 7827,
    "eur": 1200
   }
  ],
  "escolhas": {
   "barato": 0,
-  "rapido": 3,
+  "rapido": 1,
   "direto": 6
  },
  "historico": [
@@ -516,6 +516,16 @@
    "brl": 5574,
    "eur": 856,
    "direto": 7194,
+   "razoavelEur": 856,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 1105,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-21T23:26:59.799Z",
+   "brl": 5582,
+   "eur": 856,
+   "direto": 7207,
    "razoavelEur": 856,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 1105,
