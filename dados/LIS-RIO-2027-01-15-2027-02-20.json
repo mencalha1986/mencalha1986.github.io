@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-21T23:26:59.799Z",
- "tentativa": "2026-11-23T02:53:22.863Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-24T00:59:46.587Z",
+ "tentativa": "2026-11-24T00:59:53.729Z",
+ "erro": "Nenhum voo encontrado.",
  "voos": [
   {
    "saida": "08:50",
@@ -20,7 +20,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5582,
+   "brl": 5533,
    "eur": 856
   },
   {
@@ -33,7 +33,7 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5609,
+   "brl": 5560,
    "eur": 860
   },
   {
@@ -46,7 +46,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 20 min GRU",
-   "brl": 5822,
+   "brl": 5772,
    "eur": 893
   },
   {
@@ -59,7 +59,7 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 6090,
+   "brl": 6037,
    "eur": 934
   },
   {
@@ -72,21 +72,21 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 30 min OPO",
-   "brl": 7008,
+   "brl": 6947,
    "eur": 1074
   },
   {
-   "saida": "09:20",
-   "chegada": "20:10",
-   "companhia": "Azul / Tap Air Portugal",
-   "operador": "EUROATLANTIC Airways",
-   "duracao": 830,
+   "saida": "12:10",
+   "chegada": "00:25⁺¹",
+   "companhia": "Azul",
+   "operador": "",
+   "duracao": 915,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "2h 25 min VCP",
-   "brl": 7016,
-   "eur": 1076
+   "detalhe": "3h 35 min VCP",
+   "brl": 6961,
+   "eur": 1077
   },
   {
    "saida": "23:20",
@@ -98,7 +98,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7207,
+   "brl": 7144,
    "eur": 1105
   },
   {
@@ -111,7 +111,7 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7827,
+   "brl": 7758,
    "eur": 1200
   }
  ],
@@ -526,6 +526,16 @@
    "brl": 5582,
    "eur": 856,
    "direto": 7207,
+   "razoavelEur": 856,
+   "razoavelCia": "LATAM, 5h GRU",
+   "diretoEur": 1105,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-24T00:59:46.587Z",
+   "brl": 5533,
+   "eur": 856,
+   "direto": 7144,
    "razoavelEur": 856,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 1105,
