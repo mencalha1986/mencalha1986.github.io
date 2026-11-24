@@ -6,9 +6,9 @@
   "volta": "2027-02-20",
   "issue": 4
  },
- "atualizado": "2026-11-24T00:59:46.587Z",
- "tentativa": "2026-11-24T11:04:19.361Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-24T21:21:24.847Z",
+ "tentativa": "2026-11-24T21:21:24.847Z",
+ "erro": null,
  "voos": [
   {
    "saida": "08:50",
@@ -20,8 +20,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "5h GRU",
-   "brl": 5533,
-   "eur": 856
+   "brl": 5806,
+   "eur": null
   },
   {
    "saida": "08:50",
@@ -33,21 +33,8 @@
    "chega": "SDU",
    "paradas": 1,
    "detalhe": "Mudança de aeroporto",
-   "brl": 5560,
-   "eur": 860
-  },
-  {
-   "saida": "08:50",
-   "chegada": "21:25",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 935,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "4h 20 min GRU",
-   "brl": 5772,
-   "eur": 893
+   "brl": 5832,
+   "eur": null
   },
   {
    "saida": "14:35",
@@ -59,8 +46,21 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 55 min GRU",
-   "brl": 6037,
-   "eur": 934
+   "brl": 6044,
+   "eur": null
+  },
+  {
+   "saida": "08:50",
+   "chegada": "21:25",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 935,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "4h 20 min GRU",
+   "brl": 6044,
+   "eur": null
   },
   {
    "saida": "10:00",
@@ -72,21 +72,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "3h 30 min OPO",
-   "brl": 6947,
-   "eur": 1074
-  },
-  {
-   "saida": "12:10",
-   "chegada": "00:25⁺¹",
-   "companhia": "Azul",
-   "operador": "",
-   "duracao": 915,
-   "sai": "LIS",
-   "chega": "GIG",
-   "paradas": 1,
-   "detalhe": "3h 35 min VCP",
-   "brl": 6961,
-   "eur": 1077
+   "brl": 6956,
+   "eur": null
   },
   {
    "saida": "23:20",
@@ -98,8 +85,21 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7144,
-   "eur": 1105
+   "brl": 7153,
+   "eur": null
+  },
+  {
+   "saida": "12:10",
+   "chegada": "00:25⁺¹",
+   "companhia": "Azul",
+   "operador": "",
+   "duracao": 915,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "3h 35 min VCP",
+   "brl": 7234,
+   "eur": null
   },
   {
    "saida": "13:00",
@@ -111,14 +111,14 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 7758,
-   "eur": 1200
+   "brl": 7768,
+   "eur": null
   }
  ],
  "escolhas": {
   "barato": 0,
-  "rapido": 1,
-  "direto": 6
+  "rapido": 2,
+  "direto": 5
  },
  "historico": [
   {
@@ -539,6 +539,24 @@
    "razoavelEur": 856,
    "razoavelCia": "LATAM, 5h GRU",
    "diretoEur": 1105,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-24T21:21:17.486Z",
+   "brl": 5806,
+   "eur": null,
+   "direto": 7153,
+   "razoavelEur": null,
+   "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-24T21:21:24.847Z",
+   "brl": 5806,
+   "eur": null,
+   "direto": 7153,
+   "razoavelEur": null,
+   "diretoEur": null,
    "diretoCia": "Tap Air Portugal / Gol, direto"
   }
  ],
