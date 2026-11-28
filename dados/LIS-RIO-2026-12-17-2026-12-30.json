@@ -6,22 +6,22 @@
   "volta": "2026-12-30",
   "issue": 2
  },
- "atualizado": "2026-11-27T10:58:53.012Z",
- "tentativa": "2026-11-27T20:02:44.662Z",
- "erro": "Nenhum voo encontrado. Página: Pular para o conteúdo principal Feedback de acessibilidade Explorar Voos Hotéis Aluguel por temporada Mudar a aparência Fazer login Carregando resultados Pesqui",
+ "atualizado": "2026-11-28T02:46:36.500Z",
+ "tentativa": "2026-11-28T02:46:36.500Z",
+ "erro": null,
  "voos": [
   {
    "saida": "18:35",
-   "chegada": "05:50⁺¹",
+   "chegada": "12:20⁺¹",
    "companhia": "LATAM",
    "operador": "Latam Airlines Brasil",
-   "duracao": 855,
+   "duracao": 1245,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "3h 25 min FOR",
-   "brl": 7921,
-   "eur": null
+   "detalhe": "9h 55 min FOR",
+   "brl": 8050,
+   "eur": 1328
   },
   {
    "saida": "20:30",
@@ -33,21 +33,21 @@
    "chega": "SDU",
    "paradas": 2,
    "detalhe": "FCO, GRU",
-   "brl": 8404,
-   "eur": null
+   "brl": 8262,
+   "eur": 1358
   },
   {
-   "saida": "12:30",
-   "chegada": "23:10",
-   "companhia": "Tap Air Portugal / Gol",
-   "operador": "",
-   "duracao": 820,
+   "saida": "18:35",
+   "chegada": "05:50⁺¹",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 855,
    "sai": "LIS",
    "chega": "GIG",
    "paradas": 1,
-   "detalhe": "2h 10 min GRU",
-   "brl": 8534,
-   "eur": null
+   "detalhe": "3h 25 min FOR",
+   "brl": 8277,
+   "eur": 1402
   },
   {
    "saida": "13:50",
@@ -59,21 +59,8 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "2h 35 min GRU",
-   "brl": 8772,
-   "eur": null
-  },
-  {
-   "saida": "08:50",
-   "chegada": "22:00",
-   "companhia": "LATAM",
-   "operador": "Latam Airlines Brasil",
-   "duracao": 970,
-   "sai": "LIS",
-   "chega": "SDU",
-   "paradas": 1,
-   "detalhe": "5h GRU",
-   "brl": 9053,
-   "eur": null
+   "brl": 8620,
+   "eur": 1458
   },
   {
    "saida": "11:55",
@@ -85,21 +72,21 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 35 min CWB",
-   "brl": 9188,
-   "eur": null
+   "brl": 8946,
+   "eur": 1470
   },
   {
-   "saida": "05:30",
-   "chegada": "21:25",
-   "companhia": "Air France",
-   "operador": "",
-   "duracao": 1135,
+   "saida": "08:50",
+   "chegada": "22:00",
+   "companhia": "LATAM",
+   "operador": "Latam Airlines Brasil",
+   "duracao": 970,
    "sai": "LIS",
-   "chega": "GIG",
+   "chega": "SDU",
    "paradas": 1,
-   "detalhe": "4h 40 min CDG",
-   "brl": 9419,
-   "eur": null
+   "detalhe": "5h GRU",
+   "brl": 8993,
+   "eur": 1478
   },
   {
    "saida": "17:00",
@@ -111,8 +98,34 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "4h 45 min FOR",
-   "brl": 9871,
+   "brl": 9345,
+   "eur": 1535
+  },
+  {
+   "saida": "05:30",
+   "chegada": "18:30",
+   "companhia": "Air France",
+   "operador": "",
+   "duracao": 960,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "1h 45 min CDG",
+   "brl": 9603,
    "eur": null
+  },
+  {
+   "saida": "16:30",
+   "chegada": "06:25⁺¹",
+   "companhia": "Tap Air Portugal / Gol",
+   "operador": "",
+   "duracao": 1015,
+   "sai": "LIS",
+   "chega": "GIG",
+   "paradas": 1,
+   "detalhe": "5h 30 min GRU",
+   "brl": null,
+   "eur": 1576
   },
   {
    "saida": "23:20",
@@ -124,8 +137,8 @@
    "chega": "GIG",
    "paradas": 0,
    "detalhe": "",
-   "brl": 10341,
-   "eur": null
+   "brl": 10164,
+   "eur": 1670
   },
   {
    "saida": "08:20",
@@ -137,14 +150,14 @@
    "chega": "GIG",
    "paradas": 1,
    "detalhe": "1h 45 min MAD",
-   "brl": 11427,
-   "eur": null
+   "brl": 11229,
+   "eur": 1883
   }
  ],
  "escolhas": {
   "barato": 0,
   "rapido": 2,
-  "direto": 8
+  "direto": 9
  },
  "historico": [
   {
@@ -917,6 +930,16 @@
    "direto": 10341,
    "razoavelEur": null,
    "diretoEur": null,
+   "diretoCia": "Tap Air Portugal / Gol, direto"
+  },
+  {
+   "quando": "2026-11-28T02:46:36.500Z",
+   "brl": 8050,
+   "eur": 1328,
+   "direto": 10164,
+   "razoavelEur": 1402,
+   "razoavelCia": "LATAM, 3h 25 min FOR",
+   "diretoEur": 1670,
    "diretoCia": "Tap Air Portugal / Gol, direto"
   }
  ],
